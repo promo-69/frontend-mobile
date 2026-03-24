@@ -41,3 +41,14 @@ app-example
 # generated native folders
 /ios
 /android
+
+# Local files en yarn folder
+.yarn/*
+!.yarn/patches
+!.yarn/releases
+!.yarn/plugins
+!.yarn/sdks
+!.yarn/versions
+.yarn/install-state.gz
+.yarn/build-state.yml
+.pnp.*
