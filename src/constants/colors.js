@@ -127,7 +127,7 @@ export const COLORS = {
   text: {
     primary: palette.grey[50],
     secondary: palette.grey[400],
-    inverse: palette.grey[950],
+    inverse: palette.grey[50],
   },
 
   border: palette.midnight[700],
@@ -149,7 +149,7 @@ export const COLORS = {
 
     //Gradiente Button Active (Vertical)
     buttonMainActive: {
-      colors: [palette.gold[400], palette.gold[500]], 
+      colors: ['#d9982f', '#b27c25'], 
       locations: [0.45, 1.0],         // 45% -> 100%
       start: { x: 0.5, y: 0 },        // Centro superior
       end: { x: 0.5, y: 1 },          // Centro inferior

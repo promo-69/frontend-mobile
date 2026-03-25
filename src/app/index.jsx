@@ -45,12 +45,11 @@ export default function HomeScreen() {
               colors={['transparent', theme.colors.background]} // Ajusta al color de tu tema
               style={styles.gradient}
             />
-            
-            <View style={styles.brandSection}>
-              <Logo width={187} height={43} viewBox="0 0 187 43" />
-              
-            </View>
           </ImageBackground>
+
+          <View style={styles.logoSection}>
+              <Logo width={187} height={43} viewBox="0 0 187 43" /> 
+          </View>
 
           <View style={styles.formContainer}>
             <AppText variant="h1" style={styles.loginTitle}>Inicio de Sesión</AppText>
@@ -93,11 +92,11 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   contentContainer: {
     flexGrow: 1,
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
   },
   headerImage: {
     width: width,      // Ocupa todo el ancho
-    height: 420,       // El alto que especificaste
+    height: 380,       // El alto que especificaste
     justifyContent: 'flex-end', // Empuja el logo hacia abajo de la imagen
   },
   gradient: {
@@ -107,10 +106,11 @@ const styles = StyleSheet.create({
     bottom: 0,
     height: '60%', // Qué tanto se extiende el desvanecimiento
   },
-  brandSection: {
+  logoSection: {
     alignItems: 'center',
-    marginBottom: theme.spacing.xl,
-    zIndex: 1,
+    marginTop: -160,
+    marginBottom: theme.spacing.xxl,
+    zIndex: 10,
   },
   loginTitle: {
     color: theme.colors.primary,
@@ -124,8 +124,8 @@ const styles = StyleSheet.create({
   },
   description: {
     textAlign: 'center',
-    color: '#CCC',
-    marginBottom: 30,
+    color: theme.colors.text.primary,
+    marginBottom: theme.spacing.lg,
   },
   formSection: {
     width: '100%',
