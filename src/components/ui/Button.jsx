@@ -10,19 +10,21 @@ export const ActionButton = ({
   disabled = false,
   style,
 }) => {
-
   const isDisabled = disabled || isLoading;
 
-  const buttonStyle = variant === 'primary' ? theme.colors.primary : styles.outline;
+  const buttonStyle = variant === 'primary' ? styles.primary : styles.outline;
 
   // Selecciona el color del texto
-  const textColor = variant === 'primary' ? theme.colors.text.primary : theme.colors.inverse;
+  const textColor =
+    variant === 'primary'
+      ? theme.colors.text.primary
+      : theme.colors.text.inverse;
 
   return (
     <TouchableOpacity
       onPress={onPress}
       disabled={isDisabled}
-      activeOpacity={0.7} 
+      activeOpacity={0.7}
       style={[styles.base, buttonStyle, isDisabled && styles.disabled, style]}
     >
       {isLoading ? (
