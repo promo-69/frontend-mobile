@@ -9,13 +9,13 @@ export const AppText = ({ variant = 'body', style, children, ...props }) => {
   return (
     <Text
       style={[
-        //Color y Fuente por defecto 
+        //Color y Fuente por defecto
         {
-          color: theme.colors.text.primary,
+          color: theme.colors.textPrimary,
           fontFamily: theme.typography.family.primary.regular,
         },
         styles.base,
-        //Sobrescribe la fuente base 
+        //Sobrescribe la fuente base
         variantStyle,
         //  Sobrescribe todo si pasa un style prop manual
         style,

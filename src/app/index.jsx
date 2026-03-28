@@ -1,21 +1,22 @@
-import React, { useState } from 'react';
-import { StyleSheet, 
-        View, 
-        Text,
-        ScrollView, 
-        KeyboardAvoidingView, 
-        Platform,
-        Dimensions,
-        ImageBackground } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { ScreenWrapper } from '../components/ScreenWrapper';
+import { useState } from 'react';
+import {
+  Dimensions,
+  ImageBackground,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  View
+} from 'react-native';
 import { AppText } from '../components/AppText';
+import { ScreenWrapper } from '../components/ScreenWrapper';
 import { ActionButton } from '../components/ui/Button';
+import Logo from '../components/ui/Icons/Logo';
 import { UnderlinedInput } from '../components/ui/UnderlinedInput';
 import { theme } from '../constants';
-import Logo from '../components/ui/Icons/Logo';
 
-const {width} = Dimensions.get('window');
+const { width } = Dimensions.get('window');
 
 export default function HomeScreen() {
   const [email, setEmail] = useState('');
@@ -28,19 +29,19 @@ export default function HomeScreen() {
   return (
     <ScreenWrapper>
       {/* KeyboardAvoidingView evita que el teclado cubra los inputs en iOS/Android */}
-      <KeyboardAvoidingView 
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'} 
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
       >
-        <ScrollView 
+        <ScrollView
           contentContainerStyle={styles.contentContainer}
           showsVerticalScrollIndicator={false}
         >
-            <ImageBackground 
+          <ImageBackground
             source={require('../assets/images/login-bg.jpg')}
             style={styles.headerImage}
             resizeMode="cover"
-            >
+          >
             {/* Gradiente para fundir la imagen con el fondo morado */}
             <LinearGradient
               colors={['transparent', theme.colors.background]} // Ajusta al color de tu tema
@@ -49,11 +50,13 @@ export default function HomeScreen() {
           </ImageBackground>
 
           <View style={styles.logoSection}>
-              <Logo width={187} height={43} viewBox="0 0 187 43" /> 
+            <Logo width={187} height={43} viewBox="0 0 187 43" />
           </View>
 
           <View style={styles.formContainer}>
-            <AppText variant="h1" style={styles.loginTitle}>Inicio de Sesión</AppText>
+            <AppText variant="h1" style={styles.loginTitle}>
+              Inicio de Sesión
+            </AppText>
             <AppText variant="body1" style={styles.description}>
               Accede a tu cuenta para disfrutar de todas las funcionalidades
             </AppText>
@@ -66,7 +69,7 @@ export default function HomeScreen() {
                 placeholder="usuario@ucla.edu.ve"
                 keyboardType="email-address"
               />
-              
+
               <View style={{ height: theme.spacing.lg }} />
 
               <UnderlinedInput
@@ -78,10 +81,8 @@ export default function HomeScreen() {
               />
             </View>
 
-          <View style={styles.actionSection}>
-              <ActionButton title="Ingresar" 
-              onPress={handleLogin} 
-              />
+            <View style={styles.actionSection}>
+              <ActionButton title="Ingresar" onPress={handleLogin} />
             </View>
           </View>
         </ScrollView>
@@ -96,8 +97,8 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
   },
   headerImage: {
-    width: width,      // Ocupa todo el ancho
-    height: 380,       // El alto que especificaste
+    width: width, // Ocupa todo el ancho
+    height: 380, // El alto que especificaste
     justifyContent: 'flex-end', // Empuja el logo hacia abajo de la imagen
   },
   gradient: {
@@ -125,7 +126,7 @@ const styles = StyleSheet.create({
   },
   description: {
     textAlign: 'center',
-    color: theme.colors.text.primary,
+    color: theme.colors.textPrimary,
     marginBottom: theme.spacing.lg,
   },
   formSection: {
