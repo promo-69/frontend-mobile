@@ -3,22 +3,26 @@ import { StatusBar, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { theme } from '../constants/index';
 
-export const ScreenWrapper = ({ children, style }) => {
+export const ScreenWrapper = ({ children, style, disableSafeArea = false }) => {
+  
+  const Container = disableSafeArea ? View : SafeAreaView;
+
   return (
-    <View style={styles.container}>
-      <StatusBar barStyle="light-content" />
-
-      <LinearGradient {...theme.colors.gradients.bgColor} />
-
-      <SafeAreaView style={[styles.safeArea, style]}>{children}</SafeAreaView>
-    </View>
+    <LinearGradient
+      {...theme.colors.gradients.bgColor}
+      style={styles.container}
+    >
+      <StatusBar translucent={true} backgroundColor="transparent" barStyle="light-content" />
+      <Container style={[styles.safeArea, style]}>
+        {children}
+      </Container>
+    </LinearGradient>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.background,
   },
   safeArea: {
     flex: 1,

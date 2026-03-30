@@ -1,62 +1,50 @@
-import { ActivityIndicator, StyleSheet, TouchableOpacity } from 'react-native';
-import { theme } from '../../constants/index';
-import { AppText } from '../AppText';
+import React from 'react';
+import { TouchableOpacity, Text, StyleSheet, View } from 'react-native';
+import {theme} from '../../constants';
 
-export const ActionButton = ({
-  title,
-  onPress,
-  variant = 'primary',
-  isLoading = false,
-  disabled = false,
-  style,
-}) => {
-  const isDisabled = disabled || isLoading;
-
-  const buttonStyle = variant === 'primary' ? styles.primary : styles.outline;
-
-  // Selecciona el color del texto
-  const textColor =
-    variant === 'primary'
-      ? theme.colors.text.primary
-      : theme.colors.text.inverse;
-
+export const Button = ({ title, onPress, disabled = false, style }) => {
   return (
     <TouchableOpacity
       onPress={onPress}
-      disabled={isDisabled}
-      activeOpacity={0.7}
-      style={[styles.base, buttonStyle, isDisabled && styles.disabled, style]}
+      disabled={disabled}
+      activeOpacity={0.8}
+     
+      style={[
+        styles.base,
+        { backgroundColor: theme.colors.primary }, 
+        disabled && { opacity: 0.5 },
+        style,
+      ]}
     >
-      {isLoading ? (
-        <ActivityIndicator color={textColor} />
-      ) : (
-        <AppText variant="label" style={{ color: textColor }}>
+      <View style={styles.content}>
+        <Text style={styles.text}>
           {title}
-        </AppText>
-      )}
+        </Text>
+      </View>
     </TouchableOpacity>
   );
 };
 
 const styles = StyleSheet.create({
   base: {
-    height: 56,
-    borderRadius: theme.borderRadius.md,
+    width: '100%',
+    height: 56,                
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+  },
+  content: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: theme.spacing.lg,
   },
-  primary: {
-    backgroundColor: theme.colors.primary,
-  },
-  outline: {
-    backgroundColor: 'transparent',
-    borderWidth: 2,
-    borderColor: theme.colors.primary,
-  },
-  disabled: {
-    opacity: 0.5,
-    backgroundColor: theme.colors.grey[600],
+  text: {
+    ...theme.typography.variants.button,
+    color: theme.colors.textPrimary,          
+    textAlign: 'center',
   },
 });
