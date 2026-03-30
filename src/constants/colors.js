@@ -118,15 +118,15 @@ export const COLORS = {
   ...palette,
 
   primary: palette.gold[400],
-  secondary: palette.lila[500],
+  secondary: palette.lila[200],
   background: palette.midnight[900],
   surface: palette.gold[500],
 
   textPrimary: palette.grey[50],
-  textSecondary: palette.grey[400],
-  textDisabled: palette.grey[50],
+  textSecondary: palette.grey[100],
+  textDisabled: palette.grey[400],
 
-  border: palette.midnight[700],
+  border: palette.lila[300],
 
   // Estados de acciones de usuario
   error: palette.red[500],

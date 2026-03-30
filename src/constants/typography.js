@@ -1,66 +1,56 @@
-//Contiene la familias, pesos y escalas de tamaño
-
-
-//Definición de Alias 
-export const FAMILY = {
+//Definición de Alias
+export const FONTS = {
   primary: {
     regular: 'MainRegular',
     medium: 'MainMedium',
     semiBold: 'MainSemiBold',
     bold: 'MainBold',
   },
-  display: 'DisplayRegular', 
+  secondary: 'DisplayRegular',
 };
 
 // Escala de tamaños (Basada en 8pt y pasos medios)
 export const SIZE = {
-  xs: 12,
-  sm: 14,
-  md: 16,
-  lg: 20,
-  xl: 24,
-  xxl: 32,
-  huge: 48,
-};
-
-export const LINEHEIGHT = {
-      xs: 16,
-      sm: 20,
-      md: 24, 
-      lg: 32, 
-      xl: 40,
+  s10: 10, //Captions/Labels
+  s12: 12, //Cuerpo pequeño
+  s14: 14,
+  s16: 16, //Cuerpo base / Inputs
+  s18: 18, //Títulos de cards
+  s20: 20, //Subtitulos
+  s24: 24, //Títulos secundarios
+  s32: 32, // H2
+  s36: 36, //
+  s48: 48,
 };
 
 //Variantes semánticas para diferentes usos de texto
 export const TEXT_VARIANTS = {
   h1: {
-    fontFamily: FAMILY.display,
-    fontSize: SIZE.huge,
-    letterSpacing: 1,
+    fontFamily: FONTS.secondary,
+    fontSize: SIZE.s48,
   },
   h2: {
-    fontFamily: FAMILY.primary.bold,
-    fontSize: SIZE.xl,
-    lineHeight: LINEHEIGHT.lg,
+    fontFamily: FONTS.primary.bold,
+    fontSize: SIZE.s32,
   },
   subtitle: {
-    fontFamily: FAMILY.primary.medium,
-    fontSize: SIZE.lg,
+    fontFamily: FONTS.primary.medium,
+    fontSize: SIZE.s20,
   },
   body: {
-    fontFamily: FAMILY.primary.regular,
-    fontSize: SIZE.md,
-    lineHeight: LINEHEIGHT.md,
+    fontFamily: FONTS.primary.regular,
+    fontSize: SIZE.s16,
+  },
+  button: {
+    fontFamily: FONTS.primary.semiBold,
+    fontSize: SIZE.s16,
   },
   label: {
-    fontFamily: FAMILY.primary.semiBold,
-    fontSize: SIZE.xs,
-    textTransform: 'uppercase',
-    letterSpacing: 1.5,
+    fontFamily: FONTS.primary.semiBold,
+    fontSize: SIZE.s12,
   },
   caption: {
-    fontFamily: FAMILY.primary.regular,
-    fontSize: SIZE.xs,
-    opacity: 0.7,
-  }
+    fontFamily: FONTS.primary.regular,
+    fontSize: SIZE.s10,
+  },
 };
