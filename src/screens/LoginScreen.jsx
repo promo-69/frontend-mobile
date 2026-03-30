@@ -11,6 +11,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { useRouter } from 'expo-router';
 import { AppText } from '../components/AppText';
 import { ScreenWrapper } from '../components/ScreenWrapper';
 import { Button } from '../components/ui/Button';
@@ -25,12 +26,15 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
+  const router = useRouter();
+
   const handleLogin = () => {
     console.log('Login intent:', email);
   };
 
   const handleRegister = () => {
     console.log('Navegar a Registro');
+    router.push('/register');
   };
 
   return (
@@ -125,12 +129,12 @@ export default function LoginScreen() {
             </View>
 
             <View style={styles.footerSection}>
-              <AppText variant="body" style={styles.footerText}>
+              <AppText variant="label" style={styles.footerText}>
                 ¿No tienes una cuenta?{' '}
               </AppText>
               <TouchableOpacity onPress={handleRegister} activeOpacity={0.7}>
-                <AppText variant="body" style={styles.registerLink}>
-                  Regístrate
+                <AppText variant="label" style={styles.registerLink}>
+                  Regístrate aquí
                 </AppText>
               </TouchableOpacity>
             </View>
@@ -150,7 +154,6 @@ const styles = StyleSheet.create({
     width: width,
     height: 380,
     justifyContent: 'flex-end',
-
     opacity: 0.6,
   },
   gradient: {
@@ -162,15 +165,14 @@ const styles = StyleSheet.create({
   },
   logoSection: {
     alignItems: 'center',
-    marginTop: -160,
+    marginTop: -228,
     marginBottom: theme.spacing.s16,
     zIndex: 10,
   },
   loginTitle: {
     color: theme.colors.primary,
-    marginTop: 15,
-    fontSize: 28,
-    fontWeight: 'bold',
+    marginTop: 16,
+    ...theme.typography.variants.h2,
     marginBottom: 8,
   },
   formContainer: {
@@ -184,7 +186,7 @@ const styles = StyleSheet.create({
   },
   formSection: {
     width: '100%',
-    gap: 8,
+    gap: 32,
     marginBottom: theme.spacing.s16,
   },
   actionSection: {
