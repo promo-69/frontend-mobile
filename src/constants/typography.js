@@ -45,6 +45,10 @@ export const TEXT_VARIANTS = {
     fontFamily: FONTS.primary.semiBold,
     fontSize: SIZE.s16,
   },
+  smallText: {
+    fontFamily: FONTS.primary.semiBold,
+    fontSize: SIZE.s14,
+  },
   label: {
     fontFamily: FONTS.primary.semiBold,
     fontSize: SIZE.s12,
