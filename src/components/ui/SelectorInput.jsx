@@ -8,12 +8,17 @@ import { Input } from './Input';
 export const SelectorInput = ({
   value,
   onChangeText,
+  onSelect,
   options = ['V', 'E'],
-  placeholder = 'Número de Cédula',
   keyboardType = 'numeric',
   ...props
 }) => {
   const { selectedValue, isOpen, toggle, select } = useSelector(options[0]);
+
+  const handleSelect = (opt) => {
+    select(opt);
+    if (onSelect) onSelect(opt);
+  };
 
   return (
     <View style={styles.container}>
@@ -38,7 +43,7 @@ export const SelectorInput = ({
               <TouchableOpacity
                 key={opt}
                 style={styles.option}
-                onPress={() => select(opt)}
+                onPress={() => handleSelect(opt)}
               >
                 <AppText variant='body'style={styles.optionText}>{opt}</AppText>
               </TouchableOpacity>
@@ -49,7 +54,6 @@ export const SelectorInput = ({
 
       <View style={{ flex: 1 }}>
         <Input
-          placeholder={placeholder}
           value={value}
           onChangeText={onChangeText}
           keyboardType={keyboardType}
