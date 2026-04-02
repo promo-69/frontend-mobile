@@ -1,4 +1,3 @@
-import React from 'react';
 import { TouchableOpacity, Text, StyleSheet, View } from 'react-native';
 import {theme} from '../../constants';
 
@@ -32,7 +31,6 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 2,

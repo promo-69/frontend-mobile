@@ -1,5 +1,4 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { Eye, EyeOff } from 'lucide-react-native';
 import { useState } from 'react';
 import {
   Dimensions,
@@ -12,19 +11,18 @@ import {
   View,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { AppText } from '../components/AppText';
-import { ScreenWrapper } from '../components/ScreenWrapper';
-import { Button } from '../components/ui/Button';
-import Logo from '../components/ui/Icons/Logo';
-import { Input } from '../components/ui/Input';
-import { theme } from '../constants';
+import { AppText } from '../../components/AppText';
+import { ScreenWrapper } from '../../components/ScreenWrapper';
+import { Button } from '../../components/ui/Button';
+import Logo from '../../components/ui/Icons/Logo';
+import { Input } from '../../components/ui/Input';
+import { theme } from '../../constants';
 
 const { width } = Dimensions.get('window');
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
 
   const router = useRouter();
 
@@ -35,6 +33,11 @@ export default function LoginScreen() {
   const handleRegister = () => {
     console.log('Navegar a Registro');
     router.push('/register');
+  };
+
+   const handleRecoverPassword = () => {
+    console.log('Navegar a Recuperacion');
+    router.push('/forgot-password');
   };
 
   return (
@@ -50,7 +53,7 @@ export default function LoginScreen() {
           showsVerticalScrollIndicator={false}
         >
           <ImageBackground
-            source={require('../assets/images/login-bg.jpg')}
+            source={require('../../assets/images/login-bg.jpg')}
             style={styles.headerImage}
             resizeMode="cover"
           >
@@ -82,46 +85,26 @@ export default function LoginScreen() {
               <Input
                 value={email}
                 onChangeText={setEmail}
-                placeholder="Correo"
+                label="Correo"
                 keyboardType="email-address"
               />
               <Input
                 value={password}
                 onChangeText={setPassword}
-                placeholder="Contraseña"
-                secureTextEntry={!showPassword}
-                rightIcon={
-                  <TouchableOpacity
-                    onPress={() => setShowPassword(!showPassword)}
-                    activeOpacity={0.7}
-                  >
-                    {showPassword ? (
-                      <Eye size={20} color={theme.colors.textSecondary} />
-                    ) : (
-                      <EyeOff size={20} color={theme.colors.textSecondary} />
-                    )}
-                  </TouchableOpacity>
-                }
+                label="Contraseña"
+                secureTextEntry
               />
               <View style={styles.forgotPasswordWrapper}>
                 <TouchableOpacity
-                  onPress={() => console.log('Recuperar contraseña')}
+                  onPress={() => handleRecoverPassword()}
                   activeOpacity={0.7}
-                  styles={styles.forgotPasswordContainer}
+                  style={styles.forgotPasswordContainer}
                 >
                   <AppText style={styles.forgotPasswordText}>
                     ¿Olvidaste tu contraseña?
                   </AppText>
                 </TouchableOpacity>
               </View>
-
-              {/*<Pressable
-              onPress={()=>console.log('Recuperar contraseña')}
-               >
-              <Text>
-                ¿Olvidaste tu contraseña?
-              </Text>
-              </Pressable>*/}
             </View>
 
             <View style={styles.actionSection}>
@@ -197,7 +180,7 @@ const styles = StyleSheet.create({
   forgotPasswordWrapper: {
     width: '100%',
     alignItems: 'flex-end',
-    marginTop: theme.spacing.s8,
+    marginTop: theme.spacing.s4,
   },
   forgotPasswordContainer: {
     paddingHorizontal: 4,
@@ -207,8 +190,6 @@ const styles = StyleSheet.create({
     ...theme.typography.variants.label,
     color: theme.colors.primary,
     textDecorationLine: 'underline',
-    textDecorationStyle: 'solid',
-    textDecorationColor: 'rgba(217, 152, 47, 0.3)',
   },
   footerSection: {
     flexDirection: 'row',
@@ -222,5 +203,7 @@ const styles = StyleSheet.create({
   },
   registerLink: {
     color: theme.colors.primary,
+    textDecorationLine: 'underline',
+    fontWeight: 'bold',
   },
 });
