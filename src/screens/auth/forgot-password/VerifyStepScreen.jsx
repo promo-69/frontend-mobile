@@ -1,0 +1,107 @@
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { ChevronLeft } from 'lucide-react-native';
+import { useState } from 'react';
+import {
+    KeyboardAvoidingView,
+    Platform,
+    StyleSheet,
+    TouchableOpacity,
+    View,
+} from 'react-native';
+import { AppText } from '../../../components/AppText';
+import { OTPInput } from '../../../components/OTPInput';
+import { ScreenWrapper } from '../../../components/ScreenWrapper';
+import { Button } from '../../../components/ui/Button';
+import { theme } from '../../../constants';
+
+export const VerifyStep = () => {
+  const router = useRouter();
+  const { email } = useLocalSearchParams();
+  const [code, setCode] = useState('');
+
+  const handleBack = () => {
+    router.back();
+  };
+
+  return (
+    <ScreenWrapper>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'android' ? 'height' : 'padding'}
+        style={{ flex: 1 }}
+        keyboardVerticalOffset={Platform.OS === 'android' ? 0 : 64}
+      >
+        <TouchableOpacity onPress={handleBack} style={styles.backButton}>
+          <ChevronLeft size={28} color={theme.colors.border} />
+        </TouchableOpacity>
+
+        <View style={styles.content}>
+          <AppText variant="h2" style={styles.title}>
+            Verifica tu identidad
+          </AppText>
+          <AppText variant="body" style={styles.description}>
+            Ingresa el código que enviamos a tu correo
+          </AppText>
+
+          <View style={styles.formSection}>
+            <OTPInput code={code} setCode={setCode} maxLength={4} />
+          </View>
+
+          <View style={styles.actionSection}>
+            <Button
+              title="Confirmar Código"
+              onPress={() => router.push('/forgot-password/reset')}
+            />
+            <TouchableOpacity activeOpacity={0.7}>
+              <AppText style={styles.resendText}>
+                ¿No recibiste nada? Reenviar
+              </AppText>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </KeyboardAvoidingView>
+    </ScreenWrapper>
+  );
+};
+
+const styles = StyleSheet.create({
+  content: {
+    flexGrow: 1,
+    justifyContent: 'flex-start',
+    paddingTop: theme.spacing.s48,
+    paddingBottom: theme.spacing.s48,
+    paddingHorizontal: theme.spacing.s16,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    marginTop: theme.spacing.s8,
+    marginLeft: theme.spacing.s16,
+    justifyContent: 'center',
+  },
+  title: {
+    color: theme.colors.primary,
+    marginTop: 16,
+    ...theme.typography.variants.h2,
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  description: {
+    textAlign: 'center',
+    color: theme.colors.textPrimary,
+    marginBottom: theme.spacing.s8,
+  },
+  formSection: {
+    width: '100%',
+    marginBottom: theme.spacing.s16,
+  },
+  actionSection: {
+    width: '100%',
+    marginTop: theme.spacing.s24,
+    gap: theme.spacing.s16,
+  },
+  resendText: {
+    textAlign: 'center',
+    marginTop: 30,
+    opacity: 0.6,
+  },
+});

@@ -1,5 +1,5 @@
-import { Stack } from 'expo-router';
-import { theme } from '../../constants';
+import { Stack } from 'expo-router'
+
 
 export default function AuthLayout() {
   return (
@@ -12,6 +12,7 @@ export default function AuthLayout() {
     >
       <Stack.Screen name="login" />
       <Stack.Screen name="register" />
+      <Stack.Screen name="forgot-password" />
     </Stack>
   );
 }
