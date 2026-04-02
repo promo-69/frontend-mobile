@@ -1,4 +1,3 @@
-
 //Capitaliza nombres
 export const capitalizeNames = (name) => {
   if (!name || typeof name !== 'string') return '';
@@ -6,7 +5,7 @@ export const capitalizeNames = (name) => {
     .toLowerCase()
     .trim()
     .split(/\s+/)
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ');
 };
 
@@ -25,13 +24,13 @@ export const sanitizeInput = (input, type = 'text') => {
       // Minúsculas y quita espacios internos
       return clean.toLowerCase().replace(/\s/g, '');
 
-    case 'phone':
+    case 'phoneNumber':
       // Deja solo números y el signo +
       return clean.replace(/[^0-9+]/g, '');
 
     default:
       // Normaliza espacios
-      return clean.replace(/\s+/g, ' '); 
+      return clean.replace(/\s+/g, ' ');
   }
 };
 
@@ -42,10 +41,9 @@ export const validateEmail = (email) => {
   return re.test(email);
 };
 
-
 // Validación de contraseña (mínimo 8 caracteres, al menos 1 letra y 1 numero)
 export const validatePassword = (password) => {
-  if(!password) return false;
+  if (!password) return false;
   const hasLetter = /[a-zA-Z]/.test(password);
   const hasNumber = /[0-9]/.test(password);
   return password.length >= 8 && hasLetter && hasNumber;
@@ -59,33 +57,34 @@ export const validateNames = (name) => {
 };
 
 // Validación de coincidencia de contraseñas
-export const validatePasswordMatch = ( password, confirmPassword,) => {
+export const validatePasswordMatch = (password, confirmPassword) => {
   return password === confirmPassword;
 };
 
 // Validación de campos vacíos
 export const validateRequiredFields = (fields) => {
   return fields.every((field) => {
-    return field !== null && field!= undefined && String(field).trim() !== '';
+    return field !== null && field != undefined && String(field).trim() !== '';
   });
 };
 
 // Validación de longitud del teléfono celular general
 export const validatePhoneNumberLength = (phoneNumber) => {
-  if(!phoneNumber) return false;
-  
-  // Limpiamos espacios o guiones si el usuario los puso
-  const cleanPhone = phone.replace(/[\s-]/g, '');
+  if (!phoneNumber) return false;
 
-  if(phoneNumber.length >= 8 && phoneNumber.length <= 15) return  phoneNumber.test(cleanPhone);
+  // Limpiamos espacios o guiones si el usuario los puso
+  const cleanPhone = phoneNumber.replace(/[\s-]/g, '');
+
+  if (phoneNumber.length >= 8 && phoneNumber.length <= 15)
+    return phoneNumber.test(cleanPhone);
 };
 
 // Validación de longitud del teléfono celular venezolano
-export const validatePhoneNumberVE = (phone) => {
-  if (!phone) return false;
+export const validatePhoneNumberVE = (phoneNumber) => {
+  if (!phoneNumber) return false;
 
   // Limpiamos espacios o guiones si el usuario los puso
-  const cleanPhone = phone.replace(/[\s-]/g, '');
+  const cleanPhone = phoneNumber.replace(/[\s-]/g, '');
 
   // Explicación de la Regex:
   // ^(\+58|0) -> Debe empezar con +58 o con 0
