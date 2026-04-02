@@ -1,5 +1,6 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { useState } from 'react';
+import { useRouter } from 'expo-router';
+import { Controller, useForm } from 'react-hook-form';
 import {
   Dimensions,
   ImageBackground,
@@ -10,24 +11,33 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { useRouter } from 'expo-router';
 import { AppText } from '../../components/AppText';
 import { ScreenWrapper } from '../../components/ScreenWrapper';
 import { Button } from '../../components/ui/Button';
 import Logo from '../../components/ui/Icons/Logo';
 import { Input } from '../../components/ui/Input';
 import { theme } from '../../constants';
+import {
+  sanitizeInput,
+  validateEmail,
+  validatePassword,
+} from '../../utils/validators';
 
 const { width } = Dimensions.get('window');
 
 export default function LoginScreen() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const { control, handleSubmit } = useForm({
+    defaultValues: {
+      email: '',
+      password: '',
+    },
+  });
 
   const router = useRouter();
 
-  const handleLogin = () => {
-    console.log('Login intent:', email);
+  const onSubmit = (data) => {
+    const sanitizedEmail = sanitizeInput(data.email, 'email');
+    console.log('Login intent (sanitized):', sanitizedEmail);
   };
 
   const handleRegister = () => {
@@ -35,7 +45,7 @@ export default function LoginScreen() {
     router.push('/register');
   };
 
-   const handleRecoverPassword = () => {
+  const handleRecoverPassword = () => {
     console.log('Navegar a Recuperacion');
     router.push('/forgot-password');
   };
@@ -74,7 +84,7 @@ export default function LoginScreen() {
           </View>
 
           <View style={styles.formContainer}>
-            <AppText variant="h1" style={styles.loginTitle}>
+            <AppText variant="h2" style={styles.loginTitle}>
               Inicio de Sesión
             </AppText>
             <AppText variant="body" style={styles.description}>
@@ -82,17 +92,45 @@ export default function LoginScreen() {
             </AppText>
 
             <View style={styles.formSection}>
-              <Input
-                value={email}
-                onChangeText={setEmail}
-                label="Correo"
-                keyboardType="email-address"
+              <Controller
+                control={control}
+                name="email"
+                rules={{
+                  required: 'LLenar campos faltantes',
+                  validate: validateEmail,
+                }}
+                render={({
+                  field: { onChange, value },
+                  fieldState: { error },
+                }) => (
+                  <Input
+                    value={value}
+                    onChangeText={onChange}
+                    label="Correo"
+                    keyboardType="email-address"
+                    error={error?.message}
+                  />
+                )}
               />
-              <Input
-                value={password}
-                onChangeText={setPassword}
-                label="Contraseña"
-                secureTextEntry
+              <Controller
+                control={control}
+                name="password"
+                rules={{
+                  required: 'LLenar campos faltantes',
+                  validate: validatePassword,
+                }}
+                render={({
+                  field: { onChange, value },
+                  fieldState: { error },
+                }) => (
+                  <Input
+                    value={value}
+                    onChangeText={onChange}
+                    label="Contraseña"
+                    secureTextEntry
+                    error={error?.message}
+                  />
+                )}
               />
               <View style={styles.forgotPasswordWrapper}>
                 <TouchableOpacity
@@ -108,7 +146,7 @@ export default function LoginScreen() {
             </View>
 
             <View style={styles.actionSection}>
-              <Button title="Ingresar" onPress={handleLogin} />
+              <Button title="Ingresar" onPress={handleSubmit(onSubmit)} />
             </View>
 
             <View style={styles.footerSection}>
@@ -154,9 +192,8 @@ const styles = StyleSheet.create({
   },
   loginTitle: {
     color: theme.colors.primary,
-    marginTop: 16,
-    ...theme.typography.variants.h2,
-    marginBottom: 8,
+    marginTop: theme.spacing.s16,
+    marginBottom: theme.spacing.s8,
   },
   formContainer: {
     paddingHorizontal: theme.spacing.s16,
