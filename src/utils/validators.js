@@ -36,24 +36,28 @@ export const sanitizeInput = (input, type = 'text') => {
 
 // Validación de correo electrónico
 export const validateEmail = (email) => {
-  if (!email) return false;
+  if (!email) return "El correo es requerido";
   const re = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,12}$/;
-  return re.test(email);
+  return re.test(email) || "Correo electrónico inválido";
 };
 
 // Validación de contraseña (mínimo 8 caracteres, al menos 1 letra y 1 numero)
 export const validatePassword = (password) => {
-  if (!password) return false;
+  if (!password) return "La contraseña es requerida";
   const hasLetter = /[a-zA-Z]/.test(password);
   const hasNumber = /[0-9]/.test(password);
-  return password.length >= 8 && hasLetter && hasNumber;
+  const IsLongEnough = password.length >= 8;
+
+  if(!IsLongEnough) return "Debe tener al menos 8 caracteres";
+  if (!hasLetter || !hasNumber) return "Debe incluir al menos una letra y un número";
+  return true;
 };
 
 //Validacion de nombres/apellidos (letras, tildes, Ñ y espacios, 2 a 50 caracteres)
 export const validateNames = (name) => {
-  if (!name) return false;
+  if (!name) return "El nombre es requerido";
   const nameRegex = /^[a-zA-ZÁÉÍÓÚáéíóúÑñ][a-zA-ZÁÉÍÓÚáéíóúÑñ\s]{1,49}$/;
-  return nameRegex.test(name.trim());
+  return nameRegex.test(name.trim()) || "Usa solo letras (2-50 caracteres)";
 };
 
 // Validación de coincidencia de contraseñas
@@ -71,12 +75,9 @@ export const validateRequiredFields = (fields) => {
 // Validación de longitud del teléfono celular general
 export const validatePhoneNumberLength = (phoneNumber) => {
   if (!phoneNumber) return false;
-
   // Limpiamos espacios o guiones si el usuario los puso
   const cleanPhone = phoneNumber.replace(/[\s-]/g, '');
-
-  if (phoneNumber.length >= 8 && phoneNumber.length <= 15)
-    return phoneNumber.test(cleanPhone);
+  return (cleanPhone >=8 && cleanPhone.length <= 15) || "Teléfono inválido";
 };
 
 // Validación de longitud del teléfono celular venezolano
@@ -92,20 +93,32 @@ export const validatePhoneNumberVE = (phoneNumber) => {
   // [0-9]{7}$ -> Seguido de exactamente 7 números
   const phoneRegex = /^(\+58|0)(412|414|424|416|426|2[0-9]{2})[0-9]{7}$/;
 
-  return phoneRegex.test(cleanPhone);
+  return phoneRegex.test(cleanPhone) || "Formato de teléfono inválido";
 };
 
 // Valida fecha real en formato (DD/MM/YYYY o DD-MM-YYYY)
-export const validateDate = (dateString) => {
-  const dateRegex = /^(0[1-9]|[12][0-9]|3[01])[-/](0[1-9]|1[012])[-/]\d{4}$/;
-  if (!dateRegex.test(dateString)) return false;
+export const validateDate = (date) => {
+  if (!date) return "La fecha es requerida";
 
-  const [day, month, year] = dateString.split(/[-/]/).map(Number);
-  const date = new Date(year, month - 1, day);
+  const dateObj = typeof date === 'string' ? new Date(date) : date;
+  
+  const today = new Date();
+  
+  if (dateObj > today) {
+    return "La fecha no puede ser futura";
+  }
 
-  return (
-    date.getFullYear() === year &&
-    date.getMonth() === month - 1 &&
-    date.getDate() === day
-  );
+  const ageLimit = 13;
+  let age = today.getFullYear() - dateObj.getFullYear();
+  const monthDiff = today.getMonth() - dateObj.getMonth();
+  
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dateObj.getDate())) {
+    age--;
+  }
+
+  if (age < ageLimit) {
+    return `Debes ser mayor de ${ageLimit} años para registrarte`;
+  }
+
+  return true; 
 };
