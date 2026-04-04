@@ -161,5 +161,6 @@ const styles = StyleSheet.create({
     color: theme.colors.error,
     ...theme.typography.variants.caption,
     marginTop: theme.spacing.s4,
+    minHeight: 16,
   }
 });

@@ -17,10 +17,19 @@ const AVAILABLE_GENRES = [
 ];
 
 export const GenreSelectionStep = ({ 
-  selectedGenres = [], 
-  onToggleGenre, 
-  error = null 
+  value = [], 
+  onChange, 
+  error 
 }) => {
+
+ const handleToggle = (genre) => {
+    const isSelected = value.includes(genre);
+    const nextGenres = isSelected
+      ? value.filter(g => g !== genre)
+      : [...value, genre];
+    onChange(nextGenres);
+  };
+
   return (
     <ScrollView 
       showsVerticalScrollIndicator={false}
@@ -31,14 +40,11 @@ export const GenreSelectionStep = ({
           ¿Qué géneros te gustan?
         </AppText>
         
-        {/* Renderizado condicional del mensaje de error*/}
         {error ? (
-          <AppText style={styles.errorText}>
-            {error}
-          </AppText>
+          <AppText style={styles.errorText}>{error}</AppText>
         ) : (
           <AppText variant="body" style={styles.subtitle}>
-            Selecciona tus categorías favoritas
+            Selecciona al menos 3 categorías 
           </AppText>
         )}
       </View>
@@ -48,8 +54,8 @@ export const GenreSelectionStep = ({
           <GenreChip
             key={genre}
             label={genre}
-            isSelected={selectedGenres.includes(genre)}
-            onPress={() => onToggleGenre(genre)}
+            isSelected={value.includes(genre)}
+            onPress={() => handleToggle(genre)}
             style={styles.chipItem}
           />
         ))}

@@ -36,7 +36,7 @@ export const PersonalInfoStep = ({ formData, onInputChange, errors = {} }) => {
       {/* Sección de Encabezado */}
       <View style={styles.header}>
         <AppText variant="body" style={styles.subtitle}>
-          Ingresa tus datos básicos para comenzar tu experiencia en CinexFlix.
+          Ingresa tus datos básicos para comenzar tu experiencia en Cineflix.
         </AppText>
       </View>
 
