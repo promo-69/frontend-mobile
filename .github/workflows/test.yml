@@ -1,0 +1,25 @@
+name: test
+
+on:
+  pull_request:
+    branches: [development]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Clonar repo
+        uses: actions/checkout@v4
+
+      - name: Activar Corepack
+        run: corepack enable
+
+      - name: Usar Yarn 4
+        run: corepack prepare yarn@4.1.0 --activate
+
+      - name: Instalar dependencias
+        run: yarn install 
+
+      - name: Ejecutar tests
+        run: yarn test --ci --runInBand
