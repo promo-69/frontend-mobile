@@ -1,26 +1,38 @@
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { ChevronLeft } from 'lucide-react-native';
 import { useState } from 'react';
 import {
-    KeyboardAvoidingView,
-    Platform,
-    StyleSheet,
-    TouchableOpacity,
-    View,
+  KeyboardAvoidingView,
+  Platform,
+  StyleSheet,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { AppText } from '../../../components/AppText';
-import { OTPInput } from '../../../components/OTPInput';
 import { ScreenWrapper } from '../../../components/ScreenWrapper';
 import { Button } from '../../../components/ui/Button';
+import { Input } from '../../../components/ui/Input';
 import { theme } from '../../../constants';
 
-export const VerifyStep = () => {
+export default function ForgotPasswordScreen() {
   const router = useRouter();
-  const { email } = useLocalSearchParams();
-  const [code, setCode] = useState('');
+  const [email, setEmail] = useState('');
 
   const handleBack = () => {
     router.back();
+  };
+
+  const handleNext = () => {
+    router.push({
+      pathname: '/verify-code',
+      params: { email },
+    });
+  };
+
+  const handleCancel = () => {
+    router.push({
+      pathname: '/login',
+    });
   };
 
   return (
@@ -33,35 +45,41 @@ export const VerifyStep = () => {
         <TouchableOpacity onPress={handleBack} style={styles.backButton}>
           <ChevronLeft size={28} color={theme.colors.border} />
         </TouchableOpacity>
-
         <View style={styles.content}>
           <AppText variant="h2" style={styles.title}>
-            Verifica tu identidad
+            Recuperar Contraseña
           </AppText>
           <AppText variant="body" style={styles.description}>
-            Ingresa el código que enviamos a tu correo
+            Ingresa tu correo electrónico para enviarte un código de de
+            recuperación
           </AppText>
 
           <View style={styles.formSection}>
-            <OTPInput code={code} setCode={setCode} maxLength={4} />
+            <Input
+              value={email}
+              label="Correo"
+              keyboardType="email-address"
+              onChangeText={setEmail}
+            />
           </View>
 
           <View style={styles.actionSection}>
+            <Button title="Enviar" onPress={handleNext} />
             <Button
-              title="Confirmar Código"
-              onPress={() => router.push('/forgot-password/reset')}
+              title="Cancelar"
+              onPress={handleCancel}
+              style={{
+                backgroundColor: 'transparent',
+                borderWidth: 2,
+                borderColor: theme.colors.primary,
+              }}
             />
-            <TouchableOpacity activeOpacity={0.7}>
-              <AppText style={styles.resendText}>
-                ¿No recibiste nada? Reenviar
-              </AppText>
-            </TouchableOpacity>
           </View>
         </View>
       </KeyboardAvoidingView>
     </ScreenWrapper>
   );
-};
+}
 
 const styles = StyleSheet.create({
   content: {
@@ -88,20 +106,17 @@ const styles = StyleSheet.create({
   description: {
     textAlign: 'center',
     color: theme.colors.textPrimary,
-    marginBottom: theme.spacing.s8,
+    marginTop: theme.spacing.s8,
+    marginBottom: theme.spacing.s16,
   },
   formSection: {
     width: '100%',
+    gap: 32,
     marginBottom: theme.spacing.s16,
   },
   actionSection: {
     width: '100%',
     marginTop: theme.spacing.s24,
-    gap: theme.spacing.s16,
-  },
-  resendText: {
-    textAlign: 'center',
-    marginTop: 30,
-    opacity: 0.6,
+    gap: theme.spacing.s24,
   },
 });
