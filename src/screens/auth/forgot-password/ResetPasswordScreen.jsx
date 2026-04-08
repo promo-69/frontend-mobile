@@ -1,6 +1,5 @@
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { ChevronLeft } from 'lucide-react-native';
-import { useState } from 'react';
 import {
     KeyboardAvoidingView,
     Platform,
@@ -13,19 +12,46 @@ import { ScreenWrapper } from '../../../components/ScreenWrapper';
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
 import { theme } from '../../../constants';
+import { useForm, Controller } from 'react-hook-form';
+import {validatePassword, validatePasswordMatch } from '../../../utils/validators'
 
 export const ResetPasswordScreen = () => {
   const router = useRouter();
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const { email } = useLocalSearchParams();
+
+  const { control, handleSubmit, watch } = useForm({
+    mode: 'onBlur',
+    reValidateMode: 'onChange',
+    defaultValues: {
+      password: '',
+      confirmPassword: ''
+    }
+  });
+
+  const newPassword = watch('password');
+
+  const onSubmit = async(data) => {
+      try {
+        // API
+        // await api.post('/auth/reset-password', { 
+        // password: data.password,
+        // email: params.email
+        //  });
+        //
+        console.log('Cambiando clave para:', email);
+        console.log('Nueva clave:', data.password);
+        router.replace('/success-reset');
+
+      } catch (error) {
+        // Manejar error de servidor
+        console.error('Error en el servidor:', error);
+      }
+    };  
 
   const handleBack = () => {
     router.back();
   };
 
-  const handleReset = () => {
-    router.replace('/success-reset');
-  };
 
   return (
     <ScreenWrapper>
@@ -47,22 +73,52 @@ export const ResetPasswordScreen = () => {
           </AppText>
 
           <View style={styles.formSection}>
-            <Input
-              label="Nueva Contraseña"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
+            <Controller
+              control={control}
+              name="password"
+              rules={{
+                required: 'La contraseña es obligatoria',
+                validate: validatePassword, 
+              }}
+              render={({ 
+                field: { onChange, onBlur, value }, 
+                fieldState: { error } 
+              }) => (
+                <Input
+                  label="Nueva Contraseña"
+                  value={value}
+                  onChangeText={onChange}
+                  onBlur={onBlur}
+                  secureTextEntry
+                  error={error?.message}
+                />
+              )}
             />
-            <Input
-              label="Confirmar Contraseña"
-              value={confirmPassword}
-              onChangeText={setConfirmPassword}
-              secureTextEntry
+            <Controller
+              control={control}
+              name="confirmPassword"
+              rules={{
+                required: 'Debes confirmar la contraseña',
+                validate: (value) => validatePasswordMatch(newPassword, value) 
+              }}
+              render={({ 
+                field: { onChange, onBlur, value }, 
+                fieldState: { error } 
+              }) => (
+                <Input
+                  label="Confirmar Contraseña"
+                  value={value}
+                  onChangeText={onChange}
+                  onBlur={onBlur}
+                  secureTextEntry
+                  error={error?.message}
+                />
+              )}
             />
           </View>
 
           <View style={styles.actionSection}>
-            <Button title="Actualizar" onPress={handleReset} />
+            <Button title="Actualizar" onPress={handleSubmit(onSubmit)} />
           </View>
         </View>
       </KeyboardAvoidingView>

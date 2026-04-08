@@ -63,7 +63,7 @@ export const validateNames = (name) => {
 
 // Validación de coincidencia de contraseñas
 export const validatePasswordMatch = (password, confirmPassword) => {
-  return password === confirmPassword;
+  return password === confirmPassword || "Las contraseñas no coinciden";
 };
 
 // Validación de campos vacíos

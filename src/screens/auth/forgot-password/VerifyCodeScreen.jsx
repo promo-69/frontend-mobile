@@ -49,7 +49,12 @@ export const VerifyCodeScreen = () => {
           <View style={styles.actionSection}>
             <Button
               title="Confirmar Código"
-              onPress={() => router.push('/reset-password')}
+              onPress={() =>router.push(
+                  {
+                    pathname:'/reset-password',
+                    params: {email: email}
+                  }
+                  )}
             />
             <TouchableOpacity activeOpacity={0.7}>
               <AppText style={styles.resendText}>

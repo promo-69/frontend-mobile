@@ -96,7 +96,7 @@ export default function LoginScreen() {
                 control={control}
                 name="email"
                 rules={{
-                  required: 'LLenar campos faltantes',
+                  required: 'El correo es obligatorio',
                   validate: validateEmail,
                 }}
                 render={({
