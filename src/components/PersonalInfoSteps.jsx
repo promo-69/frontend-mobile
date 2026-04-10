@@ -8,6 +8,7 @@ import {
     validateNames,
     validatePassword,
     validatePhoneNumberVE,
+    validateDocument
 } from '../utils/validators';
 import { AppText } from './AppText';
 import { GenreSelectionStep } from './GenreSelectionStep';
@@ -133,17 +134,30 @@ export const PersonalInfoSteps = ({
           <Controller
             control={control}
             name="documentNumber"
-            rules={{ required: 'La cédula es requerida' }}
-            render={({ field: { onChange, value } }) => (
-              <SelectorInput
-                label="Cédula de Identidad"
-                value={value}
-                onChangeText={onChange}
-                onSelect={(type) => setValue('documentType', type)}
-                error={errors.documentNumber?.message}
-                keyboardType="numeric"
-              />
-            )}
+            rules={{
+              required: "La cédula es requerida",
+              validate: validateDocument,
+            }}
+            render={({ field: { onChange, value = "V" } }) => {
+              // Extraemos el tipo (primer carácter) y el número (el resto)
+              const type = value?.charAt(0) || "V";
+              const number = value?.slice(1) || "";
+
+              return (
+                <SelectorInput
+                  label="Cédula de Identidad"
+                  selectedValue={type}
+                  value={number}
+                  onSelect={(newType) => onChange(newType + number)}
+                  onChangeText={(newNumber) => {
+                    const clean = newNumber.replace(/\D/g, "");
+                    onChange(type + clean);
+                  }}
+                  error={errors.documentNumber?.message}
+                  keyboardType="numeric"
+                />
+              );
+            }}
           />
 
           <Controller

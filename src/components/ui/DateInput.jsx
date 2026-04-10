@@ -1,34 +1,30 @@
-import React, { useState } from 'react';
-import { Pressable, View, Platform } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Calendar } from 'lucide-react-native';
-import { Input } from './Input';
+import { useState } from 'react';
+import { Platform, Pressable, View } from 'react-native';
 import { theme } from '../../constants';
+import { Input } from './Input';
 
 export const DateInput = ({ label, value, onChange, placeholder, error }) => {
   const [show, setShow] = useState(false);
 
   const handleChange = (event, selectedDate) => {
-
     setShow(false);
 
-    if(selectedDate && event.type !== 'dismissed'){
-    
-    // Formato visual para el usuario (DD/MM/AAAA)
-    const displayDate = selectedDate.toLocaleDateString('es-ES', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-    });
+    if (selectedDate && event.type !== 'dismissed') {
+      // Extraemos componentes de fecha local para evitar errores de zona horaria (UTC vs Local)
+      const year = selectedDate.getFullYear();
+      const month = String(selectedDate.getMonth() + 1).padStart(2, '0');
+      const day = String(selectedDate.getDate()).padStart(2, '0');
 
-     // Formato estándar para la base de datos (YYYY-MM-DD)
-    const standardDate = selectedDate.toISOString().split('T')[0];
-    onChange(displayDate, standardDate);
-
+      const standardDate = `${year}-${month}-${day}`;
+      onChange(standardDate);
     }
-   
-    
   };
+
+  // Transformamos el valor YYYY-MM-DD del estado al formato visual DD/MM/AAAA
+  const displayValue =
+    value && value.includes('-') ? value.split('-').reverse().join('/') : value;
 
   return (
     <>
@@ -36,7 +32,7 @@ export const DateInput = ({ label, value, onChange, placeholder, error }) => {
         <View pointerEvents="none">
           <Input
             label={label}
-            value={value}
+            value={displayValue}
             placeholder={placeholder}
             editable={false}
             error={error}
