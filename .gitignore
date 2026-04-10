@@ -52,3 +52,5 @@ app-example
 .yarn/install-state.gz
 .yarn/build-state.yml
 .pnp.*
+
+.coverage/
