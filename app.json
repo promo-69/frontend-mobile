@@ -13,9 +13,9 @@
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#1A1230",
         "foregroundImage": "./src/assets/images/android-icon-foreground.png",
-        "backgroundImage": "./src/assets/images/android-icon-background.png",
+        "backgroundImage": "./src/assets/images/android-icon-bg.png",
         "monochromeImage": "./src/assets/images/android-icon-monochrome.png"
       },
       "edgeToEdgeEnabled": true,
@@ -23,7 +23,8 @@
     },
     "web": {
       "output": "static",
-      "favicon": "./src/assets/images/favicon.png"
+      "favicon": "./src/assets/images/favicon.png",
+      "bundler": "metro"
     },
     "plugins": [
       "expo-router",
@@ -33,12 +34,14 @@
           "image": "./src/assets/images/splash-icon.png",
           "imageWidth": 200,
           "resizeMode": "contain",
-          "backgroundColor": "#ffffff",
+          "backgroundColor": "#1A1230",
           "dark": {
-            "backgroundColor": "#000000"
+            "backgroundColor": "#F5F3FF"
           }
         }
-      ]
+      ],
+      "expo-font",
+      "@react-native-community/datetimepicker"
     ],
     "experiments": {
       "typedRoutes": true,

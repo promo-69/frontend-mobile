@@ -13,6 +13,7 @@ module.exports = defineConfig([
     plugins: {
       'react-hooks': reactHooks,
       'react-native': reactNative,
+      'tailwindcss': require('eslint-plugin-tailwindcss'),
     },
 
     rules: {

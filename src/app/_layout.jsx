@@ -1,35 +1,41 @@
-import { Image, StyleSheet, Text, View } from 'react-native';
+import { useFonts } from 'expo-font';
+import { Stack } from 'expo-router';
+import { DarkTheme, ThemeProvider } from '@react-navigation/native';
+import * as SplashScreen from 'expo-splash-screen';
+import { useEffect } from 'react';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import '../../global.css';
 
-export default function HomeScreen() {
+SplashScreen.preventAutoHideAsync();
+
+export default function RootLayout() {
+  const [fontsLoaded] = useFonts({
+    MainBold: require('../assets/fonts/Montserrat-Bold.ttf'),
+    MainRegular: require('../assets/fonts/Montserrat-Regular.ttf'),
+    MainSemiBold: require('../assets/fonts/Montserrat-SemiBold.ttf'),
+    MainMedium: require('../assets/fonts/Montserrat-Medium.ttf'),
+    DisplayRegular: require('../assets/fonts/BebasNeue-Regular.ttf'),
+  });
+
+  useEffect(() => {
+    if (fontsLoaded) {
+      SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded]);
+
+  if (!fontsLoaded) return null;
+
   return (
-    <View style={styles.container}>
-      <Image
-        source={require('../assets/images/react-logo.png')}
-        style={styles.logo}
-        resizeMode="contain"
-      />
-      <Text style={styles.description}>PROMO 69</Text>
-    </View>
+  <ThemeProvider value={DarkTheme}>
+    <SafeAreaProvider>
+      <Stack screenOptions={{ headerShown: false }}>
+        
+        <Stack.Screen name="(auth)"/>
+
+        {/* Grupo de la App Principal (Tabs) */}
+        {/* <Stack.Screen name="(tabs)" options={{ animation: 'fade' }} /> */}
+      </Stack>
+    </SafeAreaProvider>
+    </ThemeProvider>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#ffffff',
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 24,
-  },
-  logo: {
-    width: 140,
-    height: 140,
-    opacity: 0.95,
-    marginBottom: 16,
-  },
-  description: {
-    fontSize: 20,
-    color: '#333333',
-    textAlign: 'center',
-  },
-});
