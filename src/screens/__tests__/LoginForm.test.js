@@ -1,5 +1,6 @@
+import { Animated } from 'react-native';
 import { act, fireEvent, render, waitFor } from '@testing-library/react-native';
-import LoginScreen from '../../screens/auth/LoginScreen';
+import LoginScreen from '../auth/LoginScreen';
 
 // 1. MOCK DE NAVEGACIÓN (Expo Router)
 const mockPush = jest.fn();
@@ -8,6 +9,12 @@ jest.mock('expo-router', () => ({
     push: mockPush,
     back: jest.fn(),
   }),
+}));
+
+// Mock para que las animaciones sean instantáneas y evitar warnings de act(...)
+jest.spyOn(Animated, 'timing').mockImplementation(() => ({
+  start: (callback) => callback && callback({ finished: true }),
+  stop: () => {},
 }));
 
 // 2. MOCK DE GRADIENTE (Expo)
@@ -42,9 +49,8 @@ describe('LoginScreen Integration Tests', () => {
   it('debe mostrar mensajes de error cuando los campos están vacíos al intentar ingresar', async () => {
     const { getByText, findByText } = render(<LoginScreen />);
 
-    const loginButton = getByText('Ingresar');
     await act(async () => {
-      fireEvent.press(loginButton);
+      fireEvent.press(getByText('Ingresar'));
     });
 
     // Buscamos los mensajes de error asíncronos generados por react-hook-form
@@ -57,6 +63,7 @@ describe('LoginScreen Integration Tests', () => {
 
     await act(async () => {
       fireEvent.changeText(getByLabelText('Correo'), 'usuario_invalido');
+      fireEvent(getByLabelText('Correo'), 'blur');
       fireEvent.press(getByText('Ingresar'));
     });
 
@@ -93,7 +100,9 @@ describe('LoginScreen Integration Tests', () => {
 
     await act(async () => {
       fireEvent.changeText(getByLabelText('Correo'), 'alexis@ucla.edu.ve');
+      fireEvent(getByLabelText('Correo'), 'blur');
       fireEvent.changeText(getByLabelText('Contraseña'), 'Password123');
+      fireEvent(getByLabelText('Contraseña'), 'blur');
       fireEvent.press(getByText('Ingresar'));
     });
 

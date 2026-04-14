@@ -1,5 +1,7 @@
+import React, { useState } from 'react';
 import { Controller } from 'react-hook-form';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { StyleSheet, View, TouchableOpacity } from 'react-native';
+import { ChevronDown } from 'lucide-react-native';
 import { theme } from '../constants';
 import {
     validateDate,
@@ -22,18 +24,14 @@ export const PersonalInfoSteps = ({
   step,
   control,
   errors,
-  setValue,
-  watch,
+  getValues,
 }) => {
+  const [isGenderOpen, setIsGenderOpen] = useState(false);
+
   // Paso 1 Información Personal
   if (step === 1) {
     return (
-      <ScrollView
-        style={styles.container}
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-      >
+      <View style={styles.container}>
         <View style={styles.header}>
           <AppText variant="body" style={styles.subtitle}>
             Ingresa tus datos básicos para comenzar tu experiencia en Cineflix.
@@ -48,13 +46,13 @@ export const PersonalInfoSteps = ({
               required: 'Los nombres son obligatorios',
               validate: validateNames,
             }}
-            render={({ field: { onChange, onBlur, value } }) => (
+            render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
               <Input
                 label="Nombres"
                 value={value}
                 onBlur={onBlur}
                 onChangeText={onChange}
-                error={errors.firstName?.message}
+                error={error?.message}
                 autoCapitalize="words"
               />
             )}
@@ -67,13 +65,13 @@ export const PersonalInfoSteps = ({
               required: 'Los apellidos son obligatorios',
               validate: validateNames,
             }}
-            render={({ field: { onChange, onBlur, value } }) => (
+            render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
               <Input
                 label="Apellidos"
                 value={value}
                 onBlur={onBlur}
                 onChangeText={onChange}
-                error={errors.lastName?.message}
+                error={error?.message}
                 autoCapitalize="words"
               />
             )}
@@ -86,13 +84,13 @@ export const PersonalInfoSteps = ({
               required: 'El correo es obligatorio',
               validate: validateEmail,
             }}
-            render={({ field: { onChange, onBlur, value } }) => (
+            render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
               <Input
                 label="Correo Electrónico"
                 value={value}
                 onBlur={onBlur}
                 onChangeText={onChange}
-                error={errors.email?.message}
+                error={error?.message}
                 keyboardType="email-address"
                 autoCapitalize="none"
               />
@@ -103,33 +101,26 @@ export const PersonalInfoSteps = ({
             control={control}
             name="phoneNumber"
             rules={{ validate: validatePhoneNumberVE }}
-            render={({ field: { onChange, onBlur, value } }) => (
+            render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
               <Input
                 label="Teléfono"
                 value={value}
                 onBlur={onBlur}
                 onChangeText={onChange}
-                error={errors.phoneNumber?.message}
+                error={error?.message}
                 keyboardType="phone-pad"
               />
             )}
           />
         </View>
-      </ScrollView>
+      </View>
     );
   }
 
   // Paso 2 Detalles de Cuenta y Seguridad
   if (step === 2) {
-    const password = watch('password');
-
     return (
-      <ScrollView
-        style={styles.container}
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-      >
+      <View style={styles.container}>
         <View style={styles.formContainer}>
           <Controller
             control={control}
@@ -138,7 +129,7 @@ export const PersonalInfoSteps = ({
               required: "La cédula es requerida",
               validate: validateDocument,
             }}
-            render={({ field: { onChange, value = "V" } }) => {
+            render={({ field: { onChange, onBlur, value = "V" }, fieldState: { error } }) => {
               // Extraemos el tipo (primer carácter) y el número (el resto)
               const type = value?.charAt(0) || "V";
               const number = value?.slice(1) || "";
@@ -148,12 +139,13 @@ export const PersonalInfoSteps = ({
                   label="Cédula de Identidad"
                   selectedValue={type}
                   value={number}
+                  onBlur={onBlur}
                   onSelect={(newType) => onChange(newType + number)}
                   onChangeText={(newNumber) => {
                     const clean = newNumber.replace(/\D/g, "");
                     onChange(type + clean);
                   }}
-                  error={errors.documentNumber?.message}
+                  error={error?.message}
                   keyboardType="numeric"
                 />
               );
@@ -167,13 +159,69 @@ export const PersonalInfoSteps = ({
               required: 'La fecha es requerida',
               validate: validateDate,
             }}
-            render={({ field: { onChange, value } }) => (
+            render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
               <DateInput
                 label="Fecha de Nacimiento (DD/MM/AAAA)"
                 value={value}
-                error={errors.dateBirth?.message}
+                error={error?.message}
                 onChange={onChange}
+                onBlur={onBlur}
               />
+            )}
+          />
+
+          <Controller
+            control={control}
+            name="gender"
+            rules={{ required: 'El género es obligatorio' }}
+            render={({ field: { onChange, value }, fieldState: { error } }) => (
+              <View style={styles.genderWrapper}>
+                <AppText variant="label" style={styles.inputLabel}>Género</AppText>
+                <TouchableOpacity
+                  testID="gender-dropdown-trigger"
+                  activeOpacity={0.7}
+                  onPress={() => setIsGenderOpen(!isGenderOpen)}
+                  style={[
+                    styles.genderDropdownTrigger,
+                    error && styles.genderContainerError,
+                    isGenderOpen && styles.genderContainerFocused
+                  ]}
+                >
+                  <AppText style={[
+                    styles.genderValueText,
+                    !value && { color: theme.colors.textSecondary }
+                  ]}>
+                    {value || "Seleccionar género"}
+                  </AppText>
+                  <ChevronDown 
+                    size={20} 
+                    color={theme.colors.primary} 
+                    style={{ transform: [{ rotate: isGenderOpen ? '180deg' : '0deg' }] }}
+                  />
+                </TouchableOpacity>
+
+                {isGenderOpen && (
+                  <View style={styles.dropdownMenu}>
+                    {['Masculino', 'Femenino'].map((option) => (
+                      <TouchableOpacity
+                        key={option}
+                        testID={`gender-option-${option}`}
+                        style={styles.dropdownOption}
+                        onPress={() => {
+                          onChange(option);
+                          setIsGenderOpen(false);
+                        }}
+                      >
+                        <AppText style={styles.optionText}>{option}</AppText>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                )}
+
+                {error && (
+                  <AppText style={styles.errorTextSmall}>{error.message}</AppText>
+                )}
+              </View>
             )}
           />
 
@@ -184,13 +232,13 @@ export const PersonalInfoSteps = ({
               required: 'La contraseña es requerida',
               validate: validatePassword,
             }}
-            render={({ field: { onChange, onBlur, value } }) => (
+            render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
               <Input
                 label="Contraseña"
                 value={value}
                 onBlur={onBlur}
                 onChangeText={onChange}
-                error={errors.password?.message}
+                error={error?.message}
                 secureTextEntry
               />
             )}
@@ -202,15 +250,15 @@ export const PersonalInfoSteps = ({
             rules={{
               required: 'Confirme su contraseña',
               validate: (val) =>
-                val === password || 'Las contraseñas no coinciden',
+                val === getValues('password') || 'Las contraseñas no coinciden',
             }}
-            render={({ field: { onChange, onBlur, value } }) => (
+            render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
               <Input
                 label="Confirmar contraseña"
                 value={value}
                 onBlur={onBlur}
                 onChangeText={onChange}
-                error={errors.confirmPassword?.message}
+                error={error?.message}
                 secureTextEntry
               />
             )}
@@ -222,11 +270,11 @@ export const PersonalInfoSteps = ({
             rules={{
               validate: (v) => v === true || 'Debes aceptar los términos y condiciones',
             }}
-            render={({ field: { onChange, value } }) => (
+            render={({ field: { onChange, value }, fieldState: { error } }) => (
               <Checkbox
                 value={value}
                 onChange={onChange}
-                error={errors.acceptTerms?.message}
+                error={error?.message}
               >
                 <AppText
                   variant="label"
@@ -250,7 +298,7 @@ export const PersonalInfoSteps = ({
             )}
           />
         </View>
-      </ScrollView>
+      </View>
     );
   }
 
@@ -261,11 +309,11 @@ export const PersonalInfoSteps = ({
         control={control}
         name="favoriteGenres"
         rules={{ validate: validateGenres }}
-        render={({ field: { value, onChange } }) => (
+        render={({ field: { value, onChange }, fieldState: { error } }) => (
           <GenreSelectionStep
             value={value}
             onChange={onChange}
-            error={errors.favoriteGenres?.message}
+            error={error?.message}
           />
         )}
       />
@@ -275,10 +323,7 @@ export const PersonalInfoSteps = ({
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-  },
-  content: {
-    paddingBottom: theme.spacing.s32,
+    width: '100%',
   },
   header: {
     marginBottom: theme.spacing.s24,
@@ -293,4 +338,63 @@ const styles = StyleSheet.create({
   formContainer: {
     gap: theme.spacing.s24,
   },
+  genderWrapper: {
+    marginTop: theme.spacing.s8,
+    zIndex: 1000, // Asegura que el dropdown flote sobre otros elementos
+  },
+  inputLabel: {
+    color: theme.colors.primary,
+    fontSize: theme.typography.size.s12,
+    fontFamily: theme.typography.family.primary.semiBold,
+    marginBottom: theme.spacing.s8,
+  },
+  genderDropdownTrigger: {
+    flexDirection: 'row',
+    height: 48,
+    borderBottomWidth: 2,
+    borderBottomColor: theme.colors.border,
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: theme.spacing.s4,
+  },
+  genderValueText: {
+    color: theme.colors.textPrimary,
+    fontSize: theme.typography.size.s16,
+  },
+  genderContainerFocused: {
+    borderBottomColor: theme.colors.primary,
+  },
+  genderContainerError: {
+    borderBottomColor: theme.colors.error,
+  },
+  dropdownMenu: {
+    position: 'absolute',
+    top: 75,
+    left: 0,
+    right: 0,
+    backgroundColor: theme.colors.surface,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: theme.colors.primary,
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    zIndex: 2000,
+  },
+  dropdownOption: {
+    padding: theme.spacing.s16,
+    borderBottomWidth: 0.5,
+    borderBottomColor: theme.colors.border,
+  },
+  optionText: {
+    color: theme.colors.textPrimary,
+    fontSize: theme.typography.size.s16,
+  },
+  errorTextSmall: {
+    color: theme.colors.error,
+    fontSize: theme.typography.size.s12,
+    marginTop: theme.spacing.s4,
+  }
 });

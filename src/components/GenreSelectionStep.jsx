@@ -1,4 +1,4 @@
-import { View, StyleSheet, ScrollView } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { GenreChip } from './ui/GenreChip';
 import { AppText } from './AppText';
 import { theme } from '../constants';
@@ -31,10 +31,7 @@ export const GenreSelectionStep = ({
   };
 
   return (
-    <ScrollView 
-      showsVerticalScrollIndicator={false}
-      contentContainerStyle={styles.scrollContent}
-    >
+    <View style={styles.container}>
       <View style={styles.header}>
         <AppText variant="h2" style={styles.title}>
           ¿Qué géneros te gustan?
@@ -60,13 +57,13 @@ export const GenreSelectionStep = ({
           />
         ))}
       </View>
-    </ScrollView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  scrollContent: {
-    paddingBottom: theme.spacing.s32,
+  container: {
+    width: '100%',
   },
   header: {
     alignItems: 'center',

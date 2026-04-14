@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form';
 import {
   KeyboardAvoidingView,
   Platform,
+  ScrollView,
   StyleSheet,
   TouchableOpacity,
   View,
@@ -26,7 +27,7 @@ export default function RegisterScreen() {
     control,
     handleSubmit,
     trigger,
-    watch,
+    getValues,
     setValue,
     formState: { errors, isSubmitting },
   } = useForm({
@@ -38,6 +39,7 @@ export default function RegisterScreen() {
       email: '',
       phoneNumber: '',
       documentNumber: '',
+      gender: '',
       documentType: 'V',
       dateBirth: '',
       password: '',
@@ -51,8 +53,17 @@ export default function RegisterScreen() {
   const handleNext = async () => {
     let fieldsToValidate = [];
 
-    if (step === 1) fieldsToValidate = ['firstName', 'lastName', 'email', 'phoneNumber'];
-    if (step === 2) fieldsToValidate = ['documentNumber', 'dateBirth', 'password', 'confirmPassword', 'acceptTerms'];
+    if (step === 1)
+      fieldsToValidate = ['firstName', 'lastName', 'email', 'phoneNumber'];
+    if (step === 2)
+      fieldsToValidate = [
+        'documentNumber',
+        'dateBirth',
+        'gender',
+        'password',
+        'confirmPassword',
+        'acceptTerms',
+      ];
     if (step === 3) fieldsToValidate = ['favoriteGenres'];
 
     //devuelve true si todos los campos pasan las validaciones
@@ -86,53 +97,63 @@ export default function RegisterScreen() {
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
       >
-        <View style={styles.mainContainer}>
-          <TouchableOpacity onPress={handleBack} style={styles.backButton}>
-            <ChevronLeft size={28} color={theme.colors.border} />
-          </TouchableOpacity>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View style={styles.mainContainer}>
+            <TouchableOpacity onPress={handleBack} style={styles.backButton}>
+              <ChevronLeft size={28} color={theme.colors.border} />
+            </TouchableOpacity>
 
-          <AppText variant="h2" style={styles.title}>
-            Registro
-          </AppText>
+            <AppText variant="h2" style={styles.title}>
+              Registro
+            </AppText>
 
-          <StepIndicator currentStep={step - 1} totalSteps={totalSteps} />
+            <StepIndicator currentStep={step - 1} totalSteps={totalSteps} />
 
-          <View style={styles.formFields}>
-            <PersonalInfoSteps
-              step={step}
-              control={control}
-              errors={errors}
-              setValue={setValue}
-              watch={watch}
-            />
+            <View style={styles.formFields}>
+              <PersonalInfoSteps
+                step={step}
+                control={control}
+                errors={errors}
+                getValues={getValues}
+                setValue={setValue}
+              />
+            </View>
+
+            <View style={styles.footer}>
+              <Button
+                title={step === totalSteps ? 'Finalizar' : 'Continuar'}
+                onPress={handleNext}
+                loading={isSubmitting}
+              />
+
+              {step === 1 && (
+                <View style={styles.loginRedirect}>
+                  <AppText style={styles.footerText}>
+                    ¿Ya tienes una cuenta?{' '}
+                  </AppText>
+                  <TouchableOpacity onPress={() => router.push('/login')}>
+                    <AppText style={styles.link}>Iniciar Sesión</AppText>
+                  </TouchableOpacity>
+                </View>
+              )}
+            </View>
           </View>
-
-          <View style={styles.footer}>
-            <Button
-              title={step === totalSteps ? 'Finalizar' : 'Continuar'}
-              onPress={handleNext}
-              loading={isSubmitting}
-            />
-
-            {step === 1 && (
-              <View style={styles.loginRedirect}>
-                <AppText style={styles.footerText}>
-                  ¿Ya tienes una cuenta?{' '}
-                </AppText>
-                <TouchableOpacity onPress={() => router.push('/login')}>
-                  <AppText style={styles.link}>Iniciar Sesión</AppText>
-                </TouchableOpacity>
-              </View>
-            )}
-          </View>
-        </View>
+        </ScrollView>
       </KeyboardAvoidingView>
     </ScreenWrapper>
   );
 }
 
 const styles = StyleSheet.create({
+  scrollContent: {
+    flexGrow: 1,
+  },
   mainContainer: {
     flex: 1,
     paddingHorizontal: 25,
@@ -150,7 +171,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   formFields: {
-    flex: 1,
     marginTop: 20,
   },
   footer: {
