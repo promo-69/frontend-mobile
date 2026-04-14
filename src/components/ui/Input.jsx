@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { StyleSheet, TextInput, View, Animated, TouchableOpacity } from 'react-native';
+import { StyleSheet, TextInput, View, Animated, TouchableOpacity, Text } from 'react-native';
 import { Eye, EyeOff } from 'lucide-react-native'; // Importamos los iconos necesarios
 import { theme } from '../../constants';
 
@@ -121,9 +121,9 @@ export const Input = ({
       
       {/* Mensaje de error micro bajo el input */}
       {error && (
-        <Animated.Text style={styles.errorText}>
+        <Text style={styles.errorText}>
           {error}
-        </Animated.Text>
+        </Text>
       )}
     </View>
   );

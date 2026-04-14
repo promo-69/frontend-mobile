@@ -181,7 +181,7 @@ export const PersonalInfoSteps = ({
             control={control}
             name="password"
             rules={{
-              required: 'La contraseña es obligatoria',
+              required: 'La contraseña es requerida',
               validate: validatePassword,
             }}
             render={({ field: { onChange, onBlur, value } }) => (
@@ -220,7 +220,7 @@ export const PersonalInfoSteps = ({
             control={control}
             name="acceptTerms"
             rules={{
-              validate: (v) => v === true || 'Debes aceptar los términos',
+              validate: (v) => v === true || 'Debes aceptar los términos y condiciones',
             }}
             render={({ field: { onChange, value } }) => (
               <Checkbox
