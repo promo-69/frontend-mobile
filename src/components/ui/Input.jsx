@@ -95,6 +95,7 @@ export const Input = ({
           selectionColor={theme.colors.primary}
           secureTextEntry={secureTextEntry && !isPasswordVisible}
           {...textInputProps}
+          accessibilityLabel={label} // Añadido para que getByLabelText funcione
         />
         
         {secureTextEntry ? (

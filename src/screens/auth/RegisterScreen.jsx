@@ -51,22 +51,11 @@ export default function RegisterScreen() {
   const handleNext = async () => {
     let fieldsToValidate = [];
 
-    if (step === 1) fieldsToValidate = [
-      'firstName', 
-      'lastName', 
-      'email',
-      'phoneNumber'
-    ];
-    if (step === 2)
-      fieldsToValidate = [
-        'documentNumber',
-        'dateBirth',
-        'password',
-        'confirmPassword',
-        'acceptTerms',
-      ];
+    if (step === 1) fieldsToValidate = ['firstName', 'lastName', 'email', 'phoneNumber'];
+    if (step === 2) fieldsToValidate = ['documentNumber', 'dateBirth', 'password', 'confirmPassword', 'acceptTerms'];
     if (step === 3) fieldsToValidate = ['favoriteGenres'];
 
+    //devuelve true si todos los campos pasan las validaciones
     const isStepValid = await trigger(fieldsToValidate);
 
     if (isStepValid) {
