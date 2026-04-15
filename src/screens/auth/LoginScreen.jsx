@@ -1,4 +1,5 @@
 import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter, usePathname } from 'expo-router';
 import { useState } from 'react';
 import {
   Dimensions,
@@ -10,7 +11,6 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { useRouter } from 'expo-router';
 import { AppText } from '../../components/AppText';
 import { ScreenWrapper } from '../../components/ScreenWrapper';
 import { Button } from '../../components/ui/Button';

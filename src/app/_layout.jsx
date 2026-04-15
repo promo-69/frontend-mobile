@@ -27,8 +27,8 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <Stack screenOptions={{ headerShown: false }}>
-        {/* Grupo de Autenticación */}
-        <Stack.Screen name="(auth)" options={{ animation: 'fade' }} />
+        {/* Pantalla de Home */}
+        <Stack.Screen name="(home)" options={{ animation: 'fade' }} />
 
         {/* Grupo de la App Principal (Tabs) */}
         {/* <Stack.Screen name="(tabs)" options={{ animation: 'fade' }} /> */}
