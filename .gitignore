@@ -49,7 +49,7 @@ app-example
 !.yarn/plugins
 !.yarn/sdks
 !.yarn/versions
-.yarn/install-state.gz
+.yarn/install-state.gz # Comentado para permitir el seguimiento si es necesario
 .yarn/build-state.yml
 .pnp.*
 
