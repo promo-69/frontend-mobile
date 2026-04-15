@@ -89,8 +89,8 @@ export default function RegisterScreen() {
   useEffect(() => {
     if (showSuccess) {
       const timer = setTimeout(() => {
-        router.replace('/home'); // 'replace' para que no puedan volver atrás al registro
-      }, 5000); // 5 segundos es un tiempo ideal en UX móvil
+        router.replace('/homemain'); 
+      }, 5000); 
       return () => clearTimeout(timer);
     }
   }, [showSuccess]);
@@ -98,7 +98,7 @@ export default function RegisterScreen() {
   const onSubmit = async (data) => {
     try {
       console.log('Finalizando Registro', data);
-      // Aquí iría tu llamada a la API. Al tener éxito:
+      // Aquí la llamada a la API
       setShowSuccess(true);
     } catch (error) {
       console.error(error);
@@ -110,7 +110,7 @@ export default function RegisterScreen() {
       <SuccessScreen
         title="¡Cuenta Creada!"
         message="Tu registro se ha completado con éxito. En unos segundos serás redirigido al inicio."
-        onPress={() => router.replace('/home')}
+        onPress={() => router.replace('/homemain')}
       />
     );
   }
