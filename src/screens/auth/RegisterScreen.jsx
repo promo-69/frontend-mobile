@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import { ChevronLeft } from 'lucide-react-native';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import {
   KeyboardAvoidingView,
@@ -14,6 +14,7 @@ import {
 import { AppText } from '../../components/AppText';
 import { PersonalInfoSteps } from '../../components/PersonalInfoSteps'; // Importamos el orquestador
 import { ScreenWrapper } from '../../components/ScreenWrapper';
+import { SuccessScreen } from '../shared/SuccessScreen';
 import { Button } from '../../components/ui/Button';
 import { StepIndicator } from '../../components/ui/StepIndicator';
 import { theme } from '../../constants';
@@ -22,6 +23,7 @@ export default function RegisterScreen() {
   const router = useRouter();
   const [step, setStep] = useState(1);
   const totalSteps = 3;
+  const [showSuccess, setShowSuccess] = useState(false);
 
   const {
     control,
@@ -83,14 +85,35 @@ export default function RegisterScreen() {
     else router.back();
   };
 
+  // Redirección automática después de mostrar la pantalla de éxito
+  useEffect(() => {
+    if (showSuccess) {
+      const timer = setTimeout(() => {
+        router.replace('/home'); // 'replace' para que no puedan volver atrás al registro
+      }, 5000); // 5 segundos es un tiempo ideal en UX móvil
+      return () => clearTimeout(timer);
+    }
+  }, [showSuccess]);
+
   const onSubmit = async (data) => {
     try {
       console.log('Finalizando Registro', data);
-      // lógica de API
+      // Aquí iría tu llamada a la API. Al tener éxito:
+      setShowSuccess(true);
     } catch (error) {
       console.error(error);
     }
   };
+
+  if (showSuccess) {
+    return (
+      <SuccessScreen
+        title="¡Cuenta Creada!"
+        message="Tu registro se ha completado con éxito. En unos segundos serás redirigido al inicio."
+        onPress={() => router.replace('/home')}
+      />
+    );
+  }
 
   return (
     <ScreenWrapper>
