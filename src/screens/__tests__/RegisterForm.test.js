@@ -143,6 +143,7 @@ describe('Registro - Integración Paso 1 (Validación Explícita)', () => {
     // Verificamos mensajes de error esperados del Paso 2
     expect(await findByText('La cédula es requerida')).toBeTruthy();
     expect(await findByText('La fecha es requerida')).toBeTruthy();
+    expect(await findByText('El género es obligatorio')).toBeTruthy();
     expect(await findByText('La contraseña es requerida')).toBeTruthy();
     expect(
       await findByText('Debes aceptar los términos y condiciones')
@@ -161,6 +162,19 @@ describe('Registro - Integración Paso 1 (Validación Explícita)', () => {
     await waitFor(() => {
       expect(queryByText('La fecha es requerida')).toBeNull();
     });
+
+    // Seleccionamos Género
+    await act(async () => {
+      fireEvent.press(getByTestId('gender-dropdown-trigger'));
+    });
+    await act(async () => {
+      fireEvent.press(getByTestId('gender-option-Masculino'));
+      fireEvent(getByTestId('gender-dropdown-trigger'), 'blur');
+    });
+    await waitFor(() => {
+      expect(queryByText('El género es obligatorio')).toBeNull();
+    });
+
     await act(async () => {
       fireEvent.changeText(getByLabelText('Contraseña'), 'Password123!');
       fireEvent.changeText(

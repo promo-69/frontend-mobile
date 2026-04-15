@@ -174,13 +174,14 @@ export const PersonalInfoSteps = ({
             control={control}
             name="gender"
             rules={{ required: 'El género es obligatorio' }}
-            render={({ field: { onChange, value }, fieldState: { error } }) => (
+            render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
               <View style={styles.genderWrapper}>
                 <AppText variant="label" style={styles.inputLabel}>Género</AppText>
                 <TouchableOpacity
                   testID="gender-dropdown-trigger"
                   activeOpacity={0.7}
                   onPress={() => setIsGenderOpen(!isGenderOpen)}
+                  onBlur={onBlur}
                   style={[
                     styles.genderDropdownTrigger,
                     error && styles.genderContainerError,
