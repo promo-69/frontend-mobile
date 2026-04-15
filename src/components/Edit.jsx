@@ -4,7 +4,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { AppText } from './AppText';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
-import { theme } from '../../constants';
+import { theme } from '.././constants';
 import { validatePassword } from '../utils/validators';
 
 export const EditModal = ({ visible, onConfirm, onCancel, isLoading }) => {

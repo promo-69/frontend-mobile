@@ -1,4 +1,5 @@
 
+import React, { useState } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { Controller, useForm } from 'react-hook-form';
@@ -17,7 +18,7 @@ import { ScreenWrapper } from '../../components/ScreenWrapper';
 import { Button } from '../../components/ui/Button';
 import Logo from '../../components/ui/Icons/Logo';
 import { Input } from '../../components/ui/Input';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../services/AuthContext';
 import { theme } from '../../constants';
 import {
   sanitizeInput,
