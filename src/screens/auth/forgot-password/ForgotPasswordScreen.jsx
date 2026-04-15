@@ -1,6 +1,5 @@
 import { useRouter } from 'expo-router';
 import { ChevronLeft } from 'lucide-react-native';
-import { useState } from 'react';
 import {
   KeyboardAvoidingView,
   Platform,
@@ -13,10 +12,37 @@ import { ScreenWrapper } from '../../../components/ScreenWrapper';
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
 import { theme } from '../../../constants';
+import { useForm, Controller } from 'react-hook-form';
+import {validateEmail, sanitizeInput} from '../../../utils/validators'
 
-export default function EmailStepScreen() {
+export default function ForgotPasswordScreen() {
   const router = useRouter();
-  const [email, setEmail] = useState('');
+  const { control, handleSubmit, 
+    formState: { 
+      errors, 
+      isSubmitting 
+    } } = useForm({
+    mode: 'onBlur',
+    reValidateMode: 'onChange',
+    defaultValues: {
+      email: ''
+    },
+  });
+
+  const onSubmit = async(data) => {
+    const cleanEmail = sanitizeInput(data.email, 'email');
+    try {
+      // API
+      // await api.post('/auth/forgot-password', { email: cleanEmail });
+      console.log('Login intent (sanitized):', cleanEmail);
+      router.push({ 
+        pathname: '/verify-code', 
+        params: { email: cleanEmail } 
+      });
+    } catch (error) {
+      // Manejar error de servidor
+    }
+  };
 
   const handleBack = () => {
     router.back();
@@ -24,7 +50,7 @@ export default function EmailStepScreen() {
 
   const handleNext = () => {
     router.push({
-      pathname: '/forgot-password/verify',
+      pathname: '/verify-code',
       params: { email },
     });
   };
@@ -54,29 +80,40 @@ export default function EmailStepScreen() {
             recuperación
           </AppText>
 
-          <View style={styles.formSection}>
+          <Controller
+            control={control}
+            name="email"
+            rules={{
+              required: "El correo es obligatorio",
+              validate: validateEmail,
+            }}
+            render={({ 
+              field: { onChange, onBlur, value },
+              fieldState: {error}
+            
+            }) => (
+
+              
             <Input
-              value={email}
+              value={value}
+              onChangeText={onChange}
+              onBlur={onBlur}
               label="Correo"
               keyboardType="email-address"
-              onChangeText={setEmail}
+              error={error?.message}
             />
-          </View>
-
+            )}
+            />
           <View style={styles.actionSection}>
-            <Button 
-              title="Enviar" 
-              onPress={handleNext}
-            />
-            <Button 
-              title="Cancelar" 
-              onPress={handleCancel} 
-              style={{ 
+            <Button title="Enviar" onPress={handleSubmit(onSubmit)} />
+            <Button
+              title="Cancelar"
+              onPress={handleCancel}
+              style={{
                 backgroundColor: 'transparent',
-                borderWidth: 2, 
+                borderWidth: 2,
                 borderColor: theme.colors.primary,
-              }} 
-              
+              }}
             />
           </View>
         </View>
@@ -84,14 +121,13 @@ export default function EmailStepScreen() {
     </ScreenWrapper>
   );
 }
-
 const styles = StyleSheet.create({
   content: {
     flexGrow: 1,
     justifyContent: 'flex-start',
     paddingTop: theme.spacing.s48,
     paddingBottom: theme.spacing.s48,
-    paddingHorizontal: theme.spacing.s16
+    paddingHorizontal: theme.spacing.s16,
   },
   backButton: {
     width: 40,

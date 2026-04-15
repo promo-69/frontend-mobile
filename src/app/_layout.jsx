@@ -1,9 +1,9 @@
+import { DarkTheme, ThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import '../../global.css';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -25,6 +25,7 @@ export default function RootLayout() {
   if (!fontsLoaded) return null;
 
   return (
+  <ThemeProvider value={DarkTheme}>
     <SafeAreaProvider>
       <Stack screenOptions={{ headerShown: false }}>
         {/* Pantalla de Home */}
@@ -34,5 +35,6 @@ export default function RootLayout() {
         {/* <Stack.Screen name="(tabs)" options={{ animation: 'fade' }} /> */}
       </Stack>
     </SafeAreaProvider>
+    </ThemeProvider>
   );
 }

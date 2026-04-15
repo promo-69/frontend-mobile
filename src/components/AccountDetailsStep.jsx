@@ -16,9 +16,8 @@ export const AccountDetailsStep = ({
   onInputChange,
   errors = {},
 }) => {
-  const handleDateSelection = (display, standardDate) => {
-    onInputChange('dateBirth', display);
-    onInputChange('dateBirthRaw', standardDate);
+  const handleDateSelection = (date) => {
+    onInputChange('dateBirth', date);
   };
 
   return (

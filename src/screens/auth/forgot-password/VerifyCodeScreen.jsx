@@ -1,30 +1,26 @@
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ChevronLeft } from 'lucide-react-native';
 import { useState } from 'react';
 import {
-    KeyboardAvoidingView,
-    Platform,
-    StyleSheet,
-    TouchableOpacity,
-    View,
+  KeyboardAvoidingView,
+  Platform,
+  StyleSheet,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { AppText } from '../../../components/AppText';
+import { OTPInput } from '../../../components/OTPInput';
 import { ScreenWrapper } from '../../../components/ScreenWrapper';
 import { Button } from '../../../components/ui/Button';
-import { Input } from '../../../components/ui/Input';
 import { theme } from '../../../constants';
 
-export const ResetPasswordScreen = () => {
+export const VerifyCodeScreen = () => {
   const router = useRouter();
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const { email } = useLocalSearchParams();
+  const [code, setCode] = useState('');
 
   const handleBack = () => {
     router.back();
-  };
-
-  const handleReset = () => {
-    router.replace('/forgot-password/success');
   };
 
   return (
@@ -40,29 +36,31 @@ export const ResetPasswordScreen = () => {
 
         <View style={styles.content}>
           <AppText variant="h2" style={styles.title}>
-            Nueva Contraseña
+            Verifica tu identidad
           </AppText>
           <AppText variant="body" style={styles.description}>
-            Crea tu nueva clave de acceso
+            Ingresa el código que enviamos a tu correo
           </AppText>
 
           <View style={styles.formSection}>
-            <Input
-              label="Nueva Contraseña"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-            />
-            <Input
-              label="Confirmar Contraseña"
-              value={confirmPassword}
-              onChangeText={setConfirmPassword}
-              secureTextEntry
-            />
+            <OTPInput code={code} setCode={setCode} maxLength={4} />
           </View>
 
           <View style={styles.actionSection}>
-            <Button title="Actualizar" onPress={handleReset} />
+            <Button
+              title="Confirmar Código"
+              onPress={() =>router.push(
+                  {
+                    pathname:'/reset-password',
+                    params: {email: email}
+                  }
+                  )}
+            />
+            <TouchableOpacity activeOpacity={0.7}>
+              <AppText style={styles.resendText}>
+                ¿No recibiste nada? Reenviar
+              </AppText>
+            </TouchableOpacity>
           </View>
         </View>
       </KeyboardAvoidingView>
@@ -99,13 +97,16 @@ const styles = StyleSheet.create({
   },
   formSection: {
     width: '100%',
-    gap: 32,
     marginBottom: theme.spacing.s16,
   },
   actionSection: {
     width: '100%',
     marginTop: theme.spacing.s24,
-    paddingBottom: theme.spacing.s48,
     gap: theme.spacing.s16,
+  },
+  resendText: {
+    textAlign: 'center',
+    marginTop: 30,
+    opacity: 0.6,
   },
 });

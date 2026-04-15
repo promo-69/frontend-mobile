@@ -1,4 +1,4 @@
-import { View, StyleSheet, ScrollView } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { GenreChip } from './ui/GenreChip';
 import { AppText } from './AppText';
 import { theme } from '../constants';
@@ -17,28 +17,31 @@ const AVAILABLE_GENRES = [
 ];
 
 export const GenreSelectionStep = ({ 
-  selectedGenres = [], 
-  onToggleGenre, 
-  error = null 
+  value = [], 
+  onChange, 
+  error 
 }) => {
+
+ const handleToggle = (genre) => {
+    const isSelected = value.includes(genre);
+    const nextGenres = isSelected
+      ? value.filter(g => g !== genre)
+      : [...value, genre];
+    onChange(nextGenres);
+  };
+
   return (
-    <ScrollView 
-      showsVerticalScrollIndicator={false}
-      contentContainerStyle={styles.scrollContent}
-    >
+    <View style={styles.container}>
       <View style={styles.header}>
         <AppText variant="h2" style={styles.title}>
           ¿Qué géneros te gustan?
         </AppText>
         
-        {/* Renderizado condicional del mensaje de error*/}
         {error ? (
-          <AppText style={styles.errorText}>
-            {error}
-          </AppText>
+          <AppText style={styles.errorText}>{error}</AppText>
         ) : (
           <AppText variant="body" style={styles.subtitle}>
-            Selecciona tus categorías favoritas
+            Selecciona al menos 3 categorías 
           </AppText>
         )}
       </View>
@@ -48,19 +51,19 @@ export const GenreSelectionStep = ({
           <GenreChip
             key={genre}
             label={genre}
-            isSelected={selectedGenres.includes(genre)}
-            onPress={() => onToggleGenre(genre)}
+            isSelected={value.includes(genre)}
+            onPress={() => handleToggle(genre)}
             style={styles.chipItem}
           />
         ))}
       </View>
-    </ScrollView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  scrollContent: {
-    paddingBottom: theme.spacing.s32,
+  container: {
+    width: '100%',
   },
   header: {
     alignItems: 'center',

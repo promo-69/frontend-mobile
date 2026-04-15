@@ -36,29 +36,47 @@ export const sanitizeInput = (input, type = 'text') => {
 
 // Validación de correo electrónico
 export const validateEmail = (email) => {
-  if (!email) return false;
+  if (!email || email.trim().length === 0) return true;
   const re = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,12}$/;
-  return re.test(email);
+  return re.test(email) || 'Formato de correo electrónico inválido';
 };
 
 // Validación de contraseña (mínimo 8 caracteres, al menos 1 letra y 1 numero)
 export const validatePassword = (password) => {
-  if (!password) return false;
+  if (!password) return true; // Deja que 'required: true' en el componente maneje esto
+
   const hasLetter = /[a-zA-Z]/.test(password);
   const hasNumber = /[0-9]/.test(password);
-  return password.length >= 8 && hasLetter && hasNumber;
+
+  if (password.length < 8) return 'Debe tener al menos 8 caracteres';
+  if (password.length > 90) return 'La contraseña es muy larga';
+  if (!hasLetter || !hasNumber)
+    return 'Debe incluir al menos una letra y un número';
+
+  return true;
 };
 
 //Validacion de nombres/apellidos (letras, tildes, Ñ y espacios, 2 a 50 caracteres)
 export const validateNames = (name) => {
-  if (!name) return false;
-  const nameRegex = /^[a-zA-ZÁÉÍÓÚáéíóúÑñ][a-zA-ZÁÉÍÓÚáéíóúÑñ\s]{1,49}$/;
-  return nameRegex.test(name.trim());
+  if (!name || name.trim().length === 0) return true;
+
+  const trimmedName = name.trim();
+
+  if (trimmedName.length < 2) return 'El nombre es demasiado corto';
+
+  if (trimmedName.length > 50)
+    return 'El nombre no puede exceder los 50 caracteres';
+
+  const nameRegex = /^[a-zA-ZÁÉÍÓÚáéíóúÑñ\s]+$/;
+
+  if (!nameRegex.test(trimmedName)) return 'Solo permiten letras';
+
+  return true;
 };
 
 // Validación de coincidencia de contraseñas
 export const validatePasswordMatch = (password, confirmPassword) => {
-  return password === confirmPassword;
+  return password === confirmPassword || 'Las contraseñas no coinciden';
 };
 
 // Validación de campos vacíos
@@ -71,41 +89,119 @@ export const validateRequiredFields = (fields) => {
 // Validación de longitud del teléfono celular general
 export const validatePhoneNumberLength = (phoneNumber) => {
   if (!phoneNumber) return false;
-
   // Limpiamos espacios o guiones si el usuario los puso
   const cleanPhone = phoneNumber.replace(/[\s-]/g, '');
-
-  if (phoneNumber.length >= 8 && phoneNumber.length <= 15)
-    return phoneNumber.test(cleanPhone);
+  return (cleanPhone >= 8 && cleanPhone.length <= 15) || 'Teléfono inválido';
 };
 
 // Validación de longitud del teléfono celular venezolano
-export const validatePhoneNumberVE = (phoneNumber) => {
-  if (!phoneNumber) return false;
+export const validatePhoneNumberVE = (phone) => {
+  if (!phone || phone.trim().length === 0) return true;
 
-  // Limpiamos espacios o guiones si el usuario los puso
-  const cleanPhone = phoneNumber.replace(/[\s-]/g, '');
+  // Sanitización básica: quitar espacios o guiones si el usuario los puso
+  const cleanPhone = phone.replace(/[\s-]/g, '');
 
-  // Explicación de la Regex:
-  // ^(\+58|0) -> Debe empezar con +58 o con 0
-  // (412|414|424|416|426|2[0-9]{2}) -> Códigos móviles o fijos (02XX)
-  // [0-9]{7}$ -> Seguido de exactamente 7 números
-  const phoneRegex = /^(\+58|0)(412|414|424|416|426|2[0-9]{2})[0-9]{7}$/;
+  /**
+   * Explicación del Regex:
+   * ^0(2|4) -> Debe empezar por 02 o 04
+   * (12|14|24|16|26|51|11) -> Prefijos comunes (puedes añadir más)
+   * [0-9]{7}$ -> Seguido de exactamente 7 números
+   */
+  const phoneRegex = /^0(2|4)(12|14|24|16|26|51|11)[0-9]{7}$/;
 
-  return phoneRegex.test(cleanPhone);
+  return phoneRegex.test(cleanPhone) || 'Formato de teléfono inválido';
 };
 
 // Valida fecha real en formato (DD/MM/YYYY o DD-MM-YYYY)
-export const validateDate = (dateString) => {
-  const dateRegex = /^(0[1-9]|[12][0-9]|3[01])[-/](0[1-9]|1[012])[-/]\d{4}$/;
-  if (!dateRegex.test(dateString)) return false;
+export const validateDate = (date) => {
+  if (!date) return 'La fecha es requerida';
 
-  const [day, month, year] = dateString.split(/[-/]/).map(Number);
-  const date = new Date(year, month - 1, day);
+  let dateObj;
+  if (typeof date === 'string') {
+    const parts = date.split('/');
+    const isoParts = date.split('-');
 
+    if (parts.length === 3) {
+      // Soporte para formato visual DD/MM/AAAA
+      dateObj = new Date(parts[2], parts[1] - 1, parts[0]);
+    } else if (isoParts.length === 3) {
+      // Soporte para formato DB YYYY-MM-DD
+      dateObj = new Date(isoParts[0], isoParts[1] - 1, isoParts[2]);
+    } else {
+      dateObj = new Date(date);
+    }
+  } else {
+    dateObj = date;
+  }
+
+  if (isNaN(dateObj.getTime())) return 'Fecha inválida';
+
+  const today = new Date();
+
+  if (dateObj > today) {
+    return 'La fecha no puede ser futura';
+  }
+
+  const ageLimit = 13;
+  let age = today.getFullYear() - dateObj.getFullYear();
+  const monthDiff = today.getMonth() - dateObj.getMonth();
+
+  if (
+    monthDiff < 0 ||
+    (monthDiff === 0 && today.getDate() < dateObj.getDate())
+  ) {
+    age--;
+  }
+
+  if (age < ageLimit) {
+    return `Debes ser mayor de ${ageLimit} años para registrarte`;
+  }
+
+  return true;
+};
+
+// Validación de Cédula de Identidad (Venezuela)
+export const validateDocumentNumber = (number) => {
+  if (!number || number.trim().length === 0) return true;
+
+  // Limpiamos puntos o espacios por si acaso
+  const cleanNumber = number.replace(/[\s.]/g, '');
+
+  // Solo números, longitud entre 6 y 9 dígitos
+  const dniRegex = /^[0-9]{6,9}$/;
+
+  if (!dniRegex.test(cleanNumber)) {
+    return 'La cédula debe tener entre 6 y 9 números';
+  }
+
+  return true;
+};
+
+export const validateDocument = (fullDocument) => {
+  if (!fullDocument || typeof fullDocument !== 'string') return true;
+
+  const type = fullDocument.charAt(0);
+  const numberPart = fullDocument.slice(1);
+
+  const validTypes = ['V', 'E'];
+  if (!validTypes.includes(type)) {
+    return 'Tipo de documento inválido';
+  }
+
+  const cleanNumber = numberPart.replace(/\D/g, '');
+
+  if (cleanNumber.length < 6 || cleanNumber.length > 9) {
+    return 'La cédula debe tener entre 6 y 9 números';
+  }
+
+  return true;
+};
+
+// Validación de selección mínima de géneros
+export const validateGenres = (genresArray) => {
+  if (!genresArray || !Array.isArray(genresArray))
+    return 'Selecciona al menos 3 géneros';
   return (
-    date.getFullYear() === year &&
-    date.getMonth() === month - 1 &&
-    date.getDate() === day
+    genresArray.length >= 3 || 'Selecciona al menos 3 categorías para continuar'
   );
 };

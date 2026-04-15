@@ -1,6 +1,7 @@
 import { useRouter } from 'expo-router';
 import { ChevronLeft } from 'lucide-react-native';
 import { useState } from 'react';
+import { useForm } from 'react-hook-form';
 import {
   KeyboardAvoidingView,
   Platform,
@@ -10,10 +11,8 @@ import {
   View,
 } from 'react-native';
 
-import { AccountDetailsStep } from '../../components/AccountDetailsStep';
 import { AppText } from '../../components/AppText';
-import { GenreSelectionStep } from '../../components/GenreSelectionStep';
-import { PersonalInfoStep } from '../../components/PersonalInfoStep';
+import { PersonalInfoSteps } from '../../components/PersonalInfoSteps'; // Importamos el orquestador
 import { ScreenWrapper } from '../../components/ScreenWrapper';
 import { Button } from '../../components/ui/Button';
 import { StepIndicator } from '../../components/ui/StepIndicator';
@@ -22,47 +21,60 @@ import { theme } from '../../constants';
 export default function RegisterScreen() {
   const router = useRouter();
   const [step, setStep] = useState(1);
-  const [errors, setErrors] = useState({});
+  const totalSteps = 3;
 
-  const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
-    documentType: 'V',
-    phoneNumber: '',
-    documentNumber: '',
-    dateBirth: '',
-    dateBirthRaw: '',
-    password: '',
-    confirmPassword: '',
-    acceptTerms: false,
-    genres: [],
+  const {
+    control,
+    handleSubmit,
+    trigger,
+    getValues,
+    setValue,
+    formState: { errors, isSubmitting },
+  } = useForm({
+    mode: 'onBlur',
+    revalidateMode: 'onChange',
+    defaultValues: {
+      firstName: '',
+      lastName: '',
+      email: '',
+      phoneNumber: '',
+      documentNumber: '',
+      gender: '',
+      documentType: 'V',
+      dateBirth: '',
+      password: '',
+      confirmPassword: '',
+      acceptTerms: false,
+      favoriteGenres: [],
+    },
   });
 
-  const updateForm = (key, value) => {
-    setFormData((prev) => ({ ...prev, [key]: value }));
-    if (errors[key]) setErrors((prev) => ({ ...prev, [key]: null }));
-  };
+  // Lógica para avanzar de paso
+  const handleNext = async () => {
+    let fieldsToValidate = [];
 
-  const handleToggleGenre = (genre) => {
-    const currentGenres = formData.genres;
-    const isSelected = currentGenres.includes(genre);
-    const nextGenres = isSelected
-      ? currentGenres.filter((g) => g !== genre)
-      : [...currentGenres, genre];
+    if (step === 1)
+      fieldsToValidate = ['firstName', 'lastName', 'email', 'phoneNumber'];
+    if (step === 2)
+      fieldsToValidate = [
+        'documentNumber',
+        'dateBirth',
+        'gender',
+        'password',
+        'confirmPassword',
+        'acceptTerms',
+      ];
+    if (step === 3) fieldsToValidate = ['favoriteGenres'];
 
-    updateForm('genres', nextGenres);
-  };
+    //devuelve true si todos los campos pasan las validaciones
+    const isStepValid = await trigger(fieldsToValidate);
 
-  const handleNext = () => {
-    if (step < 3) {
-      setStep(step + 1);
-    } else {
-      if (formData.genres.length < 3) {
-        setErrors({ genres: 'Selecciona al menos 3 géneros' });
-        return;
+    if (isStepValid) {
+      if (step < totalSteps) {
+        setStep(step + 1);
+      } else {
+        handleSubmit(onSubmit)();
       }
-      console.log('Finalizando Registro CineFlix:', formData);
     }
   };
 
@@ -71,66 +83,53 @@ export default function RegisterScreen() {
     else router.back();
   };
 
+  const onSubmit = async (data) => {
+    try {
+      console.log('Finalizando Registro', data);
+      // lógica de API
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   return (
     <ScreenWrapper>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
       >
         <ScrollView
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          {/** 
-         * <View style={styles.navHeader}>
-            <TouchableOpacity onPress={handleBack} style={styles.backButton}>
-              <ChevronLeft size={28} color={theme.colors.primary} />
-            </TouchableOpacity>
-            <Logo width={120} height={30} />
-            <View style={{ width: 40 }} />
-          </View>
-        */}
-
-          <TouchableOpacity onPress={handleBack} style={styles.backButton}>
-            <ChevronLeft size={28} color={theme.colors.border} />
-          </TouchableOpacity>
-
           <View style={styles.mainContainer}>
+            <TouchableOpacity onPress={handleBack} style={styles.backButton}>
+              <ChevronLeft size={28} color={theme.colors.border} />
+            </TouchableOpacity>
+
             <AppText variant="h2" style={styles.title}>
               Registro
             </AppText>
 
-            <StepIndicator currentStep={step - 1} totalSteps={3} />
+            <StepIndicator currentStep={step - 1} totalSteps={totalSteps} />
 
             <View style={styles.formFields}>
-              {step === 1 && (
-                <PersonalInfoStep
-                  formData={formData}
-                  onInputChange={updateForm}
-                />
-              )}
-              {step === 2 && (
-                <AccountDetailsStep
-                  formData={formData}
-                  onInputChange={updateForm}
-                  errors={errors}
-                />
-              )}
-              {step === 3 && (
-                <GenreSelectionStep
-                  selectedGenres={formData.genres}
-                  onToggleGenre={handleToggleGenre}
-                  error={errors.genres}
-                />
-              )}
+              <PersonalInfoSteps
+                step={step}
+                control={control}
+                errors={errors}
+                getValues={getValues}
+                setValue={setValue}
+              />
             </View>
 
             <View style={styles.footer}>
               <Button
-                title={step === 3 ? 'Finalizar' : 'Continuar'}
+                title={step === totalSteps ? 'Finalizar' : 'Continuar'}
                 onPress={handleNext}
-                disabled={step === 2 && !formData.acceptTerms}
+                loading={isSubmitting}
               />
 
               {step === 1 && (
@@ -153,20 +152,17 @@ export default function RegisterScreen() {
 
 const styles = StyleSheet.create({
   scrollContent: {
-    paddingTop: 8,
     flexGrow: 1,
-    paddingBottom: 40,
+  },
+  mainContainer: {
+    flex: 1,
+    paddingHorizontal: 25,
   },
   backButton: {
     width: 40,
     height: 40,
     marginTop: theme.spacing.s8,
-    marginLeft: theme.spacing.s16,
     justifyContent: 'center',
-  },
-  mainContainer: {
-    paddingHorizontal: 25,
-    marginTop: 10,
   },
   title: {
     color: theme.colors.primary,
@@ -175,12 +171,12 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   formFields: {
-    width: '100%',
     marginTop: 20,
   },
   footer: {
     width: '100%',
-    marginTop: 30,
+    paddingBottom: 40,
+    marginTop: 20,
   },
   loginRedirect: {
     flexDirection: 'row',

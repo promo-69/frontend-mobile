@@ -42,7 +42,7 @@ export default function HomemainScreen() {
         </View>
 
         {/* Botón Ingresar */}
-        <TouchableOpacity style={styles.loginButton} onPress={() => router.push('/login')}>
+        <TouchableOpacity style={styles.loginButton} onPress={() => router.push('/Login')}>
           <Text style={styles.loginButtonText}>Ingresar</Text>
           <Image source={require('../../assets/images/circle-user.png')} style={styles.loginImage} />
       </TouchableOpacity>
