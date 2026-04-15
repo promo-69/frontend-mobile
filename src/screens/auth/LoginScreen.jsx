@@ -1,3 +1,4 @@
+
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { Controller, useForm } from 'react-hook-form';
@@ -41,12 +42,10 @@ export default function LoginScreen() {
   };
 
   const handleRegister = () => {
-    console.log('Navegar a Registro');
     router.push('/register');
   };
 
   const handleRecoverPassword = () => {
-    console.log('Navegar a Recuperacion');
     router.push('/forgot-password');
   };
 
@@ -54,13 +53,14 @@ export default function LoginScreen() {
     <ScreenWrapper disableSafeArea={true}>
       {/* KeyboardAvoidingView evita que el teclado cubra los inputs en iOS/Android */}
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'android' ? 'height' : 'padding'}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
-        keyboardVerticalOffset={Platform.OS === 'android' ? 0 : 64}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
       >
         <ScrollView
           contentContainerStyle={styles.contentContainer}
           showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
         >
           <ImageBackground
             source={require('../../assets/images/login-bg.jpg')}
@@ -100,12 +100,13 @@ export default function LoginScreen() {
                   validate: validateEmail,
                 }}
                 render={({
-                  field: { onChange, value },
+                  field: { onChange, onBlur, value },
                   fieldState: { error },
                 }) => (
                   <Input
                     value={value}
                     onChangeText={onChange}
+                    onBlur={onBlur}
                     label="Correo"
                     keyboardType="email-address"
                     error={error?.message}
@@ -120,12 +121,13 @@ export default function LoginScreen() {
                   validate: validatePassword,
                 }}
                 render={({
-                  field: { onChange, value },
+                  field: { onChange, onBlur, value },
                   fieldState: { error },
                 }) => (
                   <Input
                     value={value}
                     onChangeText={onChange}
+                    onBlur={onBlur}
                     label="Contraseña"
                     secureTextEntry
                     error={error?.message}
