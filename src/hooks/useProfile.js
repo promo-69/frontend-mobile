@@ -1,41 +1,30 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 
-export const useProfile = (userData, onSave) => {
-  const [step, setStep] = useState('view');
-  const [showSuccess, setShowSuccess] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [formData, setFormData] = useState(userData);
-  const [errors, setErrors] = useState({ email: '', password: '' });
+export const useProfile = () => {
+  const [isEditModalVisible, setIsEditModalVisible] = useState(false);
+  const [isSuccessVisible, setIsSuccessVisible] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
 
-  const validate = () => {
-    let newErrors = { email: '', password: '' };
-    let isValid = true;
-    if (!formData.email.includes('@')) {
-      newErrors.email = 'Correo inválido';
-      isValid = false;
-    }
-    const passRegex = /^(?=.*[a-zA-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>]).{8,20}$/;
-    if (!passRegex.test(formData.password)) {
-      newErrors.password = 'Clave inválida (8-20 caracteres, letras, números y símbolos)';
-      isValid = false;
-    }
-    setErrors(newErrors);
-    return isValid;
-  };
-
-  const handleSave = () => {
-    if (validate()) {
-      onSave(formData);
-      setStep('view');
-      setShowSuccess(true);
+  const handleFinalUpdate = async (currentPassword, formData) => {
+    setIsUpdating(true);
+    try {
+      // Aquí iría la integración real: await authService.updateProfile(formData, currentPassword)
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      setIsEditModalVisible(false);
+      setIsSuccessVisible(true);
+    } catch (err) {
+      console.error("Error updating profile", err);
+    } finally {
+      setIsUpdating(false);
     }
   };
 
   return {
-    step, setStep,
-    formData, setFormData,
-    showSuccess, setShowSuccess,
-    showPassword, setShowPassword,
-    errors, handleSave
+    isEditModalVisible,
+    setIsEditModalVisible,
+    isSuccessVisible,
+    setIsSuccessVisible,
+    isUpdating,
+    handleFinalUpdate
   };
 };

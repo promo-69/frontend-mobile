@@ -17,6 +17,7 @@ import { ScreenWrapper } from '../../components/ScreenWrapper';
 import { Button } from '../../components/ui/Button';
 import Logo from '../../components/ui/Icons/Logo';
 import { Input } from '../../components/ui/Input';
+import { useAuth } from '../../context/AuthContext';
 import { theme } from '../../constants';
 import {
   sanitizeInput,
@@ -27,6 +28,8 @@ import {
 const { width } = Dimensions.get('window');
 
 export default function LoginScreen() {
+  const { login } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
   const { control, handleSubmit } = useForm({
     defaultValues: {
       email: '',
@@ -36,9 +39,15 @@ export default function LoginScreen() {
 
   const router = useRouter();
 
-  const onSubmit = (data) => {
-    const sanitizedEmail = sanitizeInput(data.email, 'email');
-    console.log('Login intent (sanitized):', sanitizedEmail);
+  const onSubmit = async (data) => {
+    setIsLoading(true);
+    try {
+      await login(data);
+    } catch (error) {
+      console.error('Login error:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleRegister = () => {
@@ -148,7 +157,11 @@ export default function LoginScreen() {
             </View>
 
             <View style={styles.actionSection}>
-              <Button title="Ingresar" onPress={handleSubmit(onSubmit)} />
+              <Button 
+                title="Ingresar" 
+                onPress={handleSubmit(onSubmit)} 
+                loading={isLoading}
+              />
             </View>
 
             <View style={styles.footerSection}>

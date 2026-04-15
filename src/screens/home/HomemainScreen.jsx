@@ -1,27 +1,36 @@
 import { useRouter } from 'expo-router';
-import { Alert, Image, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import {
+  Image,
+  SafeAreaView,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import { useAuth } from '../../context/AuthContext';
 
 // Constantes de diseño para mantener consistencia
 const COLORS = {
   bgDark: '#2C1A4A', // Fondo principal morado oscuro
   headerBg: '#442F6B', // Fondo del header morado medio
-  accent: '#FFC864',  // Dorado para botones y títulos
+  accent: '#FFC864', // Dorado para botones y títulos
   textMain: '#FFFFFF', // Texto principal blanco
   textGray: '#B0A8C5', // Texto secundario grisáceo
 };
 
 export default function HomemainScreen() {
   const router = useRouter();
+  const { isAuthenticated } = useAuth();
 
-  // Función para mostrar el aviso
-  const mostrarAvisoPerfil = () => {
-    Alert.alert(
-      "Aviso ", // Título
-      "¡Ingresa con tu usuario o registrate!", // Mensaje
-      [
-        { text: "OK", onPress: () => console.log("Alerta cerrada") } // Botón OK
-      ]
-    );
+  // Manejo de navegación protegida al perfil
+  const handleProfilePress = () => {
+    if (isAuthenticated) {
+      router.push('/profile');
+    } else {
+      router.push('/login');
+    }
   };
 
   return (
@@ -33,7 +42,10 @@ export default function HomemainScreen() {
       {/* 3. Header (Cabecera Fija) */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
-          <Image source={require('../../assets/images/android-icon-foreground.png')} style={styles.logo} />
+          <Image
+            source={require('../../assets/images/android-icon-foreground.png')}
+            style={styles.logo}
+          />
           {/* Ubicación */}
           <View style={styles.locationContainer}>
             <Text style={styles.locationText}>📍 Barquisimeto</Text>
@@ -42,15 +54,22 @@ export default function HomemainScreen() {
         </View>
 
         {/* Botón Ingresar */}
-        <TouchableOpacity style={styles.loginButton} onPress={() => router.push('/login')}>
-          <Text style={styles.loginButtonText}>Ingresar</Text>
-          <Image source={require('../../assets/images/circle-user.png')} style={styles.loginImage} />
-      </TouchableOpacity>
+        {!isAuthenticated && (
+          <TouchableOpacity
+            style={styles.loginButton}
+            onPress={() => router.push('/login')}
+          >
+            <Text style={styles.loginButtonText}>Ingresar</Text>
+            <Image
+              source={require('../../assets/images/circle-user.png')}
+              style={styles.loginImage}
+            />
+          </TouchableOpacity>
+        )}
       </View>
 
       {/* 4. ScrollView: Contenido Principal Scrolleable */}
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        
         {/* Sección EN CARTELERA */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>EN CARTELERA</Text>
@@ -64,115 +83,133 @@ export default function HomemainScreen() {
           >
             {/* Película 1 */}
             <TouchableOpacity style={styles.posterWrapper}>
-              <Image source={require('../../assets/images/peli1.jpg')} style={styles.posterScroll} />
+              <Image
+                source={require('../../assets/images/peli1.jpg')}
+                style={styles.posterScroll}
+              />
               <Text style={styles.peliTitleScroll}>Hajime no Ippo</Text>
             </TouchableOpacity>
 
             {/* Película 2 */}
             <TouchableOpacity style={styles.posterWrapper}>
-              <Image source={require('../../assets/images/peli2.jpg')} style={styles.posterScroll} />
+              <Image
+                source={require('../../assets/images/peli2.jpg')}
+                style={styles.posterScroll}
+              />
               <Text style={styles.peliTitleScroll}>Hoppers</Text>
             </TouchableOpacity>
 
             {/* Película 3 */}
             <TouchableOpacity style={styles.posterWrapper}>
-              <Image source={require('../../assets/images/peli3.jpg')} style={styles.posterScroll} />
+              <Image
+                source={require('../../assets/images/peli3.jpg')}
+                style={styles.posterScroll}
+              />
               <Text style={styles.peliTitleScroll}>Matrix</Text>
             </TouchableOpacity>
 
             {/* Película 4 */}
             <TouchableOpacity style={styles.posterWrapper}>
-              <Image source={require('../../assets/images/peli4.jpg')} style={styles.posterScroll} />
+              <Image
+                source={require('../../assets/images/peli4.jpg')}
+                style={styles.posterScroll}
+              />
               <Text style={styles.peliTitleScroll}>Lucy 2</Text>
             </TouchableOpacity>
           </ScrollView>
-
-          
         </View>
 
-       {/* Sección ¡PARA TÍ! */}
+        {/* Sección ¡PARA TÍ! */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>¡PARA TÍ!</Text>
-          
-          <ScrollView 
-            horizontal={true} 
+
+          <ScrollView
+            horizontal={true}
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.carouselScrollContainer}
           >
             {/* Película 1 */}
             <TouchableOpacity style={styles.gridCardScroll}>
-              <Image source={require('../../assets/images/peli4.jpg')} style={styles.gridPosterScroll} />
+              <Image
+                source={require('../../assets/images/peli4.jpg')}
+                style={styles.gridPosterScroll}
+              />
               <Text style={styles.gridPeliTitle}>Hajime no Ippo</Text>
             </TouchableOpacity>
 
             {/* Película 2 */}
             <TouchableOpacity style={styles.gridCardScroll}>
-              <Image source={require('../../assets/images/peli5.jpg')} style={styles.gridPosterScroll} />
+              <Image
+                source={require('../../assets/images/peli5.jpg')}
+                style={styles.gridPosterScroll}
+              />
               <Text style={styles.gridPeliTitle}>David</Text>
             </TouchableOpacity>
 
             {/* Película 3 */}
             <TouchableOpacity style={styles.gridCardScroll}>
-              <Image source={require('../../assets/images/peli3.jpg')} style={styles.gridPosterScroll} />
+              <Image
+                source={require('../../assets/images/peli3.jpg')}
+                style={styles.gridPosterScroll}
+              />
               <Text style={styles.gridPeliTitle}>Matrix</Text>
             </TouchableOpacity>
 
             {/* Película 4 */}
             <TouchableOpacity style={styles.gridCardScroll}>
-              <Image source={require('../../assets/images/peli7.jpg')} style={styles.gridPosterScroll} />
+              <Image
+                source={require('../../assets/images/peli7.jpg')}
+                style={styles.gridPosterScroll}
+              />
               <Text style={styles.gridPeliTitle}>Lucy 2</Text>
             </TouchableOpacity>
           </ScrollView>
         </View>
 
+        {/* Sección PRÓXIMOS ESTRENOS */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Próximos Estrenos</Text>
+          <ScrollView
+            horizontal={true}
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.carouselScrollContainer}
+          >
+            {/* Película 1 */}
+            <View style={styles.gridCardScroll}>
+              <Image
+                source={require('../../assets/images/peli6.jpg')}
+                style={styles.gridPosterScroll}
+              />
+              <Text style={styles.gridPeliTitleSmall}>Matrix</Text>
+            </View>
 
-          
+            {/* Película 2 */}
+            <View style={styles.gridCardScroll}>
+              <Image
+                source={require('../../assets/images/peli7.jpg')}
+                style={styles.gridPosterScroll}
+              />
+              <Text style={styles.gridPeliTitleSmall}>Lucy 2</Text>
+            </View>
 
-          
-        
-      {/* Sección PRÓXIMOS ESTRENOS */}
-<View style={styles.section}>
-  <Text style={styles.sectionTitle}>Próximos Estrenos</Text>
-  <ScrollView 
-    horizontal={true} 
-    showsHorizontalScrollIndicator={false}
-    contentContainerStyle={styles.carouselScrollContainer}
-  >
-    {/* Película 1 */}
-    <View style={styles.gridCardScroll}>
-      <Image 
-        source={require('../../assets/images/peli6.jpg')} 
-        style={styles.gridPosterScroll} 
-      />
-      <Text style={styles.gridPeliTitleSmall}>Matrix</Text>
-    </View>
-
-    {/* Película 2 */}
-    <View style={styles.gridCardScroll}>
-      <Image 
-        source={require('../../assets/images/peli7.jpg')} 
-        style={styles.gridPosterScroll} 
-      />
-      <Text style={styles.gridPeliTitleSmall}>Lucy 2</Text>
-    </View>
-
-    {/* Película 3 (Ejemplo para ver el scroll) */}
-    <View style={styles.gridCardScroll}>
-      <Image 
-        source={require('../../assets/images/peli1.jpg')} 
-        style={styles.gridPosterScroll} 
-      />
-      <Text style={styles.gridPeliTitleSmall}>Película 3</Text>
-    </View>
-  </ScrollView>
-</View>
-
-
+            {/* Película 3 (Ejemplo para ver el scroll) */}
+            <View style={styles.gridCardScroll}>
+              <Image
+                source={require('../../assets/images/peli1.jpg')}
+                style={styles.gridPosterScroll}
+              />
+              <Text style={styles.gridPeliTitleSmall}>Película 3</Text>
+            </View>
+          </ScrollView>
+        </View>
       </ScrollView>
-      
+
       {/* Botón Flotante SCAN */}
       <TouchableOpacity style={styles.scanButton}>
-        <Image source={require('../../assets/images/qr-code.png')} style={styles.scanIcon} />
+        <Image
+          source={require('../../assets/images/qr-code.png')}
+          style={styles.scanIcon}
+        />
         <Text style={styles.scanText}>Scan</Text>
       </TouchableOpacity>
 
@@ -182,7 +219,7 @@ export default function HomemainScreen() {
           <Text style={styles.tabIcon}>🏠</Text>
           <Text style={[styles.tabText, { color: COLORS.accent }]}>Inicio</Text>
         </TouchableOpacity>
-        
+
         <TouchableOpacity style={styles.tabItem}>
           <Text style={styles.tabIcon}>🍿</Text>
           <Text style={styles.tabText}>Confitería</Text>
@@ -193,13 +230,14 @@ export default function HomemainScreen() {
           <Text style={styles.tabText}>Sucursales</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.tabItem} onPress={mostrarAvisoPerfil}>
-          <Image source={require('../../assets/images/circle-user.png')} style={styles.tabIcon} /> 
+        <TouchableOpacity style={styles.tabItem} onPress={handleProfilePress}>
+          <Image
+            source={require('../../assets/images/circle-user.png')}
+            style={styles.tabIcon}
+          />
           <Text style={styles.tabText}>Mi Perfil</Text>
-
         </TouchableOpacity>
       </View>
-
     </SafeAreaView>
   );
 }
@@ -210,7 +248,7 @@ const styles = StyleSheet.create({
     flex: 1, // Ocupa todo el alto de la pantalla
     backgroundColor: COLORS.bgDark, // Fondo morado oscuro
   },
-  
+
   // Estilos del Header
   header: {
     paddingTop: 20, // Espacio superior para no pegar con el notch
@@ -297,7 +335,7 @@ const styles = StyleSheet.create({
     marginTop: 12,
     textAlign: 'center',
   },
-gridCardScroll: {
+  gridCardScroll: {
     width: 160, // Aumentado para que no se vea tan pequeño
     marginRight: 15,
     alignItems: 'center',
@@ -315,7 +353,6 @@ gridCardScroll: {
     textAlign: 'center',
     marginTop: 8,
   },
-
 
   // Estilos del Contenido Scrolleable
   scrollContent: {
@@ -461,7 +498,7 @@ gridCardScroll: {
     color: COLORS.textMain,
     marginBottom: 4,
   },
-  tabIcon2:{
+  tabIcon2: {
     tintColor: COLORS.textMain,
     fontSize: 22,
     marginBottom: 4,
