@@ -13,12 +13,13 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { ChevronLeft } from 'lucide-react-native'
 import { AppText } from '../../components/AppText';
 import { ScreenWrapper } from '../../components/ScreenWrapper';
 import { Button } from '../../components/ui/Button';
 import Logo from '../../components/ui/Icons/Logo';
 import { Input } from '../../components/ui/Input';
-import { useAuth } from '../../services/AuthContext';
+import { useAuth } from '../../context/AuthContext';
 import { theme } from '../../constants';
 import {
   sanitizeInput,
@@ -31,6 +32,7 @@ const { width } = Dimensions.get('window');
 export default function LoginScreen() {
   const { login } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
+  const [serverError, setServerError] = useState(null);
   const { control, handleSubmit } = useForm({
     defaultValues: {
       email: '',
@@ -40,12 +42,28 @@ export default function LoginScreen() {
 
   const router = useRouter();
 
+  const handleGoBack = () => {
+    router.back();
+  };
+
+  const clearServerError = () => {
+    if (serverError) {
+      setServerError(null);
+    }
+  };
+
   const onSubmit = async (data) => {
+    setServerError(null);
     setIsLoading(true);
     try {
-      await login(data);
+      const result = await login(data);
+
+      if (!result?.success) {
+        setServerError(result?.message || 'Problemas de conexión con el servidor');
+      }
     } catch (error) {
       console.error('Login error:', error);
+      setServerError('Problemas de conexión con el servidor');
     } finally {
       setIsLoading(false);
     }
@@ -77,6 +95,14 @@ export default function LoginScreen() {
             style={styles.headerImage}
             resizeMode="cover"
           >
+            <TouchableOpacity
+              onPress={handleGoBack}
+              activeOpacity={0.7}
+              style={styles.backButton}
+            >
+              <ChevronLeft size={28} color="#fff" />
+            </TouchableOpacity>
+
             {/* Gradiente para fundir la imagen con el fondo morado */}
             <LinearGradient
               colors={[
@@ -115,7 +141,10 @@ export default function LoginScreen() {
                 }) => (
                   <Input
                     value={value}
-                    onChangeText={onChange}
+                    onChangeText={(text) => {
+                      clearServerError();
+                      onChange(sanitizeInput(text));
+                    }}
                     onBlur={onBlur}
                     label="Correo"
                     keyboardType="email-address"
@@ -127,7 +156,7 @@ export default function LoginScreen() {
                 control={control}
                 name="password"
                 rules={{
-                  required: 'LLenar campos faltantes',
+                  required: 'La contraseña es obligatoria',
                   validate: validatePassword,
                 }}
                 render={({
@@ -136,7 +165,10 @@ export default function LoginScreen() {
                 }) => (
                   <Input
                     value={value}
-                    onChangeText={onChange}
+                    onChangeText={(text) => {
+                      clearServerError();
+                      onChange(text);
+                    }}
                     onBlur={onBlur}
                     label="Contraseña"
                     secureTextEntry
@@ -158,9 +190,18 @@ export default function LoginScreen() {
             </View>
 
             <View style={styles.actionSection}>
-              <Button 
-                title="Ingresar" 
-                onPress={handleSubmit(onSubmit)} 
+              {serverError ? (
+                <View style={styles.authErrorContainer}>
+                  <View style={styles.authErrorAccent} />
+                  <AppText variant="body" style={styles.authErrorText}>
+                    {serverError}
+                  </AppText>
+                </View>
+              ) : null}
+
+              <Button
+                title="Ingresar"
+                onPress={handleSubmit(onSubmit)}
                 loading={isLoading}
               />
             </View>
@@ -229,6 +270,35 @@ const styles = StyleSheet.create({
     width: '100%',
     marginTop: theme.spacing.s24,
     paddingBottom: theme.spacing.s48,
+    gap: theme.spacing.s12,
+  },
+  authErrorContainer: {
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: theme.spacing.s12,
+    paddingVertical: theme.spacing.s12,
+    paddingHorizontal: theme.spacing.s14 || 14,
+    borderRadius: 16,
+    backgroundColor: 'rgba(241, 118, 118, 0.14)',
+    borderWidth: 1,
+    borderColor: 'rgba(246, 190, 190, 0.35)',
+    shadowColor: theme.colors.red[400],
+    shadowOpacity: 0.18,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 3,
+  },
+  authErrorAccent: {
+    width: 4,
+    alignSelf: 'stretch',
+    borderRadius: 999,
+    backgroundColor: theme.colors.red[400],
+  },
+  authErrorText: {
+    flex: 1,
+    color: theme.colors.red[100],
+    lineHeight: 20,
   },
   forgotPasswordWrapper: {
     width: '100%',
@@ -259,4 +329,14 @@ const styles = StyleSheet.create({
     textDecorationLine: 'underline',
     fontWeight: 'bold',
   },
+
+  backButton: {
+  position: 'absolute',
+  top: 56,
+  left: 16,
+  zIndex: 20,
+  padding: 8,
+  borderRadius: 999,
+  backgroundColor: 'rgba(0,0,0,0.25)',
+},
 });

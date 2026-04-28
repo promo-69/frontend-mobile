@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import { ChevronLeft } from 'lucide-react-native';
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import {
   KeyboardAvoidingView,
@@ -12,15 +12,17 @@ import {
 } from 'react-native';
 
 import { AppText } from '../../components/AppText';
-import { PersonalInfoSteps } from '../../components/PersonalInfoSteps'; // Importamos el orquestador
+import { PersonalInfoSteps } from '../../components/PersonalInfoSteps';
 import { ScreenWrapper } from '../../components/ScreenWrapper';
-import { SuccessScreen } from '../shared/SuccessScreen';
 import { Button } from '../../components/ui/Button';
 import { StepIndicator } from '../../components/ui/StepIndicator';
 import { theme } from '../../constants';
+import { useAuth } from '../../context/AuthContext';
+import { SuccessScreen } from '../shared/SuccessScreen';
 
 export default function RegisterScreen() {
   const router = useRouter();
+  const { register } = useAuth();
   const [step, setStep] = useState(1);
   const totalSteps = 3;
   const [showSuccess, setShowSuccess] = useState(false);
@@ -43,7 +45,7 @@ export default function RegisterScreen() {
       documentNumber: '',
       gender: '',
       documentType: 'V',
-      dateBirth: '',
+      birthDate: '',
       password: '',
       confirmPassword: '',
       acceptTerms: false,
@@ -60,7 +62,7 @@ export default function RegisterScreen() {
     if (step === 2)
       fieldsToValidate = [
         'documentNumber',
-        'dateBirth',
+        'birthDate',
         'gender',
         'password',
         'confirmPassword',
@@ -85,20 +87,36 @@ export default function RegisterScreen() {
     else router.back();
   };
 
-  // Redirección automática después de mostrar la pantalla de éxito
   useEffect(() => {
-    if (showSuccess) {
-      const timer = setTimeout(() => {
-        router.replace('/homemain'); 
-      }, 5000); 
-      return () => clearTimeout(timer);
-    }
-  }, [showSuccess]);
+    if (!showSuccess) return;
+
+    const timer = setTimeout(() => {
+      router.replace('/(main)/home');
+    }, 2500);
+
+    return () => clearTimeout(timer);
+  }, [router, showSuccess]);
 
   const onSubmit = async (data) => {
     try {
-      console.log('Finalizando Registro', data);
-      // Aquí la llamada a la API
+      const payload = {
+        firstName: data.firstName,
+        lastName: data.lastName,
+        email: data.email,
+        password: data.password,
+        documentNumber: data.documentNumber,
+        phoneNumber: data.phoneNumber,
+        gender: data.gender,
+        birthDate: data.birthDate,
+      };
+
+      const result = await register(payload);
+
+      if (!result?.success) {
+        console.error('Error en registro:', result?.message);
+        return;
+      }
+
       setShowSuccess(true);
     } catch (error) {
       console.error(error);
@@ -110,7 +128,7 @@ export default function RegisterScreen() {
       <SuccessScreen
         title="¡Cuenta Creada!"
         message="Tu registro se ha completado con éxito. En unos segundos serás redirigido al inicio."
-        onPress={() => router.replace('/homemain')}
+        onPress={() => router.replace('/(main)/home')}
       />
     );
   }

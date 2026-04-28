@@ -120,7 +120,11 @@ export const COLORS = {
   primary: palette.gold[400],
   secondary: palette.lila[200],
   background: palette.midnight[900],
+  bgHeader: palette.midnight[950],
   surface: palette.gold[500],
+
+  itemInactive: palette.midnight[700],
+  itemActive: palette.gold[400],
 
   textPrimary: palette.grey[50],
   textSecondary: palette.grey[100],

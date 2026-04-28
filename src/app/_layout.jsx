@@ -4,7 +4,7 @@ import { Stack, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { AuthProvider, useAuth } from '../services/AuthContext';
+import { AuthProvider, useAuth } from '../context/AuthContext';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -14,26 +14,32 @@ function NavigationGuard() {
   const router = useRouter();
 
   useEffect(() => {
-    if (isLoading) return;
+      if (isLoading) return;
 
-    const inAuthGroup = segments[0] === '(auth)';
-    const isInsideProfile = segments[1] === 'profile';
+      // Grupos de rutas
+      const inAuthGroup = segments[0] === '(auth)';
+      const inMainGroup = segments[0] === '(main)';
 
-    if (isAuthenticated && inAuthGroup) {
-      // Si está autenticado y trata de ir a login, redirigir a home
-      router.replace('/(home)/homemain');
-    } else if (!isAuthenticated && isInsideProfile) {
-      // Si cierra sesión estando en el perfil, lo mandamos al home público
-      router.replace('/(home)/homemain');
-    }
-  }, [isAuthenticated, isLoading, segments]);
+      //Si el usuario se loguea y está en Login/Register, mandarlo a Home
+      if (isAuthenticated && inAuthGroup) {
+        router.replace('/(main)/home');
+      } 
+      
+      //Si el usuario no está logueado e intenta entrar a una zona privada
+      const isPrivateSection = segments[1] === 'profile';
+      if (!isAuthenticated && isPrivateSection) {
+        router.replace('/(auth)/login');
+      }
 
-  return (
+    }, [isAuthenticated, isLoading, segments]);
+
+    return (
     <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="(home)" options={{ animation: 'fade' }} />
-      <Stack.Screen name="(auth)" options={{ animation: 'fade' }} />
+      <Stack.Screen name="(main)" options={{ animation: 'fade' }} />
+      <Stack.Screen name="(auth)" options={{ animation: 'slide_from_bottom' }} />
+      <Stack.Screen name="index" options={{ href: null }} />
     </Stack>
-  );
+    );
 }
 
 export default function RootLayout() {
@@ -54,12 +60,10 @@ export default function RootLayout() {
   if (!fontsLoaded) return null;
 
   return (
-    <ThemeProvider value={DarkTheme}>
       <AuthProvider>
         <SafeAreaProvider>
           <NavigationGuard />
         </SafeAreaProvider>
       </AuthProvider>
-    </ThemeProvider>
   );
 }

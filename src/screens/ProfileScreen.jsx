@@ -9,7 +9,7 @@ import { ScreenWrapper } from '../components/ScreenWrapper';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { theme } from '../constants';
-import { useAuth } from '../services/AuthContext';
+import { useAuth } from '../context/AuthContext';
 import { validateNames, validatePhoneNumberVE } from '../utils/validators';
 import { useProfile } from '../hooks/useProfile';
 import { EditModal } from '../components/Edit';

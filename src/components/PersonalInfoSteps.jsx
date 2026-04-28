@@ -20,6 +20,11 @@ import { Input } from './ui/Input';
 import { SelectorInput } from './ui/SelectorInput';
 
 
+const GENDER_OPTIONS = [
+  { label: 'Masculino', value: 1 },
+  { label: 'Femenino', value: 2 },
+];
+
 export const PersonalInfoSteps = ({
   step,
   control,
@@ -154,7 +159,7 @@ export const PersonalInfoSteps = ({
 
           <Controller
             control={control}
-            name="dateBirth"
+            name="birthDate"
             rules={{
               required: 'La fecha es requerida',
               validate: validateDate,
@@ -174,56 +179,62 @@ export const PersonalInfoSteps = ({
             control={control}
             name="gender"
             rules={{ required: 'El género es obligatorio' }}
-            render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
-              <View style={styles.genderWrapper}>
-                <AppText variant="label" style={styles.inputLabel}>Género</AppText>
-                <TouchableOpacity
-                  testID="gender-dropdown-trigger"
-                  activeOpacity={0.7}
-                  onPress={() => setIsGenderOpen(!isGenderOpen)}
-                  onBlur={onBlur}
-                  style={[
-                    styles.genderDropdownTrigger,
-                    error && styles.genderContainerError,
-                    isGenderOpen && styles.genderContainerFocused
-                  ]}
-                >
-                  <AppText style={[
-                    styles.genderValueText,
-                    !value && { color: theme.colors.textSecondary }
-                  ]}>
-                    {value || "Seleccionar género"}
-                  </AppText>
-                  <ChevronDown 
-                    size={20} 
-                    color={theme.colors.primary} 
-                    style={{ transform: [{ rotate: isGenderOpen ? '180deg' : '0deg' }] }}
-                  />
-                </TouchableOpacity>
+            render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => {
+              const selectedGender = GENDER_OPTIONS.find(
+                (option) => option.value === value
+              );
 
-                {isGenderOpen && (
-                  <View style={styles.dropdownMenu}>
-                    {['Masculino', 'Femenino'].map((option) => (
-                      <TouchableOpacity
-                        key={option}
-                        testID={`gender-option-${option}`}
-                        style={styles.dropdownOption}
-                        onPress={() => {
-                          onChange(option);
-                          setIsGenderOpen(false);
-                        }}
-                      >
-                        <AppText style={styles.optionText}>{option}</AppText>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-                )}
+              return (
+                <View style={styles.genderWrapper}>
+                  <AppText variant="label" style={styles.inputLabel}>Género</AppText>
+                  <TouchableOpacity
+                    testID="gender-dropdown-trigger"
+                    activeOpacity={0.7}
+                    onPress={() => setIsGenderOpen(!isGenderOpen)}
+                    onBlur={onBlur}
+                    style={[
+                      styles.genderDropdownTrigger,
+                      error && styles.genderContainerError,
+                      isGenderOpen && styles.genderContainerFocused
+                    ]}
+                  >
+                    <AppText style={[
+                      styles.genderValueText,
+                      !selectedGender && { color: theme.colors.textSecondary }
+                    ]}>
+                      {selectedGender?.label || 'Seleccionar género'}
+                    </AppText>
+                    <ChevronDown 
+                      size={20} 
+                      color={theme.colors.primary} 
+                      style={{ transform: [{ rotate: isGenderOpen ? '180deg' : '0deg' }] }}
+                    />
+                  </TouchableOpacity>
 
-                {error && (
-                  <AppText style={styles.errorTextSmall}>{error.message}</AppText>
-                )}
-              </View>
-            )}
+                  {isGenderOpen && (
+                    <View style={styles.dropdownMenu}>
+                      {GENDER_OPTIONS.map((option) => (
+                        <TouchableOpacity
+                          key={option.value}
+                          testID={`gender-option-${option.label}`}
+                          style={styles.dropdownOption}
+                          onPress={() => {
+                            onChange(option.value);
+                            setIsGenderOpen(false);
+                          }}
+                        >
+                          <AppText style={styles.optionText}>{option.label}</AppText>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  )}
+
+                  {error && (
+                    <AppText style={styles.errorTextSmall}>{error.message}</AppText>
+                  )}
+                </View>
+              );
+            }}
           />
 
           <Controller

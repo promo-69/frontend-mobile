@@ -1,13 +1,12 @@
 import { Redirect } from 'expo-router';
+import { useAuth } from '../context/AuthContext';
 
-export default function AppRoot() {
-  // Simulación de lógica de autenticación
-  const userIsLoggedIn = false;
+export default function Index() {
+  const { isLoading } = useAuth();
 
-  if (!userIsLoggedIn) {
-    // En Expo Router, las carpetas de grupo como `(home)` no se incluyen en la URL.
-    return <Redirect href="/(home)/homemain" />;
-  }
-  // Si está logueado, lo mandamos al Home 
-  //return <Redirect href="/(tabs)/home" />;
+  // No renderizar nada mientras se verifica la sesión en el almacenamiento
+  if (isLoading) return null;
+
+  // Enviamos al usuario al Home por defecto
+  return <Redirect href="/(main)/home" />;
 }
