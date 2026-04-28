@@ -3,8 +3,8 @@
 const LOCAL_IP = '192.168.1.XX'; 
 const PORT = '3000';
 
-const DEV_URL = `http://${LOCAL_IP}:${PORT}/api`;
-const PROD_URL = 'https://backend-jog6.onrender.com/api';
+const DEV_URL = `https://backend-jog6.onrender.com/api/v1`;
+const PROD_URL = 'https://backend-jog6.onrender.com';
 
 export const ENV = {
   API_URL: __DEV__ ? DEV_URL : PROD_URL,

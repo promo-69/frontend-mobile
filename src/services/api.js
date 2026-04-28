@@ -1,15 +1,15 @@
 import axios from 'axios';
-import { ENV, ENDPOINTS, HEADERS } from '../constants/Config';
+import { ENDPOINTS, ENV, HEADERS } from '../constants/Config';
 import { storageHelper } from '../helper/storage.helper';
 
-// 1. Crear la instancia base
+// Crear la instancia base
 const api = axios.create({
   baseURL: ENV.API_URL,
   timeout: ENV.TIMEOUT,
   headers: HEADERS.JSON,
 });
 
-// 2. Interceptor de Peticiones: Inyectar el Bearer Token
+//  Interceptor de Peticiones: Inyectar el Bearer Token
 api.interceptors.request.use(
   async (config) => {
     const token = await storageHelper.getAccessToken();
@@ -21,11 +21,23 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// 3. Interceptor de Respuestas: Manejo de errores y refresh
+// Interceptor de Respuestas: Manejo de errores y refresh
 api.interceptors.response.use(
   (response) => response, // Si la respuesta es exitosa, pasarla tal cual
   async (error) => {
     const originalRequest = error.config;
+
+    // Registrar errores de conexión o respuesta
+    if (error.response) {
+      console.error('Error de respuesta:', {
+        status: error.response.status,
+        data: error.response.data,
+      });
+    } else if (error.request) {
+      console.error('Error de conexión:', error.request);
+    } else {
+      console.error('Error desconocido:', error.message);
+    }
 
     // Si el error es 401 (No autorizado) y no hemos reintentado ya esta petición
     if (error.response?.status === 401 && !originalRequest._retry) {
@@ -56,6 +68,7 @@ api.interceptors.response.use(
 
       } catch (refreshError) {
         // Si el refresh también falla, limpiar sesión y forzar logout
+        console.error('Error al intentar refrescar el token:', refreshError);
         await storageHelper.clearSession();
         // Aquí podrías disparar un evento global o redirección al login
         return Promise.reject(refreshError);
