@@ -1,23 +1,21 @@
 import { useRouter } from 'expo-router';
 import {
-    Image,
-    SafeAreaView,
-    ScrollView,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
-} from 'react-native';
-import { 
-  MapPin, 
-  UserCircle, 
-  Home, 
-  Clapperboard, 
-  Map, 
-  ChevronRight 
+  ChevronRight,
+  MapPin,
+  UserCircle
 } from 'lucide-react-native';
+import {
+  Image,
+  SafeAreaView,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { useAuth } from '../../context/AuthContext';
+import { checkHealth } from '../../services/api';
 
 // Constantes de diseño para mantener consistencia
 const COLORS = {
@@ -38,6 +36,15 @@ export default function HomeScreen() {
       router.push(route);
     } else {
       router.push('/(auth)/login');
+    }
+  };
+
+  const handleCheckConnection = async () => {
+    try {
+      const healthStatus = await checkHealth();
+      alert('Conexión exitosa: ' + JSON.stringify(healthStatus));
+    } catch (error) {
+      alert('Error al conectar con el backend.');
     }
   };
 
@@ -83,6 +90,14 @@ export default function HomeScreen() {
           </TouchableOpacity>
         )}
       </View>
+
+      {/* Botón para verificar conexión */}
+      <TouchableOpacity
+        style={styles.checkConnectionButton}
+        onPress={handleCheckConnection}
+      >
+        <Text style={styles.checkConnectionText}>Verificar Conexión</Text>
+      </TouchableOpacity>
 
       {/* Contenido Principal */}
       <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -450,4 +465,16 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255,255,255,0.1)'
   },
 
+  checkConnectionButton: {
+    backgroundColor: COLORS.accent,
+    padding: 10,
+    borderRadius: 5,
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  checkConnectionText: {
+    color: COLORS.textMain,
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
 });

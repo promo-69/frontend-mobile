@@ -5,7 +5,6 @@ import { storageHelper } from '../helper/storage.helper';
 // Crear la instancia base
 const api = axios.create({
   baseURL: ENV.API_URL,
-  timeout: ENV.TIMEOUT,
   headers: HEADERS.JSON,
 });
 
@@ -78,5 +77,16 @@ api.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
+// Function to check the health of the backend service
+export const checkHealth = async () => {
+  try {
+    const response = await axios.get('http://backend-jog6.onrender.com/health');
+    return response.data; // Return the response data if successful
+  } catch (error) {
+    console.error('Health check failed:', error);
+    throw error; // Re-throw the error for further handling
+  }
+};
 
 export default api;

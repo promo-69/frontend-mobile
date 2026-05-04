@@ -14,7 +14,7 @@ export const authService = {
   /**
    * Petición de registro 
    */
-  register: async (userData) => {
+  signUp: async (userData) => {
     const response = await api.post(ENDPOINTS.REGISTER, userData);
     return response.data;
   },

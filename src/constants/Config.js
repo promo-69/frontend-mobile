@@ -3,19 +3,21 @@
 const LOCAL_IP = '192.168.1.XX'; 
 const PORT = '3000';
 
-const DEV_URL = `https://backend-jog6.onrender.com/api/v1`;
+const DEV_URL = `https://backend-jog6.onrender.com/api/v1/test`;
 const PROD_URL = 'https://backend-jog6.onrender.com';
 
 export const ENV = {
-  API_URL: __DEV__ ? DEV_URL : PROD_URL,
-  TIMEOUT: 60000,
+  API_URL: __DEV__ ? DEV_URL : PROD_URL
 };
 
 // Endpoints centralizados para no escribirlos manualmente en los servicios
 export const ENDPOINTS = {
   LOGIN: '/auth/login',
-  REGISTER: '/auth/register',
+  SIGNUP: '/auth/signUp',
   REFRESH_SESSION: '/auth/refresh',
+  SEND_RECOVERY: '/auth/recovery/send-email',
+  VERIFY_CODE: '/auth/recovery/verify-code',
+  RESET_PASSWORD: '/auth/recovery/reset-password',
   LOGOUT: '/auth/logout',
   VALIDATE_QR: '/tickets/validate',
 };
