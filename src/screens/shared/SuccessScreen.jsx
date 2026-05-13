@@ -1,8 +1,8 @@
-import { useEffect, useRef } from 'react'
-import { View, StyleSheet, Animated, BackHandler } from 'react-native'
 import { CheckCircle2 } from 'lucide-react-native'
+import { useEffect, useRef } from 'react'
+import { Animated, BackHandler, StyleSheet, View } from 'react-native'
 import { AppText } from '../../components/AppText'
-import { Button } from '../../components/ui/Button'
+import { CustomButton } from '../../components/ui/CustomButton'
 import { theme } from '../../constants'
 
 export const SuccessScreen = ({ 
@@ -43,7 +43,7 @@ export const SuccessScreen = ({
         <AppText variant="body" style={styles.message}>{message}</AppText>
       </View>
 
-      <Button 
+      <CustomButton 
         title={buttonText} 
         onPress={onPress} 
         style={styles.button}

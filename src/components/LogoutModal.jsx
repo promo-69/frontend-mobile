@@ -1,8 +1,7 @@
-import React from 'react';
-import { Modal, StyleSheet, View, TouchableOpacity } from 'react-native';
+import { Modal, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { theme } from '../constants';
 import { AppText } from './AppText';
-import { Button } from './ui/Button';
+import { CustomButton } from './ui/CustomButton';
 
 export const LogoutModal = ({ visible, onConfirm, onCancel }) => (
   <Modal visible={visible} transparent animationType="fade">
@@ -16,7 +15,7 @@ export const LogoutModal = ({ visible, onConfirm, onCancel }) => (
         </AppText>
         
         <View style={styles.modalActions}>
-          <Button 
+          <CustomButton 
             title="SÍ, CERRAR SESIÓN" 
             onPress={onConfirm} 
             style={styles.btnConfirm}

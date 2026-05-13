@@ -14,7 +14,7 @@ import {
 import { AppText } from '../../components/AppText';
 import { PersonalInfoSteps } from '../../components/PersonalInfoSteps';
 import { ScreenWrapper } from '../../components/ScreenWrapper';
-import { Button } from '../../components/ui/Button';
+import { CustomButton } from '../../components/ui/CustomButton';
 import { StepIndicator } from '../../components/ui/StepIndicator';
 import { theme } from '../../constants';
 import { useAuth } from '../../context/AuthContext';
@@ -167,7 +167,7 @@ export default function RegisterScreen() {
             </View>
 
             <View style={styles.footer}>
-              <Button
+              <CustomButton
                 title={step === totalSteps ? 'Finalizar' : 'Continuar'}
                 onPress={handleNext}
                 loading={isSubmitting}

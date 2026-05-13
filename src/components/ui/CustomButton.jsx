@@ -1,7 +1,7 @@
-import { TouchableOpacity, Text, StyleSheet, View, ActivityIndicator } from 'react-native';
+import { Pressable, TouchableOpacity, Text, StyleSheet, View, ActivityIndicator, Platform} from 'react-native';
 import {theme} from '../../constants';
 
-export const Button = ({ title, onPress, disabled = false, loading = false, style }) => {
+export const CustomButton = ({ title, onPress, disabled = false, loading = false, style }) => {
   return (
     <Pressable
       onPress={loading ? null : onPress}

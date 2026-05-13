@@ -1,7 +1,7 @@
 import { Modal, StyleSheet, View } from 'react-native';
 import { theme } from '.././constants';
 import { AppText } from './AppText';
-import { Button } from './ui/Button';
+import { CustomButton } from './ui/CustomButton';
 
 export const SuccessModal = ({ visible, onClose }) => (
   <Modal visible={visible} transparent animationType="fade">
@@ -16,7 +16,7 @@ export const SuccessModal = ({ visible, onClose }) => (
         <AppText variant="body" style={styles.modalDesc}>
           Tus cambios se han guardado con éxito en el sistema.
         </AppText>
-        <Button title="ENTENDIDO" onPress={onClose} />
+        <CustomButton title="ENTENDIDO" onPress={onClose} />
       </View>
     </View>
   </Modal>

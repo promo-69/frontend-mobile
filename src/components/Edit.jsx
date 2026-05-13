@@ -1,11 +1,10 @@
-import React, { useState } from 'react';
-import { Modal, View, TouchableOpacity, StyleSheet } from 'react-native';
-import { useForm, Controller } from 'react-hook-form';
-import { AppText } from './AppText';
-import { Button } from './ui/Button';
-import { Input } from './ui/Input';
+import { Controller, useForm } from 'react-hook-form';
+import { Modal, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { theme } from '.././constants';
 import { validatePassword } from '../utils/validators';
+import { AppText } from './AppText';
+import { CustomButton } from './ui/CustomButton';
+import { Input } from './ui/Input';
 
 export const EditModal = ({ visible, onConfirm, onCancel, isLoading }) => {
   const { control, handleSubmit, reset } = useForm({
@@ -43,7 +42,7 @@ export const EditModal = ({ visible, onConfirm, onCancel, isLoading }) => {
           />
 
           <View style={styles.modalActions}>
-            <Button 
+            <CustomButton 
               title="VALIDAR Y GUARDAR" 
               onPress={handleSubmit(handleConfirm)} 
               loading={isLoading}

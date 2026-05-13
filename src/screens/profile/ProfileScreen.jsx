@@ -1,20 +1,20 @@
-import React, { useState } from 'react';
-import { View, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
-import { ChevronLeft } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
-import { useForm, Controller } from 'react-hook-form';
+import { ChevronLeft } from 'lucide-react-native';
+import { useState } from 'react';
+import { Controller, useForm } from 'react-hook-form';
+import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 
-import { AppText } from '../components/AppText';
-import { ScreenWrapper } from '../components/ScreenWrapper';
-import { Button } from '../components/ui/Button';
-import { Input } from '../components/ui/Input';
-import { theme } from '../constants';
-import { useAuth } from '../context/AuthContext';
-import { validateNames, validatePhoneNumberVE } from '../utils/validators';
-import { useProfile } from '../hooks/useProfile';
-import { EditModal } from '../components/Edit';
-import { SuccessModal } from '../components/SuccessModal';
-import { LogoutModal } from '../components/LogoutModal';
+import { AppText } from '../../components/AppText';
+import { EditModal } from '../../components/Edit';
+import { LogoutModal } from '../../components/LogoutModal';
+import { ScreenWrapper } from '../../components/ScreenWrapper';
+import { SuccessModal } from '../../components/SuccessModal';
+import { CustomButton } from '../../components/ui/CustomButton';
+import { Input } from '../../components/ui/Input';
+import { theme } from '../../constants';
+import { useAuth } from '../../context/AuthContext';
+import { useProfile } from '../../hooks/useProfile';
+import { validateNames, validatePhoneNumberVE } from '../../utils/validators';
 
 // --- PANTALLA PRINCIPAL DE PERFIL ---
 export default function ProfileScreen() {
@@ -142,7 +142,7 @@ export default function ProfileScreen() {
       </ScrollView>
 
       <View style={styles.footer}>
-        <Button
+        <CustomButton
           title="GUARDAR CAMBIOS"
           onPress={handleSubmit(onSavePress)}
           disabled={!isDirty}

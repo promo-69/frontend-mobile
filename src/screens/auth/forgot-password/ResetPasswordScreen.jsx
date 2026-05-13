@@ -1,5 +1,6 @@
-import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ChevronLeft } from 'lucide-react-native';
+import { Controller, useForm } from 'react-hook-form';
 import {
     KeyboardAvoidingView,
     Platform,
@@ -9,11 +10,10 @@ import {
 } from 'react-native';
 import { AppText } from '../../../components/AppText';
 import { ScreenWrapper } from '../../../components/ScreenWrapper';
-import { Button } from '../../../components/ui/Button';
+import { CustomButton } from '../../../components/ui/CustomButton';
 import { Input } from '../../../components/ui/Input';
 import { theme } from '../../../constants';
-import { useForm, Controller } from 'react-hook-form';
-import {validatePassword, validatePasswordMatch } from '../../../utils/validators'
+import { validatePassword, validatePasswordMatch } from '../../../utils/validators';
 
 export const ResetPasswordScreen = () => {
   const router = useRouter();
@@ -118,7 +118,7 @@ export const ResetPasswordScreen = () => {
           </View>
 
           <View style={styles.actionSection}>
-            <Button title="Actualizar" onPress={handleSubmit(onSubmit)} />
+            <CustomButton title="Actualizar" onPress={handleSubmit(onSubmit)} />
           </View>
         </View>
       </KeyboardAvoidingView>

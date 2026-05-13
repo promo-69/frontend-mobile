@@ -1,7 +1,8 @@
 
-import React, { useState } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter } from 'expo-router';
+import { useRouter, useNavigation } from 'expo-router';
+import { ChevronLeft } from 'lucide-react-native';
+import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import {
   Dimensions,
@@ -13,14 +14,13 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { ChevronLeft } from 'lucide-react-native'
 import { AppText } from '../../components/AppText';
 import { ScreenWrapper } from '../../components/ScreenWrapper';
-import { Button } from '../../components/ui/Button';
+import { CustomButton } from '../../components/ui/CustomButton';
 import Logo from '../../components/ui/Icons/Logo';
 import { Input } from '../../components/ui/Input';
-import { useAuth } from '../../context/AuthContext';
 import { theme } from '../../constants';
+import { useAuth } from '../../context/AuthContext';
 import {
   sanitizeInput,
   validateEmail,
@@ -41,9 +41,17 @@ export default function LoginScreen() {
   });
 
   const router = useRouter();
+  const navigation = useNavigation();
 
   const handleGoBack = () => {
-    router.back();
+    // navigation.canGoBack() devuelve true si hay una pantalla previa en el stack
+    if (navigation.canGoBack()) {
+      router.back();
+    } else {
+      // Si entraste directo al login o el stack se limpió, 
+      // redirigimos al home por defecto.
+      router.replace('/(main)/home');
+    }
   };
 
   const clearServerError = () => {
@@ -199,7 +207,7 @@ export default function LoginScreen() {
                 </View>
               ) : null}
 
-              <Button
+              <CustomButton
                 title="Ingresar"
                 onPress={handleSubmit(onSubmit)}
                 loading={isLoading}
