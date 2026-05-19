@@ -30,18 +30,20 @@ import {
 const { width } = Dimensions.get('window');
 
 export default function LoginScreen() {
+  const router = useRouter();
+  const navigation = useNavigation();
   const { login } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
-  const [serverError, setServerError] = useState(null);
+  
+  const [Error, setError] = useState(null);
+
   const { control, handleSubmit } = useForm({
     defaultValues: {
       email: '',
       password: '',
     },
   });
-
-  const router = useRouter();
-  const navigation = useNavigation();
+  
 
   const handleGoBack = () => {
     // navigation.canGoBack() devuelve true si hay una pantalla previa en el stack
@@ -54,24 +56,32 @@ export default function LoginScreen() {
     }
   };
 
-  const clearServerError = () => {
-    if (serverError) {
-      setServerError(null);
+  const clearError = () => {
+    if (Error) {
+      setError(null);
     }
   };
 
   const onSubmit = async (data) => {
-    setServerError(null);
+    setError(null);
     setIsLoading(true);
     try {
+      
       const result = await login(data);
 
-      if (!result?.success) {
-        setServerError(result?.message || 'Problemas de conexión con el servidor');
-      }
+        if (!result?.success) {
+          setError(result?.message);
+      
+      
+          
+        } else {
+          setError(result?.message || 'Problemas de conexión con el servidor');
+        }
+      
+
     } catch (error) {
       console.error('Login error:', error);
-      setServerError('Problemas de conexión con el servidor');
+      setError('Problemas de conexión con el servidor');
     } finally {
       setIsLoading(false);
     }
@@ -150,7 +160,7 @@ export default function LoginScreen() {
                   <Input
                     value={value}
                     onChangeText={(text) => {
-                      clearServerError();
+                      clearError();
                       onChange(sanitizeInput(text));
                     }}
                     onBlur={onBlur}
@@ -174,7 +184,7 @@ export default function LoginScreen() {
                   <Input
                     value={value}
                     onChangeText={(text) => {
-                      clearServerError();
+                      clearError();
                       onChange(text);
                     }}
                     onBlur={onBlur}
@@ -198,11 +208,11 @@ export default function LoginScreen() {
             </View>
 
             <View style={styles.actionSection}>
-              {serverError ? (
+              {Error ? (
                 <View style={styles.authErrorContainer}>
                   <View style={styles.authErrorAccent} />
                   <AppText variant="body" style={styles.authErrorText}>
-                    {serverError}
+                    {Error}
                   </AppText>
                 </View>
               ) : null}
