@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { STORAGE_KEYS } from '../constants/Config';
+import { STORAGE_KEYS } from '../constants/config';
 
 /**
  * Centraliza la persistencia de tokens y datos de usuario

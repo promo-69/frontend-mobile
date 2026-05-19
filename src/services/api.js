@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { ENDPOINTS, ENV, HEADERS } from '../constants/Config';
+import { ENDPOINTS, ENV, HEADERS } from '../constants/config';
 import { storageHelper } from '../helper/storage.helper';
 
 // Crear la instancia base

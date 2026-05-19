@@ -2,7 +2,7 @@ export const normalizeLoginError = (error) => {
   const status = error?.response?.status;
 
   if (status === 401 || status === 422) {
-    return 'Las credenciales no son correctas';
+    return 'Credenciales no válidas';
   }
 
   if (!error?.response || status >= 500) {
