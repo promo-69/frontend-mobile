@@ -27,23 +27,25 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  /**
-   * Maneja el flujo de inicio de sesión
-   * @param {Object} credentials - { email, password }
-   */
+ 
   const login = async (credentials) => {
     try {
       const response = await authService.login(credentials);
-      const payload = response?.data ?? response;
-
-      const { accessToken, refreshToken, user: userData } = payload;
-
-      // Guardamos exactamente el objeto user que viene del backend
-      // y mantenemos la convención firstName / lastName.
-      await storageHelper.saveSession(accessToken, refreshToken, userData);
-      setUser(userData);
+      
+      if (!response?.success) {
+      return { success: false, message: response?.message || 'Error de autenticación' };
+    }
+    
+      const { user, tokens } = response.data;
+      
+      const { accessToken, refreshToken } = tokens;
+      
+      await storageHelper.saveSession(accessToken, refreshToken, user);
+      
+      setUser(user);
 
       return { success: true };
+
     } catch (error) {
       return {
         success: false,
@@ -57,32 +59,87 @@ export const AuthProvider = ({ children }) => {
    * Maneja el registro 
    */
   const register = async (formData) => {
-    try {
-      const response = await authService.register(formData);
-      const payload = response?.data ?? response;
-      const { accessToken, refreshToken, user: userData } = payload;
-
-      await storageHelper.saveSession(accessToken, refreshToken, userData);
-      setUser(userData);
-
-      return { success: true };
-    } catch (error) {
-      const message = error.response?.data?.message || 'Error en el registro';
-      return { success: false, message };
-    }
-  };
+  try {
+    const response = await authService.signup(formData);
+    return { success: true, message: response?.message || 'Registro exitoso.' };
+  } catch (error) {
+    return { 
+      success: false, 
+      message: error.response?.data?.message || 'Error en el registro' 
+    };
+  }
+};
 
   /**
    * Cierre de sesión
    */
   const logout = async () => {
     try {
-      // Intentamos avisar al backend (opcional)
       await authService.logout().catch(() => {});
     } finally {
-      // Siempre limpiamos localmente, falle o no la red
       await storageHelper.clearSession();
       setUser(null);
+    }
+  };
+
+  /**
+   * Verificar correo (Paso obligatorio post-registro)
+   */
+  const verifyAccount = async (email, code) => {
+    try {
+      await authService.verifyEmail({ email, code });
+      return { success: true, message: 'Cuenta verificada exitosamente.' };
+    } catch (error) {
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Cuenta no verificada exitosamente.'
+      };
+    }
+  };
+
+  /**
+   * RECUPERAR CONTRASEÑA - PASO 1 (Enviar correo)
+   */
+  const sendRecoveryEmail = async (email) => {
+    try {
+      const response = await authService.forgotPassword(email);
+      return { success: true, message: response?.message };
+    } catch (error) {
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Error al procesar la solicitud.'
+      };
+    }
+  };
+
+  /**
+   * RECUPERAR CONTRASEÑA - PASO 2 (Validar código de 4 dígitos)
+   * Retorna el token de 64 caracteres necesario para el paso final
+   */
+  const verifyRecoveryCode = async (email, code) => {
+    try {
+      const response = await authService.verifyResetCode({ email, code });
+      return { success: true, data: response }; // Aquí viaja el { resetToken }
+    } catch (error) {
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Código inválido o expirado.'
+      };
+    }
+  };
+
+  /**
+   * RECUPERAR CONTRASEÑA - PASO 3 (Establecer nueva contraseña con el token de 64 caracteres)
+   */
+  const resetPassword = async ({ email, resetToken, newPassword }) => {
+    try {
+      const response = await authService.resetPassword({ email, resetToken, newPassword });
+      return { success: true, message: response?.message };
+    } catch (error) {
+      return {
+        success: false,
+        message: error.response?.data?.message || 'No se pudo restablecer la contraseña.'
+      };
     }
   };
 
@@ -94,7 +151,11 @@ export const AuthProvider = ({ children }) => {
         login, 
         register, 
         logout,
-        isAuthenticated: !!user
+        isAuthenticated: !!user,
+        verifyAccount,
+        sendRecoveryEmail,
+        verifyRecoveryCode,
+        resetPassword
       }}
     >
       {children}

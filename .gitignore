@@ -54,3 +54,4 @@ app-example
 .pnp.*
 
 .coverage/
+.env
