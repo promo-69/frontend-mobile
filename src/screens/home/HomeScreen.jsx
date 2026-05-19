@@ -91,13 +91,13 @@ export default function HomeScreen() {
         )}
       </View>
 
-      {/* Botón para verificar conexión */}
+      {/* Botón para verificar conexión 
       <TouchableOpacity
         style={styles.checkConnectionButton}
         onPress={handleCheckConnection}
       >
         <Text style={styles.checkConnectionText}>Verificar Conexión</Text>
-      </TouchableOpacity>
+      </TouchableOpacity>*/}
 
       {/* Contenido Principal */}
       <ScrollView contentContainerStyle={styles.scrollContent}>
