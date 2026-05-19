@@ -1,16 +1,16 @@
-import React, { useState } from 'react';
-import { Controller } from 'react-hook-form';
-import { StyleSheet, View, TouchableOpacity } from 'react-native';
 import { ChevronDown } from 'lucide-react-native';
+import { useState } from 'react';
+import { Controller } from 'react-hook-form';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { theme } from '../constants';
 import {
-    validateDate,
-    validateEmail,
-    validateGenres,
-    validateNames,
-    validatePassword,
-    validatePhoneNumberVE,
-    validateDocument
+  validateDate,
+  validateDocument,
+  validateEmail,
+  validateGenres,
+  validateNames,
+  validatePassword,
+  validatePhoneNumberVE
 } from '../utils/validators';
 import { AppText } from './AppText';
 import { GenreSelectionStep } from './GenreSelectionStep';
@@ -317,18 +317,7 @@ export const PersonalInfoSteps = ({
   // Paso 3 Selecciona Géneros
   if (step === 3) {
     return (
-      <Controller
-        control={control}
-        name="favoriteGenres"
-        rules={{ validate: validateGenres }}
-        render={({ field: { value, onChange }, fieldState: { error } }) => (
-          <GenreSelectionStep
-            value={value}
-            onChange={onChange}
-            error={error?.message}
-          />
-        )}
-      />
+       <EmailCheck />
     );
   }
 };

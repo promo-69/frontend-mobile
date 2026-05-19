@@ -1,6 +1,6 @@
-import { View, StyleSheet } from 'react-native';
-import { GenreChip } from '../../components/ui/GenreChip';
+import { StyleSheet, View } from 'react-native';
 import { AppText } from '../../components/AppText';
+import { GenreChip } from '../../components/ui/GenreChip';
 import { theme } from '../../constants';
 
 /**
@@ -21,6 +21,16 @@ export default function FavoriteGenreMovies({
   onChange, 
   error 
 }) {
+
+   const handleSubmit = () => {
+    // Aquí puedes enviar los géneros seleccionados al backend
+    console.log('Géneros seleccionados:', value);
+    router.replace('/(main)/home'); // Redirige al home
+  };
+
+  const handleSkip = () => {
+    router.replace('/(main)/home'); // Redirige al home sin enviar datos
+  };
 
  const handleToggle = (genre) => {
     const isSelected = value.includes(genre);
@@ -57,6 +67,20 @@ export default function FavoriteGenreMovies({
           />
         ))}
       </View>
+
+       <View style={styles.buttonContainer}>
+        <CustomButton
+          title="Enviar"
+          onPress={handleSubmit}
+          style={styles.submitButton}
+        />
+        <CustomButton
+          title="Saltar"
+          onPress={handleSkip}
+          style={[styles.skipButton, { backgroundColor: 'transparent', borderWidth: 1, borderColor: theme.colors.primary }]}
+        />
+      </View>
+
     </View>
   );
 };
@@ -94,5 +118,18 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.variants.label.fontSize,
     textAlign: 'center',
     marginTop: theme.spacing.s16,
+  },
+  buttonContainer: {
+    marginTop: theme.spacing.s24,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  submitButton: {
+    flex: 1,
+    marginRight: theme.spacing.s8,
+  },
+  skipButton: {
+    flex: 1,
+    marginLeft: theme.spacing.s8,
   },
 });
