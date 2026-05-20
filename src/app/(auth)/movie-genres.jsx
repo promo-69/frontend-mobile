@@ -1,4 +1,4 @@
-import FavoriteGenreMovies from './favoriteGenreMovies';
+import FavoriteGenreMovies from './../../screens/auth/favoriteGenreMovies';
 
 export default function MovieGenresScreen() {
   const handleGenresChange = (selectedGenres) => {
