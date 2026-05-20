@@ -133,3 +133,14 @@ export default function PersonalDataScreen() {
   );
 }
 
+const styles = StyleSheet.create({
+  centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: theme.spacing.s16, paddingTop: theme.spacing.s8, marginBottom: theme.spacing.s16 },
+  backButton: { width: 40, height: 40, justifyContent: 'center' },
+  headerTitle: { color: theme.colors.primary, flex: 1, fontSize: 20, fontWeight: 'bold', textAlign: 'center', marginRight: 40 },
+  scrollContent: { paddingHorizontal: theme.spacing.s24, paddingBottom: theme.spacing.s32 },
+  description: { color: theme.colors.textSecondary, opacity: 0.6, fontSize: 14, lineHeight: 20, marginBottom: theme.spacing.s32 },
+  inputsGroup: { gap: theme.spacing.s24 },
+  dividerZone: { height: 1, backgroundColor: 'rgba(255,255,255,0.08)', marginVertical: theme.spacing.s8 },
+  footer: { padding: theme.spacing.s24, backgroundColor: 'transparent' }
+});
