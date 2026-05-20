@@ -25,14 +25,14 @@ export default function MainLayout() {
       }}
     >
       <Tabs.Screen
-        name="index"
+        name="home"
         options={{
           title: 'Inicio',
           tabBarIcon: ({ color }) => <Home color={color} size={24} />,
         }}
       />
       <Tabs.Screen
-        name="orders"
+        name="purchases"
         options={{
           title: 'Compras',
           tabBarIcon: ({ color }) => <ShoppingCart color={color} size={24} />,

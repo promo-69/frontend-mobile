@@ -13,7 +13,7 @@ import { validateEmail, validatePassword } from '../../../utils/validators'
 
 export default function SecurityDataScreen() {
   const router = useRouter();
-  const { profile, loading, isUpdating, updateSecurity } = useProfiles();
+  const { profile, loading, isUpdating, updateSecurity } = useProfile();
   const [isSuccessVisible, setIsSuccessVisible] = useState(false);
 
   const { control, handleSubmit, getValues, reset, formState: { isDirty } } = useForm({
@@ -122,9 +122,23 @@ export default function SecurityDataScreen() {
 }
 
 const styles = StyleSheet.create({
-  centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: theme.spacing.s16, paddingTop: theme.spacing.s8, marginBottom: theme.spacing.s16 },
-  backButton: { width: 40, height: 40, justifyContent: 'center' },
+  centered: { 
+    flex: 1, 
+    justifyContent: 'center', 
+    alignItems: 'center' 
+  },
+  header: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    paddingHorizontal: theme.spacing.s16, 
+    paddingTop: theme.spacing.s8, 
+    marginBottom: theme.spacing.s16 
+  },
+  backButton: { 
+    width: 40, 
+    height: 40, 
+    justifyContent: 'center' 
+  },
   headerTitle: { color: theme.colors.primary, flex: 1, fontSize: 20, fontWeight: 'bold', textAlign: 'center', marginRight: 40 },
   scrollContent: { paddingHorizontal: theme.spacing.s24, paddingBottom: theme.spacing.s32 },
   description: { color: theme.colors.textSecondary, opacity: 0.6, fontSize: 14, lineHeight: 20, marginBottom: theme.spacing.s32 },
