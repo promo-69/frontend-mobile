@@ -1,7 +1,6 @@
 import axios from 'axios';
 import { ENDPOINTS, ENV, HEADERS } from '../constants/config';
 import { storageHelper } from '../helper/storage.helper';
-
 // Crear la instancia base
 const api = axios.create({
   baseURL: ENV.API_URL,
@@ -51,8 +50,9 @@ api.interceptors.response.use(
 
         // Intentar renovar el token usando el endpoint 
         // Nota: Usamos axios directamente para evitar bucles infinitos con la instancia 'api'
-        const response = await axios.post(`${ENV.API_URL}${ENDPOINTS.REFRESH_SESSION}`, {}, {
-          headers: { Authorization: `${HEADERS.AUTH_PREFIX} ${refreshToken}` }
+        const response = await axios.post(`${ENV.API_URL}/auth/refresh`, {}, {
+          headers: 
+          { Authorization: `${HEADERS.AUTH_PREFIX} ${refreshToken}` }
         });
 
         // Los tokens vienen en data.data
