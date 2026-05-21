@@ -16,7 +16,7 @@ export const LogoutModal = ({ visible, onConfirm, onCancel }) => (
         
         <View style={styles.modalActions}>
           <CustomButton 
-            title="SÍ, CERRAR SESIÓN" 
+            title="CERRAR SESIÓN" 
             onPress={onConfirm} 
             style={styles.btnConfirm}
           />
@@ -43,8 +43,6 @@ const styles = StyleSheet.create({
     width: '88%',
     borderRadius: 28,
     padding: theme.spacing.s32,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
   },
   modalTitle: { color: '#ff4444', textAlign: 'center', marginBottom: theme.spacing.s12 },
   modalDesc: {

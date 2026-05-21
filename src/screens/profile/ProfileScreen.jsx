@@ -1,169 +1,115 @@
 import { useRouter } from 'expo-router';
-import { ChevronLeft } from 'lucide-react-native';
+import { ChevronLeft, ChevronRight, User, ShieldCheck, Moon, LogOut, Globe, Bell, HelpCircle } from 'lucide-react-native';
 import { useState } from 'react';
-import { Controller, useForm } from 'react-hook-form';
-import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { ScrollView, StyleSheet, TouchableOpacity, View, Switch, ActivityIndicator } from 'react-native';
 
 import { AppText } from '../../components/AppText';
-import { EditModal } from '../../components/Edit';
-import { LogoutModal } from '../../components/LogoutModal';
+import { LogoutModal } from '../../components/ui/LogoutModal';
 import { ScreenWrapper } from '../../components/ScreenWrapper';
-import { SuccessModal } from '../../components/SuccessModal';
-import { CustomButton } from '../../components/ui/CustomButton';
-import { Input } from '../../components/ui/Input';
 import { theme } from '../../constants';
 import { useAuth } from '../../context/AuthContext';
-import { useProfile } from '../../hooks/useProfile';
-import { validateNames, validatePhoneNumberVE } from '../../utils/validators';
+import { useProfile } from '../../hooks/profile/useProfile';
 
-// --- PANTALLA PRINCIPAL DE PERFIL ---
 export default function ProfileScreen() {
   const router = useRouter();
   const { user, logout } = useAuth();
-  const { 
-    isEditModalVisible, setIsEditModalVisible, 
-    isSuccessVisible, setIsSuccessVisible, 
-    isUpdating, handleFinalUpdate 
-  } = useProfile();
+  const { profile, loading } = useProfile();
   
   const [isLogoutModalVisible, setIsLogoutModalVisible] = useState(false);
+ 
 
- const { control, handleSubmit, getValues, formState: { isDirty } } = useForm({
-    defaultValues: {
-      firstName: user?.firstName || '',
-      lastName: user?.lastName || '',
-      phoneNumber: user?.phoneNumber || '',
-    }
-});
+  if (loading) {
+    return (
+      <ScreenWrapper style={styles.centered}>
+        <ActivityIndicator size="large" color={theme.colors.primary} />
+      </ScreenWrapper>
+    );
+  }
 
-  const onSavePress = () => setIsEditModalVisible(true);
-  const handleLogoutPress = () => setIsLogoutModalVisible(true);
+  // Helper para renderizar cada fila/opción del menú de manera limpia
+  const renderMenuItem = ({ icon: Icon, title, onPress, rightComponent }) => (
+    <TouchableOpacity style={styles.menuItem} onPress={onPress} disabled={!!rightComponent}>
+      <View style={styles.menuItemLeft}>
+        <Icon size={22} color={theme.colors.textSecondary || '#FFFFFF'} style={styles.menuIcon} />
+        <AppText variant="body" style={styles.menuItemText}>{title}</AppText>
+      </View>
+      {rightComponent ? rightComponent : <ChevronRight size={20} color="rgba(255,255,255,0.3)" />}
+    </TouchableOpacity>
+  );
 
-   return (
+  const handleLogout = async () => {
+    setIsLogoutModalVisible(true);
+
+    await logout();
+
+    router.replace('/(main)/home');
+
+  }
+
+  return (
     <ScreenWrapper>
+      {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => router.back()}
-          style={styles.backButton}
-        >
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <ChevronLeft size={28} color={theme.colors.border} />
         </TouchableOpacity>
-        <AppText variant="h2" style={styles.headerTitle}>
-          Editar Perfil
-        </AppText>
+        <AppText variant="h2" style={styles.headerTitle}>Mi Perfil</AppText>
       </View>
 
-      <ScrollView contentContainerStyle={styles.formContent}>
-        <View style={styles.avatarSection}>
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        {/* Sección de Tarjeta de Usuario Resumida */}
+        <View style={styles.userCard}>
           <View style={styles.avatarCircle}>
-            <AppText variant="h1" style={{ color: theme.colors.primary }}>
-              {user?.firstName?.charAt(0)}
-              {user?.lastName?.charAt(0)}
+            <AppText variant="h2" style={{ color: theme.colors.primary }}>
+              {profile?.firstName?.charAt(0)}{profile?.lastName?.charAt(0)}
             </AppText>
           </View>
-          <AppText variant="body" style={styles.userEmail}>
-            {user?.email}
-          </AppText>
+          <View style={styles.userInfo}>
+            <AppText variant="h3" style={styles.userName}>
+              {profile?.firstName} {profile?.lastName}
+            </AppText>
+            <AppText variant="body" style={styles.userEmail}>{profile?.email}</AppText>
+          </View>
         </View>
 
-        <View style={styles.inputsGroup}>
-          <Controller
-            control={control}
-            name="firstName"
-            rules={{
-              required: 'El nombre es obligatorio',
-              validate: validateNames,
-            }}
-            render={({
-              field: { onChange, onBlur, value },
-              fieldState: { error },
-            }) => (
-              <Input
-                label="Nombres"
-                value={value}
-                onBlur={onBlur}
-                onChangeText={onChange}
-                error={error?.message}
-                autoCapitalize="words"
-              />
-            )}
-          />
-
-          <Controller
-            control={control}
-            name="lastName"
-            rules={{
-              required: 'El apellido es obligatorio',
-              validate: validateNames,
-            }}
-            render={({
-              field: { onChange, onBlur, value },
-              fieldState: { error },
-            }) => (
-              <Input
-                label="Apellidos"
-                value={value}
-                onBlur={onBlur}
-                onChangeText={onChange}
-                error={error?.message}
-                autoCapitalize="words"
-              />
-            )}
-          />
-
-          <Controller
-            control={control}
-            name="phoneNumber"
-            rules={{ validate: validatePhoneNumberVE }}
-            render={({
-              field: { onChange, onBlur, value },
-              fieldState: { error },
-            }) => (
-              <Input
-                label="Teléfono Móvil"
-                value={value}
-                onBlur={onBlur}
-                onChangeText={onChange}
-                error={error?.message}
-                keyboardType="phone-pad"
-              />
-            )}
-          />
+        {/* --- CONFIGURACIÓN DE CUENTA --- */}
+        <AppText variant="small" style={styles.categoryTitle}>Account Settings</AppText>
+        <View style={styles.menuGroup}>
+          {renderMenuItem({
+            icon: User,
+            title: 'Datos Personales',
+            onPress: () => router.push('/profile/personal-data')
+          })}
+          {renderMenuItem({
+            icon: ShieldCheck,
+            title: 'Seguridad',
+            onPress: () => router.push('/profile/security') // Asegúrate de que el archivo coincida con el nombre de tu ruta
+          })}
+          {renderMenuItem({
+            icon: LogOut,
+            title: 'Logout',
+            onPress: () => setIsLogoutModalVisible(true)
+          })}
         </View>
 
-        <View style={styles.logoutSection}>
-          <TouchableOpacity 
-            style={styles.logoutButton} 
-            onPress={handleLogoutPress}
-          >
-            <AppText style={styles.logoutText}>Cerrar Sesión</AppText>
-          </TouchableOpacity>
+        {/* --- CATEGORÍA 2: CONFIGURACIÓN DE APP --- 
+        <AppText variant="small" style={styles.categoryTitle}>App Settings</AppText>
+        <View style={styles.menuGroup}>
+          {renderMenuItem({ icon: Globe, title: 'Language', onPress: () => alert('Próximamente') })}
+          {renderMenuItem({ icon: Bell, title: 'Notification', onPress: () => alert('Próximamente') })}
         </View>
+
+        {/* --- CATEGORÍA 3: SOPORTE --- 
+        <AppText variant="small" style={styles.categoryTitle}>Support</AppText>
+        <View style={styles.menuGroup}>
+          {renderMenuItem({ icon: HelpCircle, title: 'Help Center', onPress: () => alert('Próximamente') })}
+        </View>*/}
       </ScrollView>
 
-      <View style={styles.footer}>
-        <CustomButton
-          title="GUARDAR CAMBIOS"
-          onPress={handleSubmit(onSavePress)}
-          disabled={!isDirty}
-        />
-      </View>
-
-      <EditModal
-        visible={isEditModalVisible}
-        onConfirm={(pass) => handleFinalUpdate(pass, getValues())}
-        onCancel={() => setIsEditModalVisible(false)}
-        isLoading={isUpdating}
-      />
-
-      <SuccessModal
-        visible={isSuccessVisible}
-        onClose={() => setIsSuccessVisible(false)}
-      />
-
+      {/* Modal de confirmación de deslogueo */}
       <LogoutModal
         visible={isLogoutModalVisible}
-        onConfirm={logout}
+        onConfirm={handleLogout}
         onCancel={() => setIsLogoutModalVisible(false)}
       />
     </ScreenWrapper>
@@ -171,70 +117,109 @@ export default function ProfileScreen() {
 }
 
 const styles = StyleSheet.create({
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: theme.spacing.s16,
-    paddingTop: theme.spacing.s8,
-    marginBottom: theme.spacing.s16,
+  centered: { 
+    flex: 1, 
+    justifyContent: 'center', 
+    alignItems: 'center' 
   },
-  backButton: {
-    width: 40,
-    height: 40,
-    justifyContent: 'center',
+  header: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    paddingHorizontal: theme.spacing.s16, 
+    paddingTop: theme.spacing.s8, 
+    marginBottom: theme.spacing.s8 
   },
-  headerTitle: {
-    color: theme.colors.primary,
-    flex: 1,
-    textAlign: 'center',
-    marginRight: 40, // Alineación visual respecto al backbutton
+  backButton: { 
+    width: 40, 
+    height: 40, 
+    justifyContent: 'center' 
   },
-  formContent: {
-    paddingHorizontal: theme.spacing.s24,
-    paddingBottom: theme.spacing.s32,
+  headerTitle: { 
+    color: theme.colors.primary, 
+    flex: 1, 
+    textAlign: 'center', 
+    marginRight: 40, 
+    fontSize: 20, 
+    fontWeight: 'bold' 
   },
-  avatarSection: {
-    alignItems: 'center',
-    marginVertical: theme.spacing.s32,
+  scrollContent: { 
+    paddingHorizontal: 
+    theme.spacing.s24, 
+    paddingBottom: theme.spacing.s40 
   },
-  avatarCircle: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: 'rgba(255,255,255,0.05)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: theme.colors.primary,
-    marginBottom: theme.spacing.s12,
+  
+  // Tarjeta superior del usuario
+  userCard: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    marginVertical: theme.spacing.s24, 
+    padding: theme.spacing.s16, 
+    backgroundColor: 'rgba(255,255,255,0.02)', borderRadius: 16, 
+    borderWidth: 1, 
+    borderColor: 'rgba(255,255,255,0.05)' 
   },
-  userEmail: {
-    color: theme.colors.textSecondary,
-    opacity: 0.7,
+  avatarCircle: { 
+    width: 60, 
+    height: 60, 
+    borderRadius: 30, 
+    backgroundColor: 'rgba(255,255,255,0.05)', justifyContent: 'center', 
+    alignItems: 'center', 
+    borderWidth: 1.5, 
+    borderColor: theme.colors.primary
+   },
+  userInfo: { 
+    marginLeft: theme.spacing.s16, 
+    flex: 1 
   },
-  inputsGroup: {
-    gap: theme.spacing.s24,
+  userName: { 
+    color: '#FFFFFF', 
+    fontSize: 18, 
+    fontWeight: '600' 
   },
-  footer: {
-    padding: theme.spacing.s24,
-    backgroundColor: 'transparent',
+  userEmail: { 
+    color: theme.colors.textSecondary, 
+    opacity: 0.6, 
+    fontSize: 13, 
+    marginTop: 2
+   },
+  
+  // Agrupadores de menús 
+  categoryTitle: { 
+    color: theme.colors.textSecondary, 
+    opacity: 0.4, 
+    textTransform: 'uppercase', 
+    fontWeight: '700', 
+    letterSpacing: 1, 
+    marginBottom: theme.spacing.s8, 
+    marginLeft: 4 
   },
-  logoutSection: {
-    marginTop: theme.spacing.s40,
-    paddingTop: theme.spacing.s24,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.05)',
-    alignItems: 'center',
+  menuGroup: { 
+    backgroundColor: 'rgba(255,255,255,0.03)', borderRadius: 16, 
+    overflow: 'hidden', 
+    marginBottom: theme.spacing.s24, 
+    borderWidth: 1, 
+    borderColor: 'rgba(255,255,255,0.04)' 
   },
-  logoutButton: {
-    paddingVertical: theme.spacing.s12,
-    paddingHorizontal: theme.spacing.s24,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#ff4444',
+  menuItem: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    justifyContent: 'space-between', 
+    paddingVertical: theme.spacing.s16, 
+    paddingHorizontal: theme.spacing.s16, 
+    borderBottomWidth: 1, 
+    borderBottomColor: 'rgba(255,255,255,0.04)' 
   },
-  logoutText: {
-    color: '#ff4444',
-    fontWeight: '600',
+  menuItemLeft: { 
+    flexDirection: 'row', 
+    alignItems: 'center' 
   },
+  menuIcon: { 
+    marginRight: theme.spacing.s16, 
+    opacity: 0.8 
+  },
+  menuItemText: { 
+    color: '#FFFFFF', 
+    fontSize: 15, 
+    fontWeight: '500' 
+  }
 });
