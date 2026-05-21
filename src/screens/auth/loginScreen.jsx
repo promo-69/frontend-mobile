@@ -69,13 +69,11 @@ export default function LoginScreen() {
       
       const result = await login(data);
 
-        if (!result?.success) {
-          setError(result?.message);
-      
-      
-          
+        if (result?.success) {
+          router.replace('/(main)/home');
+               
         } else {
-          setError(result?.message || 'Problemas de conexión con el servidor');
+          setError(result?.message || 'Credenciales inválidas');
         }
       
 
@@ -207,16 +205,16 @@ export default function LoginScreen() {
               </View>
             </View>
 
-            <View style={styles.actionSection}>
-              {Error ? (
-                <View style={styles.authErrorContainer}>
-                  <View style={styles.authErrorAccent} />
-                  <AppText variant="body" style={styles.authErrorText}>
-                    {Error}
-                  </AppText>
-                </View>
-              ) : null}
-
+            <View style={[
+  styles.authErrorContainer, 
+  // Si no hay error, mantenemos el contenedor invisible pero ocupando su espacio (opacidad 0)
+  { opacity: Error ? 1 : 0, minHeight: 48, marginBottom: Error ? theme.spacing.s12 : 0 }
+]}>
+  <View style={styles.authErrorAccent} />
+  <AppText variant="body" style={styles.authErrorText}>
+    {Error || '¡Ups!, hubo un problema. Danos un momento para resolverlo'} 
+  </AppText>
+</View>
               <CustomButton
                 title="Ingresar"
                 onPress={handleSubmit(onSubmit)}
@@ -234,7 +232,7 @@ export default function LoginScreen() {
                 </AppText>
               </TouchableOpacity>
             </View>
-          </View>
+          
         </ScrollView>
       </KeyboardAvoidingView>
     </ScreenWrapper>
@@ -245,6 +243,7 @@ const styles = StyleSheet.create({
   contentContainer: {
     flexGrow: 1,
     justifyContent: 'flex-start',
+    paddingBottom: 40,
   },
   headerImage: {
     width: width,
@@ -287,8 +286,8 @@ const styles = StyleSheet.create({
   actionSection: {
     width: '100%',
     marginTop: theme.spacing.s24,
-    paddingBottom: theme.spacing.s48,
-    gap: theme.spacing.s12,
+    paddingBottom: theme.spacing.s8,
+    gap: theme.spacing.s8,
   },
   authErrorContainer: {
     width: '100%',
@@ -311,11 +310,11 @@ const styles = StyleSheet.create({
     width: 4,
     alignSelf: 'stretch',
     borderRadius: 999,
-    backgroundColor: theme.colors.red[400],
+    backgroundColor: theme.colors.red[700],
   },
   authErrorText: {
     flex: 1,
-    color: theme.colors.red[100],
+    color: theme.colors.red[400],
     lineHeight: 20,
   },
   forgotPasswordWrapper: {
@@ -336,8 +335,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: -theme.spacing.s32,
-    marginBottom: theme.spacing.s32,
+    marginTop: theme.spacing.s16,
+    marginBottom: theme.spacing.s24,
   },
   footerText: {
     color: theme.colors.textPrimary,
