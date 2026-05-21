@@ -13,6 +13,7 @@ import {
   Text,
   TouchableOpacity,
   View,
+  ActivityIndicator
 } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
 import { checkHealth } from '../../services/api';
@@ -28,7 +29,7 @@ const COLORS = {
 
 export default function HomeScreen() {
   const router = useRouter();
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, isLoading } = useAuth();
 
   
   const navigateProtected = (route) => {
@@ -39,14 +40,6 @@ export default function HomeScreen() {
     }
   };
 
-  const handleCheckConnection = async () => {
-    try {
-      const healthStatus = await checkHealth();
-      alert('Conexión exitosa: ' + JSON.stringify(healthStatus));
-    } catch (error) {
-      alert('Error al conectar con el backend.');
-    }
-  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -67,7 +60,9 @@ export default function HomeScreen() {
         </View>
 
         {/* Botón Ingresar */}
-        {isAuthenticated ? (
+        {isLoading ? (
+        <ActivityIndicator size="small" color={COLORS.accent} />
+        ) : isAuthenticated && user?.firstName ? ( 
           <TouchableOpacity 
             style={styles.userProfileHeader}
             onPress={() => router.push('/(main)/profile')}
@@ -77,10 +72,11 @@ export default function HomeScreen() {
                 <Text style={styles.userNameText}>{user?.firstName?.split(' ')[0]}!</Text>
             </View>
             <View style={styles.avatarMini}>
-               <UserCircle size={20} color={COLORS.bgDark} />
+              <UserCircle size={20} color={COLORS.bgDark} />
             </View>
           </TouchableOpacity>
         ) : (
+          // Si no está autenticado o la sesión está limpia
           <TouchableOpacity
             style={styles.loginButton}
             onPress={() => router.push('/(auth)/login')}
@@ -89,7 +85,7 @@ export default function HomeScreen() {
             <UserCircle size={18} color={COLORS.bgDark} />
           </TouchableOpacity>
         )}
-      </View>
+        </View>
 
       {/* Botón para verificar conexión 
       <TouchableOpacity
