@@ -5,9 +5,6 @@ export const authService = {
    * Petición de inicio de sesión
    */
   login: async (credentials) => {
-    // credentials: { email, password }
-    console.log("=== VERIFICANDO URL EN EL TELÉFONO ===");
-    console.log("BaseURL configurada:", api.defaults.baseURL);
     const response = await api.post('/auth/login', credentials);
     return response.data; 
   },

@@ -4,7 +4,11 @@ import { storageHelper } from '../helper/storage.helper';
 // Crear la instancia base
 const api = axios.create({
   baseURL: ENV.API_URL,
-  headers: HEADERS.JSON,
+  timeout: 30000,
+  headers: {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+  }
 });
 
 //  Interceptor de Peticiones: Inyectar el Bearer Token
@@ -12,7 +16,7 @@ api.interceptors.request.use(
   async (config) => {
     const token = await storageHelper.getAccessToken();
     if (token) {
-      config.headers.Authorization = `${HEADERS.AUTH_PREFIX} ${token}`;
+      config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
   },
@@ -25,7 +29,15 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    // Registrar errores de conexión o respuesta
+    if (
+      originalRequest.url?.includes('/auth/login') || 
+      originalRequest.url?.includes('/auth/refresh') ||
+      originalRequest.url?.includes('/auth/signup')
+    ) {
+      return Promise.reject(error);
+    }
+
+    /*
     if (error.response) {
       console.error('Error de respuesta:', {
         status: error.response.status,
@@ -35,7 +47,7 @@ api.interceptors.response.use(
       console.error('Error de conexión:', error.request);
     } else {
       console.error('Error desconocido:', error.message);
-    }
+    }*/
 
     // Si el error es 401 (No autorizado) y no hemos reintentado ya esta petición
     if (error.response?.status === 401 && !originalRequest._retry) {
@@ -52,7 +64,7 @@ api.interceptors.response.use(
         // Nota: Usamos axios directamente para evitar bucles infinitos con la instancia 'api'
         const response = await axios.post(`${ENV.API_URL}/auth/refresh`, {}, {
           headers: 
-          { Authorization: `${HEADERS.AUTH_PREFIX} ${refreshToken}` }
+          { Authorization: `Bearer ${refreshToken}` }
         });
 
         // Los tokens vienen en data.data
@@ -62,7 +74,7 @@ api.interceptors.response.use(
         await storageHelper.saveTokens(accessToken, newRefreshToken);
 
         // Actualizar el header de la petición original y reintentar
-        originalRequest.headers.Authorization = `${HEADERS.AUTH_PREFIX} ${accessToken}`;
+        originalRequest.headers.Authorization = `Bearer ${accessToken}`;
         return api(originalRequest);
 
       } catch (refreshError) {
@@ -81,7 +93,7 @@ api.interceptors.response.use(
 // Function to check the health of the backend service
 export const checkHealth = async () => {
   try {
-    const response = await axios.get('http://backend-jog6.onrender.com/health');
+    const response = await axios.get(ENV.API_URL);
     return response.data; // Return the response data if successful
   } catch (error) {
     console.error('Health check failed:', error);

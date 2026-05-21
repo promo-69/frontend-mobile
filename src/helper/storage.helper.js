@@ -19,6 +19,7 @@ export const storageHelper = {
       ]);
     } catch (error) {
       console.error('Error al guardar tokens:', error);
+      throw error;
     }
   },
 
@@ -34,6 +35,19 @@ export const storageHelper = {
       ]);
     } catch (error) {
       console.error('Error al guardar sesión:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Permite actualizar ÚNICAMENTE los datos del usuario (Ideal para tus pantallas de perfil)
+   */
+  updateUserData: async (newUserData) => {
+    try {
+      await AsyncStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(newUserData));
+    } catch (error) {
+      console.error('Error al actualizar datos de usuario en storage:', error);
+      throw error;
     }
   },
 
@@ -60,13 +74,25 @@ export const storageHelper = {
   },
 
   /**
-   * Obtiene los datos del usuario parseados
+   * Obtiene los datos del usuario parseados con auto-limpieza si el JSON está corrupto
    */
   getUserData: async () => {
     try {
       const user = await AsyncStorage.getItem(STORAGE_KEYS.USER);
-      return user ? JSON.parse(user) : null;
+      
+      if (!user) return null;
+
+      // Anti-Bug: Si por error se guardó un string vacío o corrupto que burla el if anterior
+      if (user.trim() === "" || user === "{}" || user === "[object Object]") {
+        await AsyncStorage.removeItem(STORAGE_KEYS.USER);
+        return null;
+      }
+
+      return JSON.parse(user);
     } catch (error) {
+      console.error('Error al parsear USER de AsyncStorage. Limpiando llave corrupta...', error);
+      // Si el JSON está roto, lo borramos inmediatamente para evitar bucles de error en la UI
+      await AsyncStorage.removeItem(STORAGE_KEYS.USER);
       return null;
     }
   },
@@ -83,7 +109,8 @@ export const storageHelper = {
       ];
       await AsyncStorage.multiRemove(keys);
     } catch (error) {
-      console.error('Error al limpiar sesión:', error);
+      console.error('Error al limpiar sesión en Async Storage:', error);
+      throw error;
     }
   }
 };

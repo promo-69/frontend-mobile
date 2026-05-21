@@ -1,6 +1,6 @@
 
-const DEV_URL = process.env.PUBLIC_DEV_URL;
-const PROD_URL = process.env.PUBLIC_PROD_URL;
+const DEV_URL = process.env.EXPO_PUBLIC_DEV_URL;
+const PROD_URL = process.env.EXPO_PUBLIC_PROD_URL;
 
 
 export const ENV = {

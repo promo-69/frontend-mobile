@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { userService } from '../../services/users.service';
+import { usersService } from '../../services/users.service';
 
 export const useProfile = () => {
 
@@ -12,7 +12,7 @@ export const useProfile = () => {
   const loadProfile = async () => {
     setLoading(true);
     try {
-      const result = await userService.getProfile();
+      const result = await usersService.getProfile();
       setProfile(result?.data || result);
       setError(null);
     } catch (err) {
