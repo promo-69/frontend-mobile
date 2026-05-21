@@ -19,6 +19,10 @@ export const AuthProvider = ({ children }) => {
       if (userData) {
         setUser(userData);
       }
+      else {
+      setUser(null);
+      await storageHelper.clearSession(); // Limpiamos por si hay residuos inválidos
+     }
     } catch (error) {
       console.error('Error al restaurar sesión:', error);
       await storageHelper.clearSession();
@@ -74,13 +78,27 @@ export const AuthProvider = ({ children }) => {
    * Cierre de sesión
    */
   const logout = async () => {
+  try {
+    setIsLoading(true); 
+
     try {
-      await authService.logout().catch(() => {});
-    } finally {
-      await storageHelper.clearSession();
-      setUser(null);
+      const response=await authService.logout(); 
+      console.log(response.message);
+    } catch (apiError) { 
+      console.warn('El servidor no pudo procesar el logout o el token expiró:', apiError);
     }
-  };
+
+    await storageHelper.clearSession();
+
+    setUser(null);
+    
+    console.log('Sesión destruida localmente con éxito.');
+  } catch (error) {
+    console.error('Error crítico en el proceso de logout:', error);
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   /**
    * Verificar correo (Paso obligatorio post-registro)
