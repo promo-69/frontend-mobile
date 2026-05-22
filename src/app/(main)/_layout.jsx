@@ -32,17 +32,17 @@ export default function MainLayout() {
         }}
       />
       <Tabs.Screen
-        name="purchases"
+        name="concessions"
         options={{
-          title: 'Compras',
-          tabBarIcon: ({ color }) => <ShoppingCart color={color} size={24} />,
+          title: 'Tienda',
+          tabBarIcon: ({ color }) => <PopcornIcon color={color} size={24} />,
         }}
       />
       <Tabs.Screen
-        name="cinemas"
+        name="purchases"
         options={{
-          title: 'Cines',
-          tabBarIcon: ({ color }) => < Store color={color} size={24} />,
+          title: 'Mis Compras',
+          tabBarIcon: ({ color }) => < ShoppingCart color={color} size={24} />,
         }}
       />
       <Tabs.Screen
