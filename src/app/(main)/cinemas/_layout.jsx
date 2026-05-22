@@ -1,4 +1,3 @@
-// src/app/(main)/profile/_layout.jsx
 import { Stack } from 'expo-router';
 import { theme } from '../../../constants';
 

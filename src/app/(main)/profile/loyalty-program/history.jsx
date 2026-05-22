@@ -1,6 +1,6 @@
 import { View, StyleSheet } from 'react-native';
-import { AppText } from '../../../components/AppText';
-import { ScreenWrapper } from '../../../components/ScreenWrapper';
+import { AppText } from '../../../../components/AppText';
+import { ScreenWrapper } from '../../../../components/ScreenWrapper';
 
 export default function LoyaltyHistoryScreen() {
   return (
