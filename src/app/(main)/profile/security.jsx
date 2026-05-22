@@ -5,7 +5,8 @@ import { Controller, useForm } from 'react-hook-form';
 import { ScrollView, StyleSheet, TouchableOpacity, View, ActivityIndicator } from 'react-native';
 import { AppText } from '../../../components/AppText';
 import { ScreenWrapper } from '../../../components/ScreenWrapper';
-import { SuccessModal } from '../../../components/ui/CustomButton';
+import { CustomButton } from '../../../components/ui/CustomButton';
+import { SuccessModal} from '../../../components/SuccessModal'
 import { Input } from '../../../components/ui/Input';
 import { theme } from '../../../constants';
 import { useProfile } from '../../../hooks/profile/useProfile';

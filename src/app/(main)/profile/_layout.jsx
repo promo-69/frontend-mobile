@@ -31,7 +31,7 @@ export default function ProfileLayout() {
       
       {/* Pantalla de cambio de credenciales / seguridad */}
       <Stack.Screen 
-        name="change-password" 
+        name="security" 
         options={{ 
           title: 'Seguridad',
           gestureEnabled: true,

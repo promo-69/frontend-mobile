@@ -1,4 +1,4 @@
-import { Home, PopcornIcon, Ticket, MapPin, User, ShoppingCart } from 'lucide-react-native'
+import { Home, PopcornIcon, Ticket, MapPin, Store, User, ShoppingCart } from 'lucide-react-native'
 import { Tabs } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme } from '../../constants';
@@ -41,8 +41,8 @@ export default function MainLayout() {
       <Tabs.Screen
         name="cinemas"
         options={{
-          title: 'Sucursales',
-          tabBarIcon: ({ color }) => <MapPin color={color} size={24} />,
+          title: 'Cines',
+          tabBarIcon: ({ color }) => < Store color={color} size={24} />,
         }}
       />
       <Tabs.Screen
