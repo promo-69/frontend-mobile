@@ -26,6 +26,16 @@ export default function ProfileScreen() {
     );
   }
 
+  const userInitials = (() => {
+    const firstLetter = user?.firstName?.trim()?.charAt(0) || '';
+    const lastLetter = user?.lastName?.trim()?.charAt(0) || '';
+    
+    const initials = `${firstLetter}${lastLetter}`.toUpperCase();
+    
+    // Fallback de seguridad: Si por alguna razón no hay datos aún, muestra una inicial genérica
+    return initials || 'U'; 
+  })();
+
   // Helper para renderizar cada fila/opción del menú de manera limpia
   const renderMenuItem = ({ icon: Icon, title, onPress, rightComponent }) => (
     <TouchableOpacity style={styles.menuItem} onPress={onPress} disabled={!!rightComponent}>
@@ -60,15 +70,15 @@ export default function ProfileScreen() {
         {/* Sección de Tarjeta de Usuario Resumida */}
         <View style={styles.userCard}>
           <View style={styles.avatarCircle}>
-            <AppText variant="h2" style={{ color: theme.colors.primary }}>
-              {profile?.firstName?.charAt(0)}{profile?.lastName?.charAt(0)}
+            <AppText variant="h2" style={styles.avatarText}>
+              {userInitials}
             </AppText>
           </View>
           <View style={styles.userInfo}>
             <AppText variant="h3" style={styles.userName}>
-              {profile?.firstName} {profile?.lastName}
+              {user?.firstName} {user?.lastName}
             </AppText>
-            <AppText variant="body" style={styles.userEmail}>{profile?.email}</AppText>
+            <AppText variant="body" style={styles.userEmail}>{user?.email}</AppText>
           </View>
         </View>
 
@@ -158,15 +168,25 @@ const styles = StyleSheet.create({
     borderWidth: 1, 
     borderColor: 'rgba(255,255,255,0.05)' 
   },
-  avatarCircle: { 
-    width: 60, 
-    height: 60, 
-    borderRadius: 30, 
-    backgroundColor: 'rgba(255,255,255,0.05)', justifyContent: 'center', 
-    alignItems: 'center', 
-    borderWidth: 1.5, 
-    borderColor: theme.colors.primary
-   },
+  avatarCircle: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: theme.colors.primary,
+    marginBottom: theme.spacing.s12,
+  },
+  avatarText: {
+    color: theme.colors.primary,
+    fontSize: 32,       
+    fontWeight: 'bold',
+    textAlign: 'center',
+    includeFontPadding: false, 
+    textAlignVertical: 'center',
+  },
   userInfo: { 
     marginLeft: theme.spacing.s16, 
     flex: 1 
