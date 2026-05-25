@@ -13,10 +13,24 @@ export const storageHelper = {
    */
   saveTokens: async (accessToken, refreshToken) => {
     try {
-      await AsyncStorage.multiSet([
-        [STORAGE_KEYS.ACCESS_TOKEN, accessToken],
-        [STORAGE_KEYS.REFRESH_TOKEN, refreshToken]
-      ]);
+      const pairs = [];
+
+      if (accessToken !== undefined && accessToken !== null) {
+        pairs.push([STORAGE_KEYS.ACCESS_TOKEN, accessToken]);
+      } else {
+        // If caller explicitly passed undefined/null, remove existing key
+        await AsyncStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
+      }
+
+      if (refreshToken !== undefined && refreshToken !== null) {
+        pairs.push([STORAGE_KEYS.REFRESH_TOKEN, refreshToken]);
+      } else {
+        await AsyncStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
+      }
+
+      if (pairs.length > 0) {
+        await AsyncStorage.multiSet(pairs);
+      }
     } catch (error) {
       console.error('Error al guardar tokens:', error);
       throw error;
@@ -28,11 +42,29 @@ export const storageHelper = {
    */
   saveSession: async (accessToken, refreshToken, userData) => {
     try {
-      await AsyncStorage.multiSet([
-        [STORAGE_KEYS.ACCESS_TOKEN, accessToken],
-        [STORAGE_KEYS.REFRESH_TOKEN, refreshToken],
-        [STORAGE_KEYS.USER, JSON.stringify(userData)]
-      ]);
+      const pairs = [];
+
+      if (accessToken !== undefined && accessToken !== null) {
+        pairs.push([STORAGE_KEYS.ACCESS_TOKEN, accessToken]);
+      } else {
+        await AsyncStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
+      }
+
+      if (refreshToken !== undefined && refreshToken !== null) {
+        pairs.push([STORAGE_KEYS.REFRESH_TOKEN, refreshToken]);
+      } else {
+        await AsyncStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
+      }
+
+      if (userData !== undefined && userData !== null) {
+        pairs.push([STORAGE_KEYS.USER, JSON.stringify(userData)]);
+      } else {
+        await AsyncStorage.removeItem(STORAGE_KEYS.USER);
+      }
+
+      if (pairs.length > 0) {
+        await AsyncStorage.multiSet(pairs);
+      }
     } catch (error) {
       console.error('Error al guardar sesión:', error);
       throw error;

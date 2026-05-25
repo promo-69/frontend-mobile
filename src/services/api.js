@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { ENDPOINTS, ENV, HEADERS } from '../constants/config';
+import { ENV } from '../constants/config';
 import { storageHelper } from '../helper/storage.helper';
 // Crear la instancia base
 const api = axios.create({
@@ -67,13 +67,21 @@ api.interceptors.response.use(
           { Authorization: `Bearer ${refreshToken}` }
         });
 
-        // Los tokens vienen en data.data
-        const { accessToken, refreshToken: newRefreshToken } = response.data.data;
+        // Extraer tokens de forma defensiva (varios formatos posibles)
+        const respPayload = response.data?.data ?? response.data ?? {};
 
-        // Guardar los nuevos tokens
+        const accessToken = respPayload.accessToken || respPayload.access_token || respPayload.token || respPayload?.tokens?.accessToken || respPayload?.tokens?.access_token;
+        const newRefreshToken = respPayload.refreshToken || respPayload.refresh_token || respPayload?.tokens?.refreshToken || respPayload?.tokens?.refresh_token;
+
+        if (!accessToken) {
+          throw new Error('Refresh response did not include an access token');
+        }
+
+        // Guardar solo los tokens definidos
         await storageHelper.saveTokens(accessToken, newRefreshToken);
 
         // Actualizar el header de la petición original y reintentar
+        originalRequest.headers = originalRequest.headers || {};
         originalRequest.headers.Authorization = `Bearer ${accessToken}`;
         return api(originalRequest);
 
