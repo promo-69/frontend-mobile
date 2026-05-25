@@ -43,13 +43,13 @@ app-example
 /android
 
 # Local files en yarn folder
+# Yarn Berry
 .yarn/*
 !.yarn/patches
-!.yarn/releases
 !.yarn/plugins
+!.yarn/releases
 !.yarn/sdks
 !.yarn/versions
-.yarn/install-state.gz # Comentado para permitir el seguimiento si es necesario
 .yarn/build-state.yml
 .pnp.*
 
