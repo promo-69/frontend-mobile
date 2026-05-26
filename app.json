@@ -46,6 +46,13 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "b09aa1e5-0287-47f4-adad-89ac8a03db11"
+      }
+    },
+    "owner": "cineflixorg"
   }
 }
