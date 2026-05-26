@@ -18,8 +18,7 @@
         "backgroundImage": "./src/assets/images/android-icon-bg.png",
         "monochromeImage": "./src/assets/images/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false,
-      "package": "com.cineflix.app"
+      "predictiveBackGestureEnabled": false
     },
     "web": {
       "output": "static",
@@ -42,7 +41,8 @@
       ],
       "expo-font",
       "@react-native-community/datetimepicker",
-      "expo-web-browser"
+      "expo-web-browser",
+      "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": true,
