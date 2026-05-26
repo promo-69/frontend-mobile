@@ -8,8 +8,6 @@ export const storageHelper = {
   
   /**
    * Guarda los tokens de acceso y refresco de forma simultánea
-   * @param {string} accessToken - Token de corta duración para peticiones
-   * @param {string} refreshToken - Token de larga duración para renovar sesión
    */
   saveTokens: async (accessToken, refreshToken) => {
     try {
@@ -18,7 +16,6 @@ export const storageHelper = {
       if (accessToken !== undefined && accessToken !== null) {
         pairs.push([STORAGE_KEYS.ACCESS_TOKEN, accessToken]);
       } else {
-        // If caller explicitly passed undefined/null, remove existing key
         await AsyncStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
       }
 

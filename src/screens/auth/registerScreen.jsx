@@ -18,14 +18,15 @@ import { CustomButton } from '../../components/ui/CustomButton';
 import { StepIndicator } from '../../components/ui/StepIndicator';
 import { theme } from '../../constants';
 import { useAuth } from '../../context/AuthContext';
-import { SuccessScreen } from '../shared/SuccessScreen';
+import { storageHelper } from '../../helper/storage.helper'
+
 
 export default function RegisterScreen() {
   const router = useRouter();
   const { register } = useAuth();
   const [step, setStep] = useState(1);
   const totalSteps = 3;
-  const [showSuccess, setShowSuccess] = useState(false);
+
 
   const {
     control,
@@ -49,7 +50,6 @@ export default function RegisterScreen() {
       password: '',
       confirmPassword: '',
       acceptTerms: false,
-      favoriteGenres: [],
     },
   });
 
@@ -57,7 +57,23 @@ export default function RegisterScreen() {
   const handleNext = async () => {
     let fieldsToValidate = [];
 
-    if (step === 1)
+    // Paso 1: Datos básicos
+  if (step === 1) {
+    fieldsToValidate = ['firstName', 'lastName', 'email', 'phoneNumber'];
+  }
+  // Paso 2: Datos de identidad, seguridad y términos
+  if (step === 2) {
+    fieldsToValidate = [
+      'documentNumber',
+      'birthDate',
+      'gender',
+      'password',
+      'confirmPassword',
+      'acceptTerms',
+    ];
+  }
+
+   /* if (step === 1)
       fieldsToValidate = ['firstName', 'lastName', 'email', 'phoneNumber'];
     if (step === 2)
       fieldsToValidate = [
@@ -69,6 +85,7 @@ export default function RegisterScreen() {
         'acceptTerms',
       ];
     if (step === 3) fieldsToValidate = ['favoriteGenres'];
+    */
 
     //devuelve true si todos los campos pasan las validaciones
     const isStepValid = await trigger(fieldsToValidate);
@@ -87,15 +104,10 @@ export default function RegisterScreen() {
     else router.back();
   };
 
-  useEffect(() => {
-    if (!showSuccess) return;
-
-    const timer = setTimeout(() => {
-      router.replace('/(main)/home');
-    }, 2500);
-
-    return () => clearTimeout(timer);
-  }, [router, showSuccess]);
+ const handleBack = () => {
+    if (step > 1) setStep(step - 1);
+    else router.back();
+  };
 
   const onSubmit = async (data) => {
     try {
@@ -117,7 +129,11 @@ export default function RegisterScreen() {
         return;
       }
 
-      setShowSuccess(true);
+      //Guardamos de forma segura/persistente el correo para usarlo en la siguiente pantalla
+      // Usamos AsyncStorage indirectamente a través del formato de STORAGE_KEYS
+      await AsyncStorage.setItem('user_email_to_verify', data.email);
+      router.replace('/auth/emailCheck');
+
     } catch (error) {
       console.error(error);
     }
