@@ -38,6 +38,7 @@ export default function RegisterScreen() {
   } = useForm({
     mode: 'onBlur',
     revalidateMode: 'onChange',
+    shouldUnregister: false,
     defaultValues: {
       firstName: '',
       lastName: '',
@@ -61,17 +62,21 @@ export default function RegisterScreen() {
   if (step === 1) {
     fieldsToValidate = ['firstName', 'lastName', 'email', 'phoneNumber'];
   }
-  // Paso 2: Datos de identidad, seguridad y términos
+  // Paso 2: Datos de identidad
   if (step === 2) {
     fieldsToValidate = [
       'documentNumber',
       'birthDate',
       'gender',
+    ];
+  }
+
+   if (step === 3) { fieldsToValidate = [
       'password',
       'confirmPassword',
       'acceptTerms',
-    ];
-  }
+     ];
+     }
 
    /* if (step === 1)
       fieldsToValidate = ['firstName', 'lastName', 'email', 'phoneNumber'];
@@ -104,13 +109,20 @@ export default function RegisterScreen() {
     else router.back();
   };
 
- const handleBack = () => {
-    if (step > 1) setStep(step - 1);
-    else router.back();
-  };
-
   const onSubmit = async (data) => {
     try {
+      
+     let formattedBirthDate = '';
+
+     if (data.birthDate) {
+        if (data.birthDate.includes('/')) {
+          const [day, month, year] = data.birthDate.split('/');
+          formattedBirthDate = `${year}-${month}-${day}`;
+        } else {
+          formattedBirthDate = data.birthDate; 
+        }
+    }*/
+
       const payload = {
         firstName: data.firstName,
         lastName: data.lastName,
@@ -118,11 +130,13 @@ export default function RegisterScreen() {
         password: data.password,
         documentNumber: data.documentNumber,
         phoneNumber: data.phoneNumber,
-        gender: data.gender,
-        birthDate: data.birthDate,
+        gender: Number(data.gender),
+        birthDate: data.birthDate ,
       };
 
       const result = await register(payload);
+      
+    /*  console.log('📦 [Payload Final que sale al servicio de registro]:', JSON.stringify(payload, null, 2));*/
 
       if (!result?.success) {
         console.error('Error en registro:', result?.message);
@@ -132,22 +146,12 @@ export default function RegisterScreen() {
       //Guardamos de forma segura/persistente el correo para usarlo en la siguiente pantalla
       // Usamos AsyncStorage indirectamente a través del formato de STORAGE_KEYS
       await AsyncStorage.setItem('user_email_to_verify', data.email);
-      router.replace('/auth/emailCheck');
+      router.replace('/(auth)/register-verify');
 
     } catch (error) {
       console.error(error);
     }
   };
-
-  if (showSuccess) {
-    return (
-      <SuccessScreen
-        title="¡Cuenta Creada!"
-        message="Tu registro se ha completado con éxito. En unos segundos serás redirigido al inicio."
-        onPress={() => router.replace('/(main)/home')}
-      />
-    );
-  }
 
   return (
     <ScreenWrapper>

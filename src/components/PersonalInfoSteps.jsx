@@ -1,28 +1,29 @@
 import { ChevronDown } from 'lucide-react-native';
 import { useState } from 'react';
 import { Controller } from 'react-hook-form';
-import { StyleSheet, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, TouchableOpacity, View, Modal, TouchableWithoutFeedback } from 'react-native';
 import { theme } from '../constants';
 import {
   validateDate,
-  validateDocument,
+  validateDocumentNoType,
   validateEmail,
-  validateGenres,
   validateNames,
   validatePassword,
-  validatePhoneNumberVE
 } from '../utils/validators';
 import { AppText } from './AppText';
-import { GenreSelectionStep } from './GenreSelectionStep';
 import { Checkbox } from './ui/CheckBox';
 import { DateInput } from './ui/DateInput';
 import { Input } from './ui/Input';
 import { SelectorInput } from './ui/SelectorInput';
 
-
 const GENDER_OPTIONS = [
   { label: 'Masculino', value: 1 },
   { label: 'Femenino', value: 2 },
+];
+
+const COUNTRY_OPTIONS = [
+  { flag: '🇻🇪', code: '+58', label: 'Venezuela' },
+  { flag: '🇨🇴', code: '+57', label: 'Colombia' },
 ];
 
 export const PersonalInfoSteps = ({
@@ -30,10 +31,14 @@ export const PersonalInfoSteps = ({
   control,
   errors,
   getValues,
+  setValue, 
 }) => {
   const [isGenderOpen, setIsGenderOpen] = useState(false);
+  const [isCountryOpen, setIsCountryOpen] = useState(false);
+  const [selectedCountry, setSelectedCountry] = useState(COUNTRY_OPTIONS[0]); // Por defecto +58
+  const [docTypeVisual, setDocTypeVisual] = useState('V');
 
-  // Paso 1 Información Personal
+  // Paso 1: Información Personal
   if (step === 1) {
     return (
       <View style={styles.container}>
@@ -102,40 +107,73 @@ export const PersonalInfoSteps = ({
             )}
           />
 
+          {/* Teléfono Internacional con Selector de Código de País */}
           <Controller
-            control={control}
-            name="phoneNumber"
-            rules={{ validate: validatePhoneNumberVE }}
-            render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
-              <Input
+          control={control}
+          name="phoneNumber"
+          rules={{
+            required: 'El teléfono es obligatorio',
+            validate: (value) => {
+              const digitsOnly = value ? value.replace(/\D/g, '') : '';
+              // Restamos los 2 dígitos correspondientes al prefijo internacional (+58 o +57)
+              const netLength = digitsOnly.length - 2; 
+
+              if (netLength < 7 || netLength > 15) {
+                return 'Teléfono debe tener entre 7 y 15 dígitos';
+              }
+              return true;
+            }
+          }}
+          render={({ field: { onChange, onBlur, value = "+58" }, fieldState: { error } }) => {
+            // 1. Determinar cuál es el prefijo actual que está al inicio del string
+            const currentCode = value?.startsWith('+57') ? '+57' : '+58';
+            
+            // 2. Extraer el resto de la cadena telefónica pura para el input de texto
+            const currentNumber = value?.replace(currentCode, '') || '';
+
+            return (
+              <SelectorInput
                 label="Teléfono"
-                value={value}
+                // Evaluamos visualmente qué bandera mostrar según el prefijo activo en el form
+                selectedValue={currentCode === '+58' ? '🇻🇪' : '🇨🇴'}
+                value={currentNumber}
                 onBlur={onBlur}
-                onChangeText={onChange}
-                error={error?.message}
                 keyboardType="phone-pad"
+                error={error?.message}
+                // Al tocar el dropdown del componente, alternamos o elegimos el país
+                onSelect={(newFlag) => {
+                  const newCode = newFlag === '🇻🇪' ? '+58' : '+57';
+                  onChange(newCode + currentNumber);
+                }}
+                // Al escribir sobre el teclado numérico, sanitizamos y concatenamos
+                onChangeText={(newNumber) => {
+                  const clean = newNumber.replace(/\D/g, "");
+                  onChange(currentCode + clean);
+                }}
+              
+                options={['🇻🇪','🇨🇴']}
               />
-            )}
-          />
+            );
+          }}
+        />
         </View>
       </View>
     );
   }
 
-  // Paso 2 Detalles de Cuenta y Seguridad
+  // Paso 2: Detalles de Cuenta
   if (step === 2) {
     return (
       <View style={styles.container}>
         <View style={styles.formContainer}>
-          <Controller
+          {/*<Controller
             control={control}
             name="documentNumber"
             rules={{
               required: "La cédula es requerida",
-              validate: validateDocument,
+              validate: validateDocumentNoType,
             }}
             render={({ field: { onChange, onBlur, value = "V" }, fieldState: { error } }) => {
-              // Extraemos el tipo (primer carácter) y el número (el resto)
               const type = value?.charAt(0) || "V";
               const number = value?.slice(1) || "";
 
@@ -155,7 +193,33 @@ export const PersonalInfoSteps = ({
                 />
               );
             }}
+          />*/}
+          <Controller
+        control={control}
+        name="documentNumber"
+        rules={{
+          required: "La cédula es requerida",
+          validate: validateDocumentNoType,
+        }}
+        render={({ field: { onChange, onBlur, value = "" }, fieldState: { error } }) => (
+          <SelectorInput
+            label="Cédula de Identidad"
+            selectedValue={docTypeVisual} // Usa el estado local cosmético
+            value={value}                // Muestra directamente el string limpio numérico de React Hook Form
+            onBlur={onBlur}
+            keyboardType="numeric"
+            error={error?.message}
+            onSelect={(newType) => {
+              setDocTypeVisual(newType); // Cambia visualmente entre V o E
+            }}
+            onChangeText={(newNumber) => {
+              const clean = newNumber.replace(/\D/g, "");
+              onChange(clean); // Setea en React Hook Form exclusivamente los dígitos numéricos
+            }}
+            options={['V', 'E']}
           />
+        )}
+      />
 
           <Controller
             control={control}
@@ -178,7 +242,7 @@ export const PersonalInfoSteps = ({
           <Controller
             control={control}
             name="gender"
-            rules={{ required: 'El género es obligatorio' }}
+            rules={{ required: 'El género es requerido' }}
             render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => {
               const selectedGender = GENDER_OPTIONS.find(
                 (option) => option.value === value
@@ -236,7 +300,7 @@ export const PersonalInfoSteps = ({
               );
             }}
           />
-
+      {/** 
           <Controller
             control={control}
             name="password"
@@ -274,9 +338,58 @@ export const PersonalInfoSteps = ({
                 secureTextEntry
               />
             )}
+          />*/}
+
+         
+        </View>
+      </View>
+    );
+  }
+
+  if(step === 3){
+  return(
+      <View style={styles.container}>
+        <View style={styles.formContainer}>
+           <Controller
+            control={control}
+            name="password"
+            rules={{
+              required: 'La contraseña es requerida',
+              validate: validatePassword,
+            }}
+            render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
+              <Input
+                label="Contraseña"
+                value={value}
+                onBlur={onBlur}
+                onChangeText={onChange}
+                error={error?.message}
+                secureTextEntry
+              />
+            )}
           />
 
           <Controller
+            control={control}
+            name="confirmPassword"
+            rules={{
+              required: 'Confirme su contraseña',
+              validate: (val) =>
+                val === getValues('password') || 'Las contraseñas no coinciden',
+            }}
+            render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
+              <Input
+                label="Confirmar contraseña"
+                value={value}
+                onBlur={onBlur}
+                onChangeText={onChange}
+                error={error?.message}
+                secureTextEntry
+              />
+            )}
+          />
+          
+         <Controller
             control={control}
             name="acceptTerms"
             rules={{
@@ -288,19 +401,13 @@ export const PersonalInfoSteps = ({
                 onChange={onChange}
                 error={error?.message}
               >
-                <AppText
-                  variant="label"
-                  style={{ color: theme.colors.textPrimary }}
-                >
+                <AppText variant="label" style={{ color: theme.colors.textPrimary }}>
                   Acepto los{' '}
                   <AppText
                     variant="label"
                     style={{
                       color: theme.colors.primary,
                       textDecorationLine: 'underline',
-                    }}
-                    onPress={() => {
-                      console.log('Navegar a términos y condiciones');
                     }}
                   >
                     Términos y Condiciones
@@ -309,16 +416,10 @@ export const PersonalInfoSteps = ({
               </Checkbox>
             )}
           />
-        </View>
       </View>
-    );
-  }
+    </View>
+  );
 
-  // Paso 3 Selecciona Géneros
-  if (step === 3) {
-    return (
-       <EmailCheck />
-    );
   }
 };
 
@@ -339,9 +440,50 @@ const styles = StyleSheet.create({
   formContainer: {
     gap: theme.spacing.s24,
   },
+  phoneFieldWrapper: {
+    width: '100%',
+  },
+  phoneInputRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 12,
+  },
+  countryPickerTrigger: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    height: 48,
+    borderBottomWidth: 2,
+    borderBottomColor: theme.colors.border,
+    paddingHorizontal: 6,
+    gap: 4,
+    marginTop: 4,
+  },
+  countryText: {
+    fontSize: 16,
+    color: theme.colors.textPrimary,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    width: '80%',
+    backgroundColor: theme.colors.surface || '#fff',
+    borderRadius: 12,
+    padding: 8,
+    elevation: 20,
+  },
+  modalOption: {
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderBottomWidth: 0.5,
+    borderBottomColor: theme.colors.border,
+  },
   genderWrapper: {
     marginTop: theme.spacing.s8,
-    zIndex: 1000, // Asegura que el dropdown flote sobre otros elementos
+    zIndex: 1000,
   },
   inputLabel: {
     color: theme.colors.primary,
@@ -378,10 +520,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: theme.colors.primary,
     elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
     zIndex: 2000,
   },
   dropdownOption: {
@@ -397,5 +535,5 @@ const styles = StyleSheet.create({
     color: theme.colors.error,
     fontSize: theme.typography.size.s12,
     marginTop: theme.spacing.s4,
-  }
+  },
 });

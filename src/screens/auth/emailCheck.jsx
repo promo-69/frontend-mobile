@@ -3,7 +3,6 @@ import { useState, useEffect, useRef } from 'react';
 import { StyleSheet, Text, View, TextInput, TouchableOpacity, ActivityIndicator, Alert, Image } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import logotipo from '../../assets/logotipo.png';
 import { CustomButton } from '../../components/ui/CustomButton';
 import { useAuth } from '../../context/AuthContext';
 import { SuccessScreen } from '../shared/SuccessScreen'; 
@@ -110,9 +109,9 @@ export default function EmailCheck() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
-        <TouchableOpacity onPress={() => router.replace('/')}>
+        {/*<TouchableOpacity onPress={() => router.replace('/')}>
           <Image source={logotipo} style={styles.logo} resizeMode="contain" />
-        </TouchableOpacity>
+        </TouchableOpacity>*/}
 
         <Text style={styles.title}>¡Revisa tu bandeja de entrada!</Text>
         <Text style={styles.subtitle}>

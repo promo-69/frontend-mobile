@@ -64,12 +64,23 @@ export const AuthProvider = ({ children }) => {
    */
   const register = async (formData) => {
   try {
-    const response = await authService.signup(formData);
+    const response = await authService.signUp(formData);
     return { success: true, message: response?.message || 'Registro exitoso.' };
   } catch (error) {
-    return { 
-      success: false, 
-      message: error.response?.data?.message || 'Error en el registro' 
+    console.error('❌ [Backend Register Error Request]:', error.config?.url);
+    if (error.response) {
+      console.error('❌ [Backend Response Data]:', JSON.stringify(error.response.data, null, 2));
+      console.error('❌ [Backend Status Code]:', error.response.status);
+    } else if (error.request) {
+      console.error('❌ [No response received from Server]:', error.request);
+    } else {
+      console.error('❌ [Axios Setup Error]:', error.message);
+    }
+
+    return {
+      success: false,
+      // Extrae el mensaje específico de tu API (ej. "El correo ya está registrado")
+      message: error.response?.data?.message || error.response?.data?.error || 'No se pudo completar el registro.'
     };
   }
 };

@@ -113,43 +113,51 @@ export const validatePhoneNumberVE = (phone) => {
 };
 
 // Valida fecha real en formato (DD/MM/YYYY o DD-MM-YYYY)
+// Valida fecha real manejando de manera blindada strings y objetos nativos
 export const validateDate = (date) => {
   if (!date) return 'La fecha es requerida';
 
   let dateObj;
-  if (typeof date === 'string') {
-    const parts = date.split('/');
-    const isoParts = date.split('-');
 
-    if (parts.length === 3) {
-      // Soporte para formato visual DD/MM/AAAA
-      dateObj = new Date(parts[2], parts[1] - 1, parts[0]);
-    } else if (isoParts.length === 3) {
-      // Soporte para formato DB YYYY-MM-DD
-      dateObj = new Date(isoParts[0], isoParts[1] - 1, isoParts[2]);
-    } else {
+  if (date instanceof Date) {
+    dateObj = date;
+  } else if (typeof date === 'string') {
+    // Si ya viene formateada como YYYY-MM-DD por mutaciones del estado
+    if (date.includes('-')) {
+      const parts = date.split('-');
+      if (parts[0].length === 4) { // YYYY-MM-DD
+        dateObj = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+      } else { // DD-MM-YYYY
+        dateObj = new Date(Number(parts[2]), Number(parts[1]) - 1, Number(parts[0]));
+      }
+    } 
+    // Si viene en formato visual DD/MM/AAAA
+    else if (date.includes('/')) {
+      const parts = date.split('/');
+      dateObj = new Date(Number(parts[2]), Number(parts[1]) - 1, Number(parts[0]));
+    } 
+    // Intento de fallback estándar
+    else {
       dateObj = new Date(date);
     }
   } else {
-    dateObj = date;
+    return 'Formato de fecha inválido';
   }
 
+  // Verificar si la fecha generada es un número válido de milisegundos
   if (isNaN(dateObj.getTime())) return 'Fecha inválida';
 
   const today = new Date();
-
   if (dateObj > today) {
     return 'La fecha no puede ser futura';
   }
 
-  const ageLimit = 13;
+  // Validación estricta de edad
+  const ageLimit = 18;
   let age = today.getFullYear() - dateObj.getFullYear();
   const monthDiff = today.getMonth() - dateObj.getMonth();
 
-  if (
-    monthDiff < 0 ||
-    (monthDiff === 0 && today.getDate() < dateObj.getDate())
-  ) {
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dateObj.getDate())) {
     age--;
   }
 
@@ -157,7 +165,7 @@ export const validateDate = (date) => {
     return `Debes ser mayor de ${ageLimit} años para registrarte`;
   }
 
-  return true;
+  return true; // Pasa con éxito
 };
 
 // Validación de Cédula de Identidad (Venezuela)
@@ -195,6 +203,19 @@ export const validateDocument = (fullDocument) => {
   }
 
   return true;
+};
+
+export const validateDocumentNoType = (documentNumber) => {
+  if (!documentNumber) return 'La cédula es requerida';
+
+  // Convierte a string y extrae exclusivamente los dígitos numéricos
+  const cleanNumber = String(documentNumber).replace(/\D/g, '');
+
+  if (cleanNumber.length < 6 || cleanNumber.length > 9) {
+    return 'La cédula debe tener entre 6 y 9 números';
+  }
+
+  return true; // Pasa con éxito
 };
 
 // Validación de selección mínima de géneros
