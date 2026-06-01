@@ -13,3 +13,23 @@ jest.mock('expo', () => {
     __ExpoImportMetaRegistry: {},
   };
 });
+
+// 4. Mock de expo-router
+jest.mock('expo-router', () => ({
+  useRouter: jest.fn(() => ({
+    push: jest.fn(),
+    replace: jest.fn(),
+    back: jest.fn(),
+  })),
+  useNavigation: jest.fn(() => ({
+    canGoBack: jest.fn(() => true),
+  })),
+}));
+
+// 5. Mock de expo-linear-gradient
+jest.mock('expo-linear-gradient', () => {
+  const { View } = require('react-native');
+  return {
+    LinearGradient: View,
+  };
+});
