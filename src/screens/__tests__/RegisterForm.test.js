@@ -5,13 +5,21 @@ import {
     waitFor
 } from '@testing-library/react-native';
 import { Animated } from 'react-native';
-import RegisterScreen from '../auth/RegisterScreen'; // Ajusta la ruta según tu estructura
+import RegisterScreen from '../auth/RegisterScreen';
+import { AuthProvider } from '../../context/AuthContext';
+import { authService } from '../../services/auth.service';
+import { storageHelper } from '../../helper/storage.helper';
 
 // MOCK DE NAVEGACIÓN (Expo Router)
+jest.mock('../../services/auth.service');
+jest.mock('../../helper/storage.helper');
+
 const mockPush = jest.fn();
+const mockReplace = jest.fn();
 jest.mock('expo-router', () => ({
   useRouter: () => ({
     push: mockPush,
+    replace: mockReplace,
     back: jest.fn(),
   }),
 }));
@@ -54,9 +62,21 @@ jest.mock('react-native-safe-area-context', () => ({
   useSafeAreaInsets: () => ({ top: 0, left: 0, right: 0, bottom: 0 }),
 }));
 
+const renderWithAuth = (ui) => {
+  return render(
+    <AuthProvider>
+      {ui}
+    </AuthProvider>
+  );
+};
+
 describe('Registro - Integración Paso 1 (Validación Explícita)', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
   it('debe mostrar errores y bloquear el avance si los campos están vacíos', async () => {
-    const { getByText, findByText, queryByText } = render(<RegisterScreen />);
+    const { getByText, findByText } = renderWithAuth(<RegisterScreen />);
 
     // Localizamos el botón "Continuar"
     const continueButton = getByText('Continuar');
@@ -80,7 +100,7 @@ describe('Registro - Integración Paso 1 (Validación Explícita)', () => {
   });
 
   it('debe avanzar al Paso 2 cuando los datos son válidos tras un intento fallido', async () => {
-    const { getByText, getByLabelText, queryByText, findByText } = render(
+    const { getByText, getByLabelText, queryByText, findByText } = renderWithAuth(
       <RegisterScreen />
     );
 
@@ -114,7 +134,7 @@ describe('Registro - Integración Paso 1 (Validación Explícita)', () => {
 
   it('debe validar errores en el Paso 2 y luego avanzar al Paso 3', async () => {
     const { getByText, getByLabelText, findByText, getByTestId, queryByText } =
-      render(<RegisterScreen />);
+      renderWithAuth(<RegisterScreen />);
 
     //COMPLETAR PASO 1
     await act(async () => {
@@ -131,7 +151,7 @@ describe('Registro - Integración Paso 1 (Validación Explícita)', () => {
       fireEvent.press(getByText('Continuar'));
     });
 
-    // --- VALIDACIÓN DE ERRORES PASO 2 ---
+    // --- VALIDACIÓN DE ERRORES PASO 2 (Solo campos de este paso) ---
     // Verificamos que estamos en el Paso 2
     expect(await findByText('Cédula de Identidad')).toBeTruthy();
 
@@ -143,11 +163,11 @@ describe('Registro - Integración Paso 1 (Validación Explícita)', () => {
     // Verificamos mensajes de error esperados del Paso 2
     expect(await findByText('La cédula es requerida')).toBeTruthy();
     expect(await findByText('La fecha es requerida')).toBeTruthy();
-    expect(await findByText('El género es obligatorio')).toBeTruthy();
-    expect(await findByText('La contraseña es requerida')).toBeTruthy();
-    expect(
-      await findByText('Debes aceptar los términos y condiciones')
-    ).toBeTruthy();
+    expect(await findByText('El género es requerido')).toBeTruthy();
+
+    // Verificamos que NO aparecen aún errores del Paso 3
+    expect(queryByText('La contraseña es requerida')).toBeNull();
+    expect(queryByText('Debes aceptar los términos y condiciones')).toBeNull();
 
     // --- COMPLETAR PASO 2 VÁLIDO ---
     await act(async () => {
@@ -173,7 +193,23 @@ describe('Registro - Integración Paso 1 (Validación Explícita)', () => {
     });
     await waitFor(() => {
       expect(queryByText('El género es obligatorio')).toBeNull();
+      expect(queryByText('El género es requerido')).toBeNull();
     });
+
+    // Avanzar al paso 3
+    await act(async () => {
+      fireEvent.press(getByText('Continuar'));
+    });
+
+    // --- VALIDACIÓN PASO 3 ---
+    expect(await findByText('Finalizar')).toBeTruthy();
+
+    // Provocar errores en paso 3
+    await act(async () => {
+      fireEvent.press(getByText('Finalizar'));
+    });
+    expect(await findByText('La contraseña es requerida')).toBeTruthy();
+    expect(await findByText('Debes aceptar los términos y condiciones')).toBeTruthy();
 
     await act(async () => {
       fireEvent.changeText(getByLabelText('Contraseña'), 'Password123!');
@@ -185,18 +221,10 @@ describe('Registro - Integración Paso 1 (Validación Explícita)', () => {
       // Aceptar términos
       fireEvent.press(getByText(/Acepto los/));
     });
-
-    await act(async () => {
-      fireEvent.press(getByText('Continuar'));
-    });
-
-    // --- VERIFICAR PASO 3 ---
-    // Si llegamos al paso 3, el botón cambia su texto a Finalizar
-    expect(await findByText('Finalizar')).toBeTruthy();
   });
 
   it('debe desaparecer el mensaje de error inmediatamente cuando el usuario empieza a escribir un valor válido', async () => {
-    const { getByText, getByLabelText, findByText, queryByText } = render(
+    const { getByText, getByLabelText, findByText, queryByText } = renderWithAuth(
       <RegisterScreen />
     );
 
@@ -220,6 +248,58 @@ describe('Registro - Integración Paso 1 (Validación Explícita)', () => {
     // waitForElementToBeRemoved lanzaría un error al no encontrarlo desde el inicio
     await waitFor(() => {
       expect(queryByText('Los nombres son obligatorios')).toBeNull();
+    });
+  });
+
+  it('debe consolidar el payload correctamente y enviar la fecha en formato YYYY-MM-DD', async () => {
+    const { getByText, getByLabelText, getByTestId } = renderWithAuth(<RegisterScreen />);
+
+    // PASO 1
+    fireEvent.changeText(getByLabelText('Nombres'), 'Alexis');
+    fireEvent.changeText(getByLabelText('Apellidos'), 'Mendoza');
+    fireEvent.changeText(getByLabelText('Correo Electrónico'), 'alexis@ucla.edu.ve');
+    fireEvent.changeText(getByLabelText('Teléfono'), '04121234567');
+    await act(async () => { fireEvent.press(getByText('Continuar')); });
+
+    // PASO 2
+    fireEvent.changeText(getByLabelText('Cédula de Identidad'), '12345678');
+    // Simulamos que el DateInput devuelve la fecha en formato ISO o string plano
+    // asumiendo que el componente real o el mock maneja '2000-05-20'
+    fireEvent(getByTestId('mock-date-input'), 'onChange', '2000-05-20');
+    
+    await act(async () => {
+      fireEvent.press(getByTestId('gender-dropdown-trigger'));
+    });
+    await act(async () => {
+      fireEvent.press(getByTestId('gender-option-Masculino'));
+    });
+    await act(async () => { fireEvent.press(getByText('Continuar')); });
+
+    // PASO 3
+    fireEvent.changeText(getByLabelText('Contraseña'), 'Password123!');
+    fireEvent.changeText(getByLabelText('Confirmar contraseña'), 'Password123!');
+    fireEvent.press(getByText(/Acepto los/));
+
+    // FINALIZAR
+    await act(async () => {
+      fireEvent.press(getByText('Finalizar'));
+    });
+
+    // VERIFICACIÓN DEL PAYLOAD CONSOLIDADO
+    await waitFor(() => {
+      expect(authService.signUp).toHaveBeenCalledWith(
+        expect.objectContaining({
+          firstName: 'Alexis',
+          lastName: 'Mendoza',
+          email: 'alexis@ucla.edu.ve',
+          // Verificación crítica: el formato de la fecha coincide con el enviado por el input
+          birthDate: '2000-05-20', 
+          documentNumber: '12345678'
+        })
+      );
+      
+      expect(storageHelper.saveValue).toHaveBeenCalledWith('user_email_to_verify', 'alexis@ucla.edu.ve');
+      expect(mockReplace).toHaveBeenCalledWith('/(auth)/register-verify');
     });
   });
 });
