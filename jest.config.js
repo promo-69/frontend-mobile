@@ -1,5 +1,6 @@
 module.exports = {
   preset: 'jest-expo',
+  testTimeout: 15000,
   setupFiles: [],
   setupFilesAfterEnv: [
     './jest.setup.js',

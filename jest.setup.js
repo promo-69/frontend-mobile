@@ -33,3 +33,18 @@ jest.mock('expo-linear-gradient', () => {
     LinearGradient: View,
   };
 });
+
+// 6. Mock de @react-native-async-storage/async-storage
+// Esto es crucial para evitar el error "NativeModule: AsyncStorage is null"
+// y permite que `storage.helper.js` (o cualquier otro componente que lo use)
+// funcione en Jest.
+jest.mock('@react-native-async-storage/async-storage', () => ({
+  setItem: jest.fn(() => Promise.resolve(null)),
+  getItem: jest.fn(() => Promise.resolve(null)),
+  removeItem: jest.fn(() => Promise.resolve(null)),
+  clear: jest.fn(() => Promise.resolve(null)),
+  getAllKeys: jest.fn(() => Promise.resolve([])),
+  multiGet: jest.fn(() => Promise.resolve([])),
+  multiSet: jest.fn(() => Promise.resolve(null)),
+  multiRemove: jest.fn(() => Promise.resolve(null)),
+}));
