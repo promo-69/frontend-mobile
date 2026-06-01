@@ -33,32 +33,37 @@ export const AuthProvider = ({ children }) => {
 
  
   const login = async (credentials) => {
-    try {
-      const response = await authService.login(credentials);
-      
-      if (!response?.success) {
+  try {
+    const response = await authService.login(credentials);
+    
+    if (!response?.success) {
       return { success: false, message: response?.message || 'Error de autenticación' };
     }
+  
+    const { user, tokens } = response.data;
+    const { accessToken, refreshToken } = tokens;
     
-      const { user, tokens } = response.data;
-      
-      const { accessToken, refreshToken } = tokens;
-      
-      await storageHelper.saveSession(accessToken, refreshToken, user);
-      
-      setUser(user);
+    await storageHelper.saveSession(accessToken, refreshToken, user);
+    setUser(user);
 
-      return { success: true };
+    return { success: true };
 
-    } catch (error) {
-      return {
-        success: false,
-        message: normalizeLoginError(error),
-        status: error?.response?.status ?? null,
-      };
-    }
-  };
+  } catch (error) {
+    console.log('📝 [DEBUG CONTEXT] Error capturado en login:', error.response?.data);
+    
+    // Extraemos el mensaje y el code directamente del payload de error de la API
+    const backendMessage = error.response?.data?.message;
+    const backendCode = error.response?.data?.code; // Ej: "UNVERIFIED_ACCOUNT"
 
+    return {
+      success: false,
+      // Si el backend no responde con un mensaje, usamos la normalización anterior por seguridad
+      message: backendMessage || normalizeLoginError(error),
+      code: backendCode || null, 
+      status: error.response?.status ?? null,
+    };
+  }
+};
   /**
    * Maneja el registro 
    */

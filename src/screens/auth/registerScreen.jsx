@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import { ChevronLeft } from 'lucide-react-native';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import {
   KeyboardAvoidingView,
@@ -18,8 +18,7 @@ import { CustomButton } from '../../components/ui/CustomButton';
 import { StepIndicator } from '../../components/ui/StepIndicator';
 import { theme } from '../../constants';
 import { useAuth } from '../../context/AuthContext';
-import { storageHelper } from '../../helper/storage.helper'
-
+import { storageHelper } from '../../helper/storage.helper';
 
 export default function RegisterScreen() {
   const router = useRouter();
@@ -27,6 +26,8 @@ export default function RegisterScreen() {
   const [step, setStep] = useState(1);
   const totalSteps = 3;
 
+  // 1. Estado de respaldo para garantizar al 100% que nada se borre al desmontar
+  const [savedFormData, setSavedFormData] = useState({});
 
   const {
     control,
@@ -58,47 +59,22 @@ export default function RegisterScreen() {
   const handleNext = async () => {
     let fieldsToValidate = [];
 
-    // Paso 1: Datos básicos
-  if (step === 1) {
-    fieldsToValidate = ['firstName', 'lastName', 'email', 'phoneNumber'];
-  }
-  // Paso 2: Datos de identidad
-  if (step === 2) {
-    fieldsToValidate = [
-      'documentNumber',
-      'birthDate',
-      'gender',
-    ];
-  }
+    if (step === 1) fieldsToValidate = ['firstName', 'lastName', 'email', 'phoneNumber'];
+    if (step === 2) fieldsToValidate = ['documentNumber', 'birthDate', 'gender'];
+    if (step === 3) fieldsToValidate = ['password', 'confirmPassword', 'acceptTerms'];
 
-   if (step === 3) { fieldsToValidate = [
-      'password',
-      'confirmPassword',
-      'acceptTerms',
-     ];
-     }
-
-   /* if (step === 1)
-      fieldsToValidate = ['firstName', 'lastName', 'email', 'phoneNumber'];
-    if (step === 2)
-      fieldsToValidate = [
-        'documentNumber',
-        'birthDate',
-        'gender',
-        'password',
-        'confirmPassword',
-        'acceptTerms',
-      ];
-    if (step === 3) fieldsToValidate = ['favoriteGenres'];
-    */
-
-    //devuelve true si todos los campos pasan las validaciones
     const isStepValid = await trigger(fieldsToValidate);
 
     if (isStepValid) {
+      // 2. RESPALDO CRUCIAL: Antes de cambiar de pantalla, extraemos los datos actuales
+      // y los fusionamos con nuestro estado plano local.
+      const currentValues = getValues();
+      setSavedFormData((prev) => ({ ...prev, ...currentValues }));
+
       if (step < totalSteps) {
         setStep(step + 1);
       } else {
+        // Si es el último paso, llamamos formalmente al submit
         handleSubmit(onSubmit)();
       }
     }
@@ -109,50 +85,41 @@ export default function RegisterScreen() {
     else router.back();
   };
 
-  const onSubmit = async (data) => {
+  const onSubmit = async () => {
     try {
-      
-     let formattedBirthDate = '';
+      // 3. FUSIONAR: Combinamos lo que tiene React Hook Form al final con el respaldo local
+      const finalForm = { ...savedFormData, ...getValues() };
 
-     if (data.birthDate) {
-        if (data.birthDate.includes('/')) {
-          const [day, month, year] = data.birthDate.split('/');
-          formattedBirthDate = `${year}-${month}-${day}`;
-        } else {
-          formattedBirthDate = data.birthDate; 
-        }
-    }*/
+      console.log(
+        '📝 [DEBUG SOLUCIONADO] Datos consolidados totales:',
+        JSON.stringify(finalForm, null, 2)
+      );
 
+      // Desestructuramos del objeto consolidado real
       const payload = {
-        firstName: data.firstName,
-        lastName: data.lastName,
-        email: data.email,
-        password: data.password,
-        documentNumber: data.documentNumber,
-        phoneNumber: data.phoneNumber,
-        gender: Number(data.gender),
-        birthDate: data.birthDate ,
+        firstName: finalForm.firstName.trim(),
+        lastName: finalForm.lastName.trim(),
+        email: finalForm.email,
+        password: finalForm.password,
+        documentNumber: finalForm.documentNumber, // Ahora sí llegará el número
+        phoneNumber: finalForm.phoneNumber,
+        gender: finalForm.gender ? Number(finalForm.gender) : null,
+        birthDate: finalForm.birthDate,           // Ahora sí llegará YYYY-MM-DD
       };
 
       const result = await register(payload);
-      
-    /*  console.log('📦 [Payload Final que sale al servicio de registro]:', JSON.stringify(payload, null, 2));*/
 
       if (!result?.success) {
-        console.error('Error en registro:', result?.message);
+        console.log('Error en registro:', result?.message);
         return;
       }
 
-      //Guardamos de forma segura/persistente el correo para usarlo en la siguiente pantalla
-      // Usamos AsyncStorage indirectamente a través del formato de STORAGE_KEYS
-      await AsyncStorage.setItem('user_email_to_verify', data.email);
+      await storageHelper.saveValue('user_email_to_verify', finalForm.email);
       router.replace('/(auth)/register-verify');
-
     } catch (error) {
-      console.error(error);
+      console.error('Error en onSubmit:', error);
     }
   };
-
   return (
     <ScreenWrapper>
       <KeyboardAvoidingView

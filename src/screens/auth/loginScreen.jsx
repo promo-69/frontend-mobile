@@ -21,6 +21,7 @@ import Logo from '../../components/ui/Icons/Logo';
 import { Input } from '../../components/ui/Input';
 import { theme } from '../../constants';
 import { useAuth } from '../../context/AuthContext';
+import { storageHelper} from '../../helper/storage.helper';
 import {
   sanitizeInput,
   validateEmail,
@@ -72,18 +73,32 @@ export default function LoginScreen() {
         if (result?.success) {
           router.replace('/(main)/home');
                
-        } else {
-          setError(result?.message || 'Credenciales inválidas');
         }
-      
+        else{
+        // 1. Validamos si la cuenta está bloqueada por falta de verificación
+      if (result?.code === 'UNVERIFIED_ACCOUNT') {
+        console.log('⚠️ Redirigiendo a verificación para:', data.email);
+        
+        // Guardamos el correo en persistencia física para rellenar la vista del código
+        await storageHelper.saveValue('user_email_to_verify', data.email.trim());
+        
+        // Redirigimos directamente al flujo donde se introduce el token del correo
+        router.replace('/(auth)/register-verify');
+        return;
+      }
+    
 
-    } catch (error) {
-      console.error('Login error:', error);
-      setError('Problemas de conexión con el servidor');
-    } finally {
-      setIsLoading(false);
+      // 2. Si es cualquier otro error, pintamos el mensaje real del backend
+      setError(result?.message);
     }
-  };
+  }
+  catch (error) {
+    console.error('Login error:', error);
+    setError('Problemas de conexión con el servidor');
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   const handleRegister = () => {
     router.push('/register');

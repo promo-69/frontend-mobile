@@ -34,9 +34,6 @@ export const PersonalInfoSteps = ({
   setValue, 
 }) => {
   const [isGenderOpen, setIsGenderOpen] = useState(false);
-  const [isCountryOpen, setIsCountryOpen] = useState(false);
-  const [selectedCountry, setSelectedCountry] = useState(COUNTRY_OPTIONS[0]); // Por defecto +58
-  const [docTypeVisual, setDocTypeVisual] = useState('V');
 
   // Paso 1: Información Personal
   if (step === 1) {
@@ -47,7 +44,6 @@ export const PersonalInfoSteps = ({
             Ingresa tus datos básicos para comenzar tu experiencia en Cineflix.
           </AppText>
         </View>
-
         <View style={styles.formContainer}>
           <Controller
             control={control}
@@ -166,34 +162,6 @@ export const PersonalInfoSteps = ({
     return (
       <View style={styles.container}>
         <View style={styles.formContainer}>
-          {/*<Controller
-            control={control}
-            name="documentNumber"
-            rules={{
-              required: "La cédula es requerida",
-              validate: validateDocumentNoType,
-            }}
-            render={({ field: { onChange, onBlur, value = "V" }, fieldState: { error } }) => {
-              const type = value?.charAt(0) || "V";
-              const number = value?.slice(1) || "";
-
-              return (
-                <SelectorInput
-                  label="Cédula de Identidad"
-                  selectedValue={type}
-                  value={number}
-                  onBlur={onBlur}
-                  onSelect={(newType) => onChange(newType + number)}
-                  onChangeText={(newNumber) => {
-                    const clean = newNumber.replace(/\D/g, "");
-                    onChange(type + clean);
-                  }}
-                  error={error?.message}
-                  keyboardType="numeric"
-                />
-              );
-            }}
-          />*/}
           <Controller
         control={control}
         name="documentNumber"
@@ -204,17 +172,17 @@ export const PersonalInfoSteps = ({
         render={({ field: { onChange, onBlur, value = "" }, fieldState: { error } }) => (
           <SelectorInput
             label="Cédula de Identidad"
-            selectedValue={docTypeVisual} // Usa el estado local cosmético
+            selectedValue={getValues('documentType') || 'V'} // Lee el valor real del formulario
             value={value}                // Muestra directamente el string limpio numérico de React Hook Form
             onBlur={onBlur}
             keyboardType="numeric"
             error={error?.message}
             onSelect={(newType) => {
-              setDocTypeVisual(newType); // Cambia visualmente entre V o E
+              setValue('documentType', newType); // Sincroniza el cambio con react-hook-form
             }}
             onChangeText={(newNumber) => {
               const clean = newNumber.replace(/\D/g, "");
-              onChange(clean); // Setea en React Hook Form exclusivamente los dígitos numéricos
+              onChange(clean);
             }}
             options={['V', 'E']}
           />
@@ -283,7 +251,8 @@ export const PersonalInfoSteps = ({
                           testID={`gender-option-${option.label}`}
                           style={styles.dropdownOption}
                           onPress={() => {
-                            onChange(option.value);
+            
+                            setValue('gender', option.value); // Asegura que el número llegue al padre
                             setIsGenderOpen(false);
                           }}
                         >
@@ -300,54 +269,14 @@ export const PersonalInfoSteps = ({
               );
             }}
           />
-      {/** 
-          <Controller
-            control={control}
-            name="password"
-            rules={{
-              required: 'La contraseña es requerida',
-              validate: validatePassword,
-            }}
-            render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
-              <Input
-                label="Contraseña"
-                value={value}
-                onBlur={onBlur}
-                onChangeText={onChange}
-                error={error?.message}
-                secureTextEntry
-              />
-            )}
-          />
-
-          <Controller
-            control={control}
-            name="confirmPassword"
-            rules={{
-              required: 'Confirme su contraseña',
-              validate: (val) =>
-                val === getValues('password') || 'Las contraseñas no coinciden',
-            }}
-            render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
-              <Input
-                label="Confirmar contraseña"
-                value={value}
-                onBlur={onBlur}
-                onChangeText={onChange}
-                error={error?.message}
-                secureTextEntry
-              />
-            )}
-          />*/}
-
-         
         </View>
       </View>
     );
   }
 
-  if(step === 3){
-  return(
+  // Paso 3: Seguridad y Términos
+  if (step === 3) {
+    return (
       <View style={styles.container}>
         <View style={styles.formContainer}>
            <Controller
@@ -417,15 +346,20 @@ export const PersonalInfoSteps = ({
             )}
           />
       </View>
-    </View>
-  );
-
+      </View>
+    );
   }
 };
 
 const styles = StyleSheet.create({
   container: {
     width: '100%',
+  },
+  stepContent: {
+    width: '100%',
+  },
+  hidden: {
+    display: 'none',
   },
   header: {
     marginBottom: theme.spacing.s24,
