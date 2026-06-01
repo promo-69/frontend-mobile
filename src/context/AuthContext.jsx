@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState } from 'react';
-import { normalizeLoginError } from '../helper/error.helper';
+import { getErrorMessage, AUTH_ERRORS } from '../constants/errorMessages';
 import { storageHelper } from '../helper/storage.helper';
 import { authService } from '../services/auth.service';
 
@@ -37,7 +37,11 @@ export const AuthProvider = ({ children }) => {
     const response = await authService.login(credentials);
     
     if (!response?.success) {
-      return { success: false, message: response?.message || 'Error de autenticación' };
+      return { 
+        success: false, 
+        code: response?.code,
+        message: getErrorMessage(response?.code) 
+      };
     }
   
     const { user, tokens } = response.data;
@@ -52,13 +56,11 @@ export const AuthProvider = ({ children }) => {
     console.log('📝 [DEBUG CONTEXT] Error capturado en login:', error.response?.data);
     
     // Extraemos el mensaje y el code directamente del payload de error de la API
-    const backendMessage = error.response?.data?.message;
     const backendCode = error.response?.data?.code; // Ej: "UNVERIFIED_ACCOUNT"
 
     return {
       success: false,
-      // Si el backend no responde con un mensaje, usamos la normalización anterior por seguridad
-      message: backendMessage || normalizeLoginError(error),
+      message: getErrorMessage(backendCode),
       code: backendCode || null, 
       status: error.response?.status ?? null,
     };

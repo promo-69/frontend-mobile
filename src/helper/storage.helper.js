@@ -169,5 +169,17 @@ export const storageHelper = {
       console.error(`Error al obtener la llave ${key} de storage:`, error);
       return null;
     }
+  },
+
+  /**
+   * Elimina cualquier valor de manera genérica
+   */
+  removeValue: async (key) => {
+    try {
+      await AsyncStorage.removeItem(key);
+    } catch (error) {
+      console.error(`Error al eliminar la llave ${key} de storage:`, error);
+      throw error;
+    }
   }
 };
