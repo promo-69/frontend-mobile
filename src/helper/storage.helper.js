@@ -141,35 +141,8 @@ export const storageHelper = {
       console.error('Error al limpiar sesión en Async Storage:', error);
       throw error;
     }
-  }
-
-  /**
-   * NUEVO: Guarda cualquier valor de tipo string de manera genérica
-   */
-  saveValue: async (key, value) => {
-    try {
-      if (value !== undefined && value !== null) {
-        await AsyncStorage.setItem(key, String(value));
-      } else {
-        await AsyncStorage.removeItem(key);
-      }
-    } catch (error) {
-      console.error(`Error al guardar la llave ${key} en storage:`, error);
-      throw error;
-    }
   },
 
-  /**
-   * NUEVO: Obtiene cualquier valor de tipo string de manera genérica
-   */
-  getValue: async (key) => {
-    try {
-      return await AsyncStorage.getItem(key);
-    } catch (error) {
-      console.error(`Error al obtener la llave ${key} de storage:`, error);
-      return null;
-    }
-  },
   /**
    * NUEVO: Guarda cualquier valor de tipo string de manera genérica
    */
