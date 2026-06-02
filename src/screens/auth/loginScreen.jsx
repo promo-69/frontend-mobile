@@ -7,10 +7,12 @@ import {
   Dimensions,
   ImageBackground,
   KeyboardAvoidingView,
+  LayoutAnimation,
   Platform,
   ScrollView,
   StyleSheet,
   TouchableOpacity,
+  UIManager,
   View,
 } from 'react-native';
 import { AppText } from '../../components/AppText';
@@ -27,6 +29,11 @@ import {
   validateEmail,
   validatePassword,
 } from '../../utils/validators';
+
+// Habilitar LayoutAnimation en Android
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
 
 const { width } = Dimensions.get('window');
 
@@ -58,11 +65,13 @@ export default function LoginScreen() {
 
   const clearError = () => {
     if (Error) {
+      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
       setError(null);
     }
   };
 
   const onSubmit = async (data) => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setError(null);
     setIsLoading(true);
     try {
@@ -87,6 +96,7 @@ export default function LoginScreen() {
         }
 
         // Usamos el mapeador de errores basado en el código devuelto
+        LayoutAnimation.configureNext(LayoutAnimation.Presets.spring);
         setError(getErrorMessage(result?.code));
       }
     } catch (error) {
@@ -109,9 +119,8 @@ export default function LoginScreen() {
     <ScreenWrapper disableSafeArea={true}>
       {/* KeyboardAvoidingView evita que el teclado cubra los inputs en iOS/Android */}
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={{ flex: 1 }}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
       >
         <ScrollView
           contentContainerStyle={styles.contentContainer}
@@ -217,23 +226,15 @@ export default function LoginScreen() {
               </View>
             </View>
 
-            <View
-              style={[
-                styles.authErrorContainer,
-                // Si no hay error, mantenemos el contenedor invisible pero ocupando su espacio (opacidad 0)
-                {
-                  opacity: Error ? 1 : 0,
-                  minHeight: 48,
-                  marginBottom: Error ? theme.spacing.s12 : 0,
-                },
-              ]}
-            >
-              <View style={styles.authErrorAccent} />
-              <AppText variant="body" style={styles.authErrorText}>
-                {Error ||
-                  '¡Ups!, hubo un problema. Danos un momento para resolverlo'}
-              </AppText>
-            </View>
+            {Error && (
+              <View style={styles.authErrorContainer}>
+                <View style={styles.authErrorAccent} />
+                <AppText variant="body" style={styles.authErrorText}>
+                  {Error}
+                </AppText>
+              </View>
+            )}
+
             <CustomButton
               title="Ingresar"
               onPress={handleSubmit(onSubmit)}
@@ -315,6 +316,7 @@ const styles = StyleSheet.create({
     paddingVertical: theme.spacing.s12,
     paddingHorizontal: theme.spacing.s14 || 14,
     borderRadius: 16,
+    marginBottom: theme.spacing.s16,
     backgroundColor: 'rgba(241, 118, 118, 0.14)',
     borderWidth: 1,
     borderColor: 'rgba(246, 190, 190, 0.35)',
