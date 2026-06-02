@@ -1,6 +1,5 @@
-
 import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter, useNavigation } from 'expo-router';
+import { useNavigation, useRouter } from 'expo-router';
 import { ChevronLeft } from 'lucide-react-native';
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
@@ -20,8 +19,9 @@ import { CustomButton } from '../../components/ui/CustomButton';
 import Logo from '../../components/ui/Icons/Logo';
 import { Input } from '../../components/ui/Input';
 import { theme } from '../../constants';
+import { AUTH_ERRORS, getErrorMessage } from '../../constants/errorMessages';
 import { useAuth } from '../../context/AuthContext';
-import { storageHelper} from '../../helper/storage.helper';
+import { storageHelper } from '../../helper/storage.helper';
 import {
   sanitizeInput,
   validateEmail,
@@ -35,7 +35,7 @@ export default function LoginScreen() {
   const navigation = useNavigation();
   const { login } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
-  
+
   const [Error, setError] = useState(null);
 
   const { control, handleSubmit } = useForm({
@@ -44,14 +44,13 @@ export default function LoginScreen() {
       password: '',
     },
   });
-  
 
   const handleGoBack = () => {
     // navigation.canGoBack() devuelve true si hay una pantalla previa en el stack
     if (navigation.canGoBack()) {
       router.back();
     } else {
-      // Si entraste directo al login o el stack se limpió, 
+      // Si entraste directo al login o el stack se limpió,
       // redirigimos al home por defecto.
       router.replace('/(main)/home');
     }
@@ -67,38 +66,36 @@ export default function LoginScreen() {
     setError(null);
     setIsLoading(true);
     try {
-      
       const result = await login(data);
 
-        if (result?.success) {
-          router.replace('/(main)/home');
-               
-        }
-        else{
+      if (result?.success) {
+        router.replace('/(main)/home');
+      } else {
         // 1. Validamos si la cuenta está bloqueada por falta de verificación
-      if (result?.code === 'UNVERIFIED_ACCOUNT') {
-        console.log('⚠️ Redirigiendo a verificación para:', data.email);
-        
-        // Guardamos el correo en persistencia física para rellenar la vista del código
-        await storageHelper.saveValue('user_email_to_verify', data.email.trim());
-        
-        // Redirigimos directamente al flujo donde se introduce el token del correo
-        router.replace('/(auth)/register-verify');
-        return;
-      }
-    
+        if (result?.code === 'UNVERIFIED_ACCOUNT') {
+          console.log('⚠️ Redirigiendo a verificación para:', data.email);
 
-      // 2. Si es cualquier otro error, pintamos el mensaje real del backend
-      setError(result?.message);
+          // Guardamos el correo en persistencia física para rellenar la vista del código
+          await storageHelper.saveValue(
+            'user_email_to_verify',
+            data.email.trim()
+          );
+
+          // Redirigimos directamente al flujo donde se introduce el token del correo
+          router.replace('/(auth)/register-verify');
+          return;
+        }
+
+        // Usamos el mapeador de errores basado en el código devuelto
+        setError(getErrorMessage(result?.code));
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      setError(AUTH_ERRORS.NETWORK_ERROR);
+    } finally {
+      setIsLoading(false);
     }
-  }
-  catch (error) {
-    console.error('Login error:', error);
-    setError('Problemas de conexión con el servidor');
-  } finally {
-    setIsLoading(false);
-  }
-};
+  };
 
   const handleRegister = () => {
     router.push('/register');
@@ -220,34 +217,40 @@ export default function LoginScreen() {
               </View>
             </View>
 
-            <View style={[
-  styles.authErrorContainer, 
-  // Si no hay error, mantenemos el contenedor invisible pero ocupando su espacio (opacidad 0)
-  { opacity: Error ? 1 : 0, minHeight: 48, marginBottom: Error ? theme.spacing.s12 : 0 }
-]}>
-  <View style={styles.authErrorAccent} />
-  <AppText variant="body" style={styles.authErrorText}>
-    {Error || '¡Ups!, hubo un problema. Danos un momento para resolverlo'} 
-  </AppText>
-</View>
-              <CustomButton
-                title="Ingresar"
-                onPress={handleSubmit(onSubmit)}
-                loading={isLoading}
-              />
-            </View>
-
-            <View style={styles.footerSection}>
-              <AppText variant="label" style={styles.footerText}>
-                ¿No tienes una cuenta?{' '}
+            <View
+              style={[
+                styles.authErrorContainer,
+                // Si no hay error, mantenemos el contenedor invisible pero ocupando su espacio (opacidad 0)
+                {
+                  opacity: Error ? 1 : 0,
+                  minHeight: 48,
+                  marginBottom: Error ? theme.spacing.s12 : 0,
+                },
+              ]}
+            >
+              <View style={styles.authErrorAccent} />
+              <AppText variant="body" style={styles.authErrorText}>
+                {Error ||
+                  '¡Ups!, hubo un problema. Danos un momento para resolverlo'}
               </AppText>
-              <TouchableOpacity onPress={handleRegister} activeOpacity={0.7}>
-                <AppText variant="label" style={styles.registerLink}>
-                  Regístrate aquí
-                </AppText>
-              </TouchableOpacity>
             </View>
-          
+            <CustomButton
+              title="Ingresar"
+              onPress={handleSubmit(onSubmit)}
+              loading={isLoading}
+            />
+          </View>
+
+          <View style={styles.footerSection}>
+            <AppText variant="label" style={styles.footerText}>
+              ¿No tienes una cuenta?{' '}
+            </AppText>
+            <TouchableOpacity onPress={handleRegister} activeOpacity={0.7}>
+              <AppText variant="label" style={styles.registerLink}>
+                Regístrate aquí
+              </AppText>
+            </TouchableOpacity>
+          </View>
         </ScrollView>
       </KeyboardAvoidingView>
     </ScreenWrapper>
@@ -363,12 +366,12 @@ const styles = StyleSheet.create({
   },
 
   backButton: {
-  position: 'absolute',
-  top: 56,
-  left: 16,
-  zIndex: 20,
-  padding: 8,
-  borderRadius: 999,
-  backgroundColor: 'rgba(0,0,0,0.25)',
-},
+    position: 'absolute',
+    top: 56,
+    left: 16,
+    zIndex: 20,
+    padding: 8,
+    borderRadius: 999,
+    backgroundColor: 'rgba(0,0,0,0.25)',
+  },
 });
