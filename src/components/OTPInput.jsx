@@ -19,6 +19,7 @@ export const OTPInput = ({ code, setCode, maxLength = 4 }) => {
         onChangeText={text => setCode(text.replace(/[^0-9]/g, '').slice(0, maxLength))}
         keyboardType="number-pad"
         style={styles.hiddenInput}
+        testID="otp-input-hidden"
         autoFocus
       />
     </Pressable>

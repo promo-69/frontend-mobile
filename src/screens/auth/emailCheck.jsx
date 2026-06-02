@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { storageHelper } from '../../helper/storage.helper';
 import { ScreenWrapper } from '../../components/ScreenWrapper';
@@ -33,51 +33,7 @@ export default function EmailCheck() {
       }
     };
     getSavedEmail();
-  }, []);
-
-  // Efecto para redirigir al Login después de ver la pantalla de Éxito
-  useEffect(() => {
-    if (!showSuccess) return;
-    const timer = setTimeout(() => {
-      router.replace('/login');
-    }, 3000);
-    return () => clearTimeout(timer);
-  }, [showSuccess]);
-
-  // Auto-disparo de la verificación cuando el código llega a 4 dígitos
-  useEffect(() => {
-    if (code.length === 4) {
-      handleContinue(code);
-    }
-  }, [code]);
-
-  const handleContinue = async (fullCode) => {
-    const finalCode = typeof fullCode === 'string' ? fullCode : code;
-    
-    if (finalCode.length < 4) {
-      Alert.alert("Código incompleto", "Por favor ingresa los 4 dígitos.");
-      return;
-    }
-
-    setIsVerifying(true);
-    try {
-      const result = await verifyAccount(email, finalCode);
-
-      if (result.success) {
-        // Limpiamos el correo temporal ya verificado de la persistencia
-        await storageHelper.removeValue('user_email_to_verify');
-        // Activamos la pantalla de felicitaciones
-        setShowSuccess(true);
-      } else {
-        Alert.alert("Verificación fallida", result.message || "Código incorrecto.");
-        setCode(''); // Limpiar el código en caso de error
-      }
-    } catch (error) {
-      Alert.alert("Error", "Ocurrió un problema al conectar con el servidor.");
-    } finally {
-      setIsVerifying(false);
-    }
-  };
+  }, [router]);
 
   const handleResendCode = async () => {
     if (!email) {
@@ -99,6 +55,48 @@ export default function EmailCheck() {
       setIsResending(false);
     }
   };
+
+  const handleContinue = useCallback(async (fullCode) => {
+    const finalCode = typeof fullCode === 'string' ? fullCode : code;
+    
+    if (finalCode.length < 4) {
+      Alert.alert("Código incompleto", "Por favor ingresa los 4 dígitos.");
+      return;
+    }
+
+    setIsVerifying(true);
+    try {
+      const result = await verifyAccount(email, finalCode);
+
+      if (result.success) {
+        await storageHelper.removeValue('user_email_to_verify');
+        setShowSuccess(true);
+      } else {
+        Alert.alert("Verificación fallida", result.message || "Código incorrecto.");
+        setCode('');
+      }
+    } catch (error) {
+      Alert.alert("Error", "Ocurrió un problema al conectar con el servidor.");
+    } finally {
+      setIsVerifying(false);
+    }
+  }, [code, email, verifyAccount]);
+
+  // Efecto para redirigir al Login después de ver la pantalla de Éxito
+  useEffect(() => {
+    if (!showSuccess) return;
+    const timer = setTimeout(() => {
+      router.replace('/login');
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, [showSuccess, router]);
+
+  // Auto-disparo de la verificación cuando el código llega a 4 dígitos
+  useEffect(() => {
+    if (code.length === 4) {
+      handleContinue(code);
+    }
+  }, [code, handleContinue]);
 
   // Si completó el flujo con éxito, renderizamos tu SuccessScreen tal como deseas
   if (showSuccess) {
@@ -140,7 +138,7 @@ export default function EmailCheck() {
             ) : (
               <Text style={styles.resendButtonText}>Reenviar código</Text>
             )}
-          />
+          </TouchableOpacity>
         </View>
       </View>
     </ScreenWrapper>
@@ -162,7 +160,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 22,
     fontWeight: 'bold',
-    color: theme?.colors?.primary || '#231640',
+    color: theme.colors.primary,
     textAlign: 'center',
     marginBottom: 12,
   },
