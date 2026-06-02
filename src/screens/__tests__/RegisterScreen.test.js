@@ -100,7 +100,7 @@ describe('Registro - Integración Paso 1 (Validación Explícita)', () => {
   });
 
   it('debe avanzar al Paso 2 cuando los datos son válidos tras un intento fallido', async () => {
-    const { getByText, getByLabelText, queryByText, findByText } = renderWithAuth(
+    const { getByText, getByLabelText, getByTestId, queryByText, findByText } = renderWithAuth(
       <RegisterScreen />
     );
 
@@ -108,23 +108,18 @@ describe('Registro - Integración Paso 1 (Validación Explícita)', () => {
       'Ingresa tus datos básicos para comenzar tu experiencia en Cineflix.';
 
     // Llenamos datos válidos en los campos del Paso 1
-    await act(async () => {
-      fireEvent.changeText(getByLabelText('Nombres'), 'Alexis');
-      fireEvent.changeText(getByLabelText('Apellidos'), 'Mendoza');
-      fireEvent.changeText(
-        getByLabelText('Correo Electrónico'),
-        'alexis@ucla.edu.ve'
-      );
-      fireEvent.changeText(getByLabelText('Teléfono'), '04121234567');
-    });
+    fireEvent.changeText(getByLabelText('Nombres'), 'Alexis');
+    fireEvent.changeText(getByLabelText('Apellidos'), 'Mendoza');
+    fireEvent.changeText(
+      getByLabelText('Correo Electrónico'),
+      'alexis@ucla.edu.ve'
+    );
+    // Corregido: usamos changeText para disparar onChangeText del mock
+    fireEvent.changeText(getByLabelText('Teléfono'), '04121234567');
 
-    // Verificamos que el texto descriptivo del Paso 1 ya no esté en pantalla
-    await act(async () => {
-      fireEvent.press(getByText('Continuar'));
-    });
+    fireEvent.press(getByText('Continuar'));
 
     // Verificamos que ahora aparezca un elemento del Paso 2
-    // findByText ya maneja la espera asíncrona del cambio de estado
     const cedulaLabel = await findByText('Cédula de Identidad');
     expect(cedulaLabel).toBeTruthy();
 
@@ -252,28 +247,34 @@ describe('Registro - Integración Paso 1 (Validación Explícita)', () => {
   });
 
   it('debe consolidar el payload correctamente y enviar la fecha en formato YYYY-MM-DD', async () => {
-    const { getByText, getByLabelText, getByTestId } = renderWithAuth(<RegisterScreen />);
+    // 1. Configurar el Mock antes de renderizar
+    authService.signUp.mockResolvedValueOnce({
+      success: true,
+      data: { user: { id: 1, email: 'alexis@ucla.edu.ve' } }
+    });
+
+    const { getByText, getByLabelText, getByTestId, queryByRole, findByLabelText, findByText } = renderWithAuth(<RegisterScreen />);
 
     // PASO 1
     fireEvent.changeText(getByLabelText('Nombres'), 'Alexis');
     fireEvent.changeText(getByLabelText('Apellidos'), 'Mendoza');
     fireEvent.changeText(getByLabelText('Correo Electrónico'), 'alexis@ucla.edu.ve');
     fireEvent.changeText(getByLabelText('Teléfono'), '04121234567');
-    await act(async () => { fireEvent.press(getByText('Continuar')); });
+    fireEvent.press(getByText('Continuar'));
+
+    // CRUCIAL: Esperar a que la validación asíncrona termine y cambie el paso
+    await findByLabelText('Cédula de Identidad');
 
     // PASO 2
     fireEvent.changeText(getByLabelText('Cédula de Identidad'), '12345678');
-    // Simulamos que el DateInput devuelve la fecha en formato ISO o string plano
-    // asumiendo que el componente real o el mock maneja '2000-05-20'
     fireEvent(getByTestId('mock-date-input'), 'onChange', '2000-05-20');
     
-    await act(async () => {
-      fireEvent.press(getByTestId('gender-dropdown-trigger'));
-    });
-    await act(async () => {
-      fireEvent.press(getByTestId('gender-option-Masculino'));
-    });
-    await act(async () => { fireEvent.press(getByText('Continuar')); });
+    fireEvent.press(getByTestId('gender-dropdown-trigger'));
+    fireEvent.press(getByTestId('gender-option-Masculino'));
+    fireEvent.press(getByText('Continuar'));
+
+    // CRUCIAL: Esperar transición al Paso 3
+    await findByText('Finalizar');
 
     // PASO 3
     fireEvent.changeText(getByLabelText('Contraseña'), 'Password123!');
@@ -281,12 +282,14 @@ describe('Registro - Integración Paso 1 (Validación Explícita)', () => {
     fireEvent.press(getByText(/Acepto los/));
 
     // FINALIZAR
-    await act(async () => {
-      fireEvent.press(getByText('Finalizar'));
-    });
+    fireEvent.press(getByText('Finalizar'));
 
-    // VERIFICACIÓN DEL PAYLOAD CONSOLIDADO
     await waitFor(() => {
+      // Verificamos que el spinner haya desaparecido (isSubmitting -> false)
+      // Nota: queryByRole('progressbar') busca el ActivityIndicator de React Native
+      expect(queryByRole('progressbar')).toBeNull();
+
+      // VERIFICACIÓN DEL PAYLOAD CONSOLIDADO
       expect(authService.signUp).toHaveBeenCalledWith(
         expect.objectContaining({
           firstName: 'Alexis',
@@ -298,7 +301,10 @@ describe('Registro - Integración Paso 1 (Validación Explícita)', () => {
         })
       );
       
+      // Verificaciones de efectos secundarios
       expect(storageHelper.saveValue).toHaveBeenCalledWith('user_email_to_verify', 'alexis@ucla.edu.ve');
+      
+      // Verificamos que la navegación ocurrió limpiamente
       expect(mockReplace).toHaveBeenCalledWith('/(auth)/register-verify');
     });
   });
