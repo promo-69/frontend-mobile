@@ -1,15 +1,10 @@
-import {
-    act,
-    fireEvent,
-    render,
-    waitFor
-} from '@testing-library/react-native';
+import { act, fireEvent, render, waitFor } from '@testing-library/react-native';
 import { Animated } from 'react-native';
-import RegisterScreen from '../auth/RegisterScreen';
 import { AuthProvider } from '../../context/AuthContext';
-import { authService } from '../../services/auth.service';
-import { storageHelper } from '../../helper/storage.helper';
 import { jwtHelper } from '../../helper/jwt.helper';
+import { storageHelper } from '../../helper/storage.helper';
+import { authService } from '../../services/auth.service';
+import RegisterScreen from '../auth/RegisterScreen';
 
 // MOCK DE NAVEGACIÓN (Expo Router)
 jest.mock('../../services/auth.service');
@@ -65,11 +60,7 @@ jest.mock('react-native-safe-area-context', () => ({
 }));
 
 const renderWithAuth = (ui) => {
-  return render(
-    <AuthProvider>
-      {ui}
-    </AuthProvider>
-  );
+  return render(<AuthProvider>{ui}</AuthProvider>);
 };
 
 describe('Registro - Integración Paso 1 (Validación Explícita)', () => {
@@ -80,10 +71,10 @@ describe('Registro - Integración Paso 1 (Validación Explícita)', () => {
   });
 
   it('debe mostrar errores y bloquear el avance si los campos están vacíos', async () => {
-    const { getByText, findByText } = renderWithAuth(<RegisterScreen />);
+    const { findByText } = renderWithAuth(<RegisterScreen />);
 
     // Localizamos el botón "Continuar"
-    const continueButton = getByText('Continuar');
+    const continueButton = await findByText('Continuar');
 
     //Simulamos clic sin haber llenado nada
     await act(async () => {
@@ -97,16 +88,15 @@ describe('Registro - Integración Paso 1 (Validación Explícita)', () => {
 
     //Verificamos que NO avanzamos al Paso 2 (el subtítulo del Paso 1 sigue ahí)
     expect(
-      getByText(
+      await findByText(
         'Ingresa tus datos básicos para comenzar tu experiencia en Cineflix.'
       )
     ).toBeTruthy();
   });
 
   it('debe avanzar al Paso 2 cuando los datos son válidos tras un intento fallido', async () => {
-    const { getByText, getByLabelText, getByTestId, queryByText, findByText } = renderWithAuth(
-      <RegisterScreen />
-    );
+    const { getByText, getByLabelText, getByTestId, queryByText, findByText } =
+      renderWithAuth(<RegisterScreen />);
 
     const subtituloPaso1 =
       'Ingresa tus datos básicos para comenzar tu experiencia en Cineflix.';
@@ -208,7 +198,9 @@ describe('Registro - Integración Paso 1 (Validación Explícita)', () => {
       fireEvent.press(getByText('Finalizar'));
     });
     expect(await findByText('La contraseña es requerida')).toBeTruthy();
-    expect(await findByText('Debes aceptar los términos y condiciones')).toBeTruthy();
+    expect(
+      await findByText('Debes aceptar los términos y condiciones')
+    ).toBeTruthy();
 
     await act(async () => {
       fireEvent.changeText(getByLabelText('Contraseña'), 'Password123!');
@@ -223,9 +215,8 @@ describe('Registro - Integración Paso 1 (Validación Explícita)', () => {
   });
 
   it('debe desaparecer el mensaje de error inmediatamente cuando el usuario empieza a escribir un valor válido', async () => {
-    const { getByText, getByLabelText, findByText, queryByText } = renderWithAuth(
-      <RegisterScreen />
-    );
+    const { getByText, getByLabelText, findByText, queryByText } =
+      renderWithAuth(<RegisterScreen />);
 
     //Provocar el error intentando avanzar
     await act(async () => {
@@ -254,15 +245,25 @@ describe('Registro - Integración Paso 1 (Validación Explícita)', () => {
     // 1. Configurar el Mock antes de renderizar
     authService.signUp.mockResolvedValueOnce({
       success: true,
-      data: { user: { id: 1, email: 'alexis@ucla.edu.ve' } }
+      data: { user: { id: 1, email: 'alexis@ucla.edu.ve' } },
     });
 
-    const { getByText, getByLabelText, getByTestId, queryByRole, findByLabelText, findByText } = renderWithAuth(<RegisterScreen />);
+    const {
+      getByText,
+      getByLabelText,
+      getByTestId,
+      queryByRole,
+      findByLabelText,
+      findByText,
+    } = renderWithAuth(<RegisterScreen />);
 
     // PASO 1
     fireEvent.changeText(getByLabelText('Nombres'), 'Alexis');
     fireEvent.changeText(getByLabelText('Apellidos'), 'Mendoza');
-    fireEvent.changeText(getByLabelText('Correo Electrónico'), 'alexis@ucla.edu.ve');
+    fireEvent.changeText(
+      getByLabelText('Correo Electrónico'),
+      'alexis@ucla.edu.ve'
+    );
     fireEvent.changeText(getByLabelText('Teléfono'), '04121234567');
     fireEvent.press(getByText('Continuar'));
 
@@ -272,7 +273,7 @@ describe('Registro - Integración Paso 1 (Validación Explícita)', () => {
     // PASO 2
     fireEvent.changeText(getByLabelText('Cédula de Identidad'), '12345678');
     fireEvent(getByTestId('mock-date-input'), 'onChange', '2000-05-20');
-    
+
     fireEvent.press(getByTestId('gender-dropdown-trigger'));
     fireEvent.press(getByTestId('gender-option-Masculino'));
     fireEvent.press(getByText('Continuar'));
@@ -282,7 +283,10 @@ describe('Registro - Integración Paso 1 (Validación Explícita)', () => {
 
     // PASO 3
     fireEvent.changeText(getByLabelText('Contraseña'), 'Password123!');
-    fireEvent.changeText(getByLabelText('Confirmar contraseña'), 'Password123!');
+    fireEvent.changeText(
+      getByLabelText('Confirmar contraseña'),
+      'Password123!'
+    );
     fireEvent.press(getByText(/Acepto los/));
 
     // FINALIZAR
@@ -300,14 +304,17 @@ describe('Registro - Integración Paso 1 (Validación Explícita)', () => {
           lastName: 'Mendoza',
           email: 'alexis@ucla.edu.ve',
           // Verificación crítica: el formato de la fecha coincide con el enviado por el input
-          birthDate: '2000-05-20', 
-          documentNumber: '12345678'
+          birthDate: '2000-05-20',
+          documentNumber: '12345678',
         })
       );
-      
+
       // Verificaciones de efectos secundarios
-      expect(storageHelper.saveValue).toHaveBeenCalledWith('user_email_to_verify', 'alexis@ucla.edu.ve');
-      
+      expect(storageHelper.saveValue).toHaveBeenCalledWith(
+        'user_email_to_verify',
+        'alexis@ucla.edu.ve'
+      );
+
       // Verificamos que la navegación ocurrió limpiamente
       expect(mockReplace).toHaveBeenCalledWith('/(auth)/register-verify');
     });

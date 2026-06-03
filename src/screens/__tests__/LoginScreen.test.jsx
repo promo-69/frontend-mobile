@@ -1,5 +1,5 @@
 import { fireEvent, render, waitFor } from '@testing-library/react-native';
-import { useRouter, useNavigation } from 'expo-router';
+import { useNavigation, useRouter } from 'expo-router';
 import { AUTH_ERRORS } from '../../constants/errorMessages';
 import { AuthProvider } from '../../context/AuthContext';
 import { storageHelper } from '../../helper/storage.helper';
@@ -42,17 +42,24 @@ describe('LoginScreen Integration Tests', () => {
       success: true,
       data: {
         user: { id: 1, firstName: 'Alexis', email: 'alexis@gmail.com' },
-        tokens: { accessToken: 'fake-access-token', refreshToken: 'fake-refresh-token' }
-      }
+        tokens: {
+          accessToken: 'fake-access-token',
+          refreshToken: 'fake-refresh-token',
+        },
+      },
     });
 
     // 2. RENDERIZAR DESPUÉS
-    const { getByLabelText, getByText } = renderWithAuth();
+    const { findByLabelText, findByText } = renderWithAuth();
+
+    const emailInput = await findByLabelText('Correo');
+    const passwordInput = await findByLabelText('Contraseña');
+    const submitButton = await findByText('Ingresar');
 
     // 3. SIMULAR EVENTOS
-    fireEvent.changeText(getByLabelText('Correo'), 'alexis@gmail.com');
-    fireEvent.changeText(getByLabelText('Contraseña'), 'Password123!');
-    fireEvent.press(getByText('Ingresar'));
+    fireEvent.changeText(emailInput, 'alexis@gmail.com');
+    fireEvent.changeText(passwordInput, 'Password123!');
+    fireEvent.press(submitButton);
 
     // 4. ASERCIONES ASÍNCRONAS
     await waitFor(() => {
@@ -78,13 +85,17 @@ describe('LoginScreen Integration Tests', () => {
     // Configurar mock antes del render
     authService.login.mockRejectedValueOnce(unverifiedError);
 
-    const { getByLabelText, getByText } = renderWithAuth();
+    const { findByLabelText, findByText } = renderWithAuth();
 
-    fireEvent.changeText(getByLabelText('Correo'), 'pendiente@gmail.com');
-    fireEvent.changeText(getByLabelText('Contraseña'), 'Password123!');
-    
+    const emailInput = await findByLabelText('Correo');
+    const passwordInput = await findByLabelText('Contraseña');
+    const submitButton = await findByText('Ingresar');
+
+    fireEvent.changeText(emailInput, 'pendiente@gmail.com');
+    fireEvent.changeText(passwordInput, 'Password123!');
+
     // Eliminado el bloque act() redundante
-    fireEvent.press(getByText('Ingresar'));
+    fireEvent.press(submitButton);
 
     // El waitFor se asegura de aguardar la respuesta asíncrona del Contexto
     await waitFor(() => {
@@ -109,12 +120,16 @@ describe('LoginScreen Integration Tests', () => {
     // Corregido a mockRejectedValueOnce para que caiga en el catch real de tu código
     authService.login.mockRejectedValueOnce(invalidLoginError);
 
-    const { getByLabelText, getByText, findByText } = renderWithAuth();
+    const { findByLabelText, findByText } = renderWithAuth();
 
-    fireEvent.changeText(getByLabelText('Correo'), 'error@gmail.com');
-    fireEvent.changeText(getByLabelText('Contraseña'), 'WrongPassword1*');
-    
-    fireEvent.press(getByText('Ingresar'));
+    const emailInput = await findByLabelText('Correo');
+    const passwordInput = await findByLabelText('Contraseña');
+    const submitButton = await findByText('Ingresar');
+
+    fireEvent.changeText(emailInput, 'error@gmail.com');
+    fireEvent.changeText(passwordInput, 'WrongPassword1*');
+
+    fireEvent.press(submitButton);
 
     // findByText ya maneja internamente el asincronismo (hace un waitFor encubierto)
     expect(await findByText(AUTH_ERRORS.INVALID_LOGIN)).toBeTruthy();

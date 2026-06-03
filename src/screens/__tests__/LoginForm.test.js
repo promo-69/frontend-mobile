@@ -1,10 +1,15 @@
+import {
+  act,
+  fireEvent,
+  render,
+  waitFor
+} from '@testing-library/react-native';
 import { Animated } from 'react-native';
-import { act, fireEvent, render, waitFor, queryByText } from '@testing-library/react-native';
-import LoginScreen from '../auth/LoginScreen';
 import { AuthProvider } from '../../context/AuthContext';
-import { authService } from '../../services/auth.service';
-import { storageHelper } from '../../helper/storage.helper';
 import { jwtHelper } from '../../helper/jwt.helper';
+import { storageHelper } from '../../helper/storage.helper';
+import { authService } from '../../services/auth.service';
+import LoginScreen from '../auth/LoginScreen';
 
 // Mock de servicios y helpers
 jest.mock('../../services/auth.service');
@@ -61,23 +66,25 @@ describe('LoginScreen Integration Tests', () => {
     jest.clearAllMocks();
     // Configuramos los mocks para que el AuthContext no intente cerrar sesión al iniciar
     jwtHelper.isExpired.mockReturnValue(false);
-    storageHelper.getUserData.mockResolvedValue(null);
-    storageHelper.getAccessToken.mockResolvedValue(null);
-    
+    storageHelper.getUserData.mockResolvedValue(Promise.resolve(null));
+    storageHelper.getAccessToken.mockResolvedValue(Promise.resolve(null));
+
     // Simulamos respuesta de login por defecto
-    authService.login.mockResolvedValue({
-      success: true,
-      data: { user: {}, tokens: {} },
-    });
+    authService.login.mockResolvedValue(
+      Promise.resolve({
+        success: true,
+        data: { user: {}, tokens: {} },
+      })
+    );
   });
 
-  it('debe renderizar correctamente los elementos del formulario de inicio de sesión', () => {
-    const { getByText, getByLabelText } = renderWithAuth(<LoginScreen />);
+  it('debe renderizar correctamente los elementos del formulario de inicio de sesión', async () => {
+    const { findByText, findByLabelText } = renderWithAuth(<LoginScreen />);
 
-    expect(getByText('Inicio de Sesión')).toBeTruthy();
-    expect(getByLabelText('Correo')).toBeTruthy();
-    expect(getByLabelText('Contraseña')).toBeTruthy();
-    expect(getByText('Ingresar')).toBeTruthy();
+    expect(await findByText('Inicio de Sesión')).toBeTruthy();
+    expect(await findByLabelText('Correo')).toBeTruthy();
+    expect(await findByLabelText('Contraseña')).toBeTruthy();
+    expect(await findByText('Ingresar')).toBeTruthy();
   });
 
   it('debe mostrar mensajes de error cuando los campos están vacíos al intentar ingresar', async () => {
@@ -93,14 +100,15 @@ describe('LoginScreen Integration Tests', () => {
   });
 
   it('debe mostrar error de validación cuando el formato del correo es inválido', async () => {
-    const { getByText, getByLabelText, findByText } = renderWithAuth(
-      <LoginScreen />
-    );
+    const { findByText, findByLabelText } = renderWithAuth(<LoginScreen />);
+
+    const emailInput = await findByLabelText('Correo');
+    const submitButton = await findByText('Ingresar');
 
     await act(async () => {
-      fireEvent.changeText(getByLabelText('Correo'), 'usuario_invalido');
-      fireEvent(getByLabelText('Correo'), 'blur');
-      fireEvent.press(getByText('Ingresar'));
+      fireEvent.changeText(emailInput, 'usuario_invalido');
+      fireEvent(emailInput, 'blur');
+      fireEvent.press(submitButton);
     });
 
     expect(
@@ -108,10 +116,10 @@ describe('LoginScreen Integration Tests', () => {
     ).toBeTruthy();
   });
 
-  it('debe navegar a la pantalla de registro al presionar el link correspondiente', () => {
-    const { getByText } = renderWithAuth(<LoginScreen />);
+  it('debe navegar a la pantalla de registro al presionar el link correspondiente', async () => {
+    const { findByText } = renderWithAuth(<LoginScreen />);
 
-    const registerLink = getByText('Regístrate aquí');
+    const registerLink = await findByText('Regístrate aquí');
     act(() => {
       fireEvent.press(registerLink);
     });
@@ -119,10 +127,10 @@ describe('LoginScreen Integration Tests', () => {
     expect(mockPush).toHaveBeenCalledWith('/register');
   });
 
-  it('debe navegar a la pantalla de recuperación de contraseña', () => {
-    const { getByText } = renderWithAuth(<LoginScreen />);
+  it('debe navegar a la pantalla de recuperación de contraseña', async () => {
+    const { findByText } = renderWithAuth(<LoginScreen />);
 
-    const recoverLink = getByText('¿Olvidaste tu contraseña?');
+    const recoverLink = await findByText('¿Olvidaste tu contraseña?');
     act(() => {
       fireEvent.press(recoverLink);
     });
