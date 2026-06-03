@@ -9,7 +9,7 @@ import { AuthProvider } from '../../context/AuthContext';
 import { jwtHelper } from '../../helper/jwt.helper';
 import { storageHelper } from '../../helper/storage.helper';
 import { authService } from '../../services/auth.service';
-import LoginScreen from '../auth/LoginScreen';
+import LoginScreen from '../auth/loginScreen';
 
 // Mock de servicios y helpers
 jest.mock('../../services/auth.service');

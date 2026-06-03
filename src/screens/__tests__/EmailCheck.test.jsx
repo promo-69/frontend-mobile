@@ -32,26 +32,24 @@ const renderWithAuth = () => {
 describe('EmailCheck Integration Tests', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    // Por defecto, asumimos que los tokens no han expirado para no interrumpir el flujo
     jwtHelper.isExpired.mockReturnValue(false);
-    jest.useFakeTimers();
+    jest.useRealTimers(); // Usamos tiempo real para evitar bloqueos
   });
 
   afterEach(() => {
-    jest.useRealTimers();
+    jest.clearAllTimers();
   });
 
   it('debe cargar el correo desde el almacenamiento y mostrarlo en el subtítulo', async () => {
-    storageHelper.getValue.mockResolvedValueOnce('alexis@ucla.edu.ve');
-    const { getByText } = renderWithAuth();
+    storageHelper.getValue.mockResolvedValue('alexis@ucla.edu.ve');
+    const { findByText } = renderWithAuth();
 
-    await waitFor(() => {
-      expect(getByText('alexis@ucla.edu.ve')).toBeTruthy();
-    });
+    const emailText = await findByText('alexis@ucla.edu.ve');
+    expect(emailText).toBeTruthy();
   });
 
   it('debe alertar y redirigir al registro si no se encuentra un correo en el storage', async () => {
-    storageHelper.getValue.mockResolvedValueOnce(null);
+    storageHelper.getValue.mockResolvedValue(null);
     renderWithAuth();
 
     await waitFor(() => {
@@ -63,45 +61,43 @@ describe('EmailCheck Integration Tests', () => {
     });
   });
 
-  it('debe realizar la verificación exitosa, mostrar SuccessScreen y redirigir tras 3 segundos', async () => {
-    storageHelper.getValue.mockResolvedValueOnce('alexis@ucla.edu.ve');
-    authService.verifyEmail.mockResolvedValueOnce({ success: true });
+  it('debe realizar la verificación exitosa, mostrar SuccessScreen y redirigir', async () => {
+    storageHelper.getValue.mockResolvedValue('alexis@ucla.edu.ve');
+    authService.verifyEmail.mockResolvedValue({ success: true });
 
-    const { getByTestId, getByText } = renderWithAuth();
+    const { findByTestId, getByText } = renderWithAuth();
 
-    const input = await waitFor(() => getByTestId('otp-input-hidden'));
+    const input = await findByTestId('otp-input-hidden');
 
     await act(async () => {
       fireEvent.changeText(input, '1234');
     });
 
+    // Verificamos que se cumpla la lógica de éxito y la UI responda correctamente
     await waitFor(() => {
       expect(authService.verifyEmail).toHaveBeenCalledWith({
         email: 'alexis@ucla.edu.ve',
         code: '1234',
       });
-      expect(storageHelper.removeValue).toHaveBeenCalledWith(
-        'user_email_to_verify'
-      );
+      expect(storageHelper.removeValue).toHaveBeenCalledWith('user_email_to_verify');
       expect(getByText('¡Cuenta Verificada!')).toBeTruthy();
     });
 
-    // Avanzamos los timers para verificar la redirección automática
-    act(() => {
-      jest.advanceTimersByTime(3000);
-    });
-
-    expect(mockReplace).toHaveBeenCalledWith('/login');
+    // Omitimos el avance manual de los timers falsos para evitar fugas de memoria,
+    // y simplemente esperamos de forma asíncrona limpia a que el router sea invocado.
+    await waitFor(() => {
+      expect(mockReplace).toHaveBeenCalledWith('/login');
+    }, { timeout: 3500 }); // Le damos el margen de los 3 segundos que tarda tu pantalla
   });
 
   it('debe mostrar alerta de error y limpiar los inputs si la verificación falla', async () => {
-    storageHelper.getValue.mockResolvedValueOnce('alexis@ucla.edu.ve');
-    authService.verifyEmail.mockRejectedValueOnce({
+    storageHelper.getValue.mockResolvedValue('alexis@ucla.edu.ve');
+    authService.verifyEmail.mockRejectedValue({
       response: { data: { message: 'Código inválido' } },
     });
 
-    const { getByTestId } = renderWithAuth();
-    const input = await waitFor(() => getByTestId('otp-input-hidden'));
+    const { findByTestId } = renderWithAuth();
+    const input = await findByTestId('otp-input-hidden');
 
     await act(async () => {
       fireEvent.changeText(input, '0000');
@@ -112,37 +108,7 @@ describe('EmailCheck Integration Tests', () => {
         'Verificación fallida',
         'Código inválido'
       );
-      // Verificamos que el input se haya reseteado a vacío
       expect(input.props.value).toBe('');
     });
   });
-
-  /*it('debe reenviar el código al presionar el botón "Reenviar código"', async () => {
-    const testEmail = 'alexis@ucla.edu.ve';
-    storageHelper.getValue.mockResolvedValueOnce(testEmail);
-    authService.verifyEmail.mockResolvedValueOnce({
-      success: true,
-      message: 'Correo de recuperación enviado',
-    });
-
-    const { getByTestId } = renderWithAuth();
-
-    // Esperamos a que el email se cargue y el botón esté disponible
-    const resendButton = await waitFor(() => getByTestId('resend-code-button'));
-
-    await act(async () => {
-      fireEvent.press(resendButton);
-    });
-
-    // Verificamos que el servicio de reenvío fue llamado con el email correcto
-    expect(authService.verifyEmail).toHaveBeenCalledWith(
-      testEmail
-    );
-
-    // Verificamos que se mostró la alerta de éxito
-    expect(Alert.alert).toHaveBeenCalledWith(
-      'Éxito',
-      'Se ha reenviado el código a tu correo.'
-    );
-  });*/
 });

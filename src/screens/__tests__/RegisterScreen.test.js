@@ -4,7 +4,7 @@ import { AuthProvider } from '../../context/AuthContext';
 import { jwtHelper } from '../../helper/jwt.helper';
 import { storageHelper } from '../../helper/storage.helper';
 import { authService } from '../../services/auth.service';
-import RegisterScreen from '../auth/RegisterScreen';
+import RegisterScreen from '../auth/registerScreen';
 
 // MOCK DE NAVEGACIÓN (Expo Router)
 jest.mock('../../services/auth.service');
