@@ -2,16 +2,16 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ChevronLeft } from 'lucide-react-native';
 import { useState } from 'react';
 import {
-  KeyboardAvoidingView,
-  Platform,
-  StyleSheet,
-  TouchableOpacity,
-  View,
+    KeyboardAvoidingView,
+    Platform,
+    StyleSheet,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 import { AppText } from '../../../components/AppText';
 import { OTPInput } from '../../../components/OTPInput';
 import { ScreenWrapper } from '../../../components/ScreenWrapper';
-import { Button } from '../../../components/ui/Button';
+import { CustomButton } from '../../../components/ui/CustomButton';
 import { theme } from '../../../constants';
 
 export const VerifyCodeScreen = () => {
@@ -47,7 +47,7 @@ export const VerifyCodeScreen = () => {
           </View>
 
           <View style={styles.actionSection}>
-            <Button
+            <CustomButton
               title="Confirmar Código"
               onPress={() =>router.push(
                   {

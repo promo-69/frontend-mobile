@@ -72,7 +72,7 @@ describe('Validación de Teléfono (validatePhoneNumberVE)', () => {
 
 /**
    * Pruebas de fecha de nacimiento
-   * Regla: >= 13 años y <= 120 años. No futura.
+   * Regla: >= 18 años y <= 120 años. No futura.
    */
   describe('Validación de Fecha (validateDate)', () => {
     beforeAll(() => {
@@ -86,12 +86,12 @@ describe('Validación de Teléfono (validatePhoneNumberVE)', () => {
     });
 
     // Asumiendo hoy es 09/04/2026
-    test('TC-01: Debe pasar si tiene 13 años exactos', () => {
-      expect(v.validateDate('09/04/2013')).toBe(true);
+    test('TC-01: Debe pasar si tiene 18 años exactos', () => {
+      expect(v.validateDate('09/04/2008')).toBe(true);
     });
 
-    test('TC-02: Debe fallar si cumple 13 mañana ', () => {
-      expect(v.validateDate('11/04/2013')).toContain("mayor de 13 años");
+    test('TC-02: Debe fallar si cumple 18 mañana ', () => {
+      expect(v.validateDate('11/04/2008')).toContain("mayor de 18 años");
     });
 
     test('TC-04: Debe fallar si la fecha es futura', () => {

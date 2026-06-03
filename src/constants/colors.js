@@ -120,7 +120,11 @@ export const COLORS = {
   primary: palette.gold[400],
   secondary: palette.lila[200],
   background: palette.midnight[900],
+  bgHeader: palette.midnight[950],
   surface: palette.gold[500],
+
+  itemInactive: palette.midnight[700],
+  itemActive: palette.gold[400],
 
   textPrimary: palette.grey[50],
   textSecondary: palette.grey[100],
@@ -144,7 +148,7 @@ export const COLORS = {
       end: { x: 0.5, y: 1 },
     },
 
-    //Gradiente Button Active (Vertical)
+    //Gradiente CustomButton Active (Vertical)
     btnDefault: {
       colors: [palette.gold[400], palette.gold[500]],
       locations: [0.45, 1.0], // 45% -> 100%
@@ -152,7 +156,7 @@ export const COLORS = {
       end: { x: 0.5, y: 1 }, // Centro inferior
     },
 
-    //Gradiente Button Pressed (Diagonal)
+    //Gradiente CustomButton Pressed (Diagonal)
     btnPressed: {
       colors: [palette.gold[200], palette.gold[400]],
       locations: [0, 1.0],

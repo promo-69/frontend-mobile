@@ -1,32 +1,50 @@
-
 import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter } from 'expo-router';
+import { useNavigation, useRouter } from 'expo-router';
+import { ChevronLeft } from 'lucide-react-native';
+import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import {
   Dimensions,
   ImageBackground,
   KeyboardAvoidingView,
+  LayoutAnimation,
   Platform,
   ScrollView,
   StyleSheet,
   TouchableOpacity,
+  UIManager,
   View,
 } from 'react-native';
 import { AppText } from '../../components/AppText';
 import { ScreenWrapper } from '../../components/ScreenWrapper';
-import { Button } from '../../components/ui/Button';
+import { CustomButton } from '../../components/ui/CustomButton';
 import Logo from '../../components/ui/Icons/Logo';
 import { Input } from '../../components/ui/Input';
 import { theme } from '../../constants';
+import { AUTH_ERRORS, getErrorMessage } from '../../constants/errorMessages';
+import { useAuth } from '../../context/AuthContext';
+import { storageHelper } from '../../helper/storage.helper';
 import {
   sanitizeInput,
   validateEmail,
   validatePassword,
 } from '../../utils/validators';
 
+// Habilitar LayoutAnimation en Android
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
+
 const { width } = Dimensions.get('window');
 
 export default function LoginScreen() {
+  const router = useRouter();
+  const navigation = useNavigation();
+  const { login } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
+
+  const [Error, setError] = useState(null);
+
   const { control, handleSubmit } = useForm({
     defaultValues: {
       email: '',
@@ -34,11 +52,59 @@ export default function LoginScreen() {
     },
   });
 
-  const router = useRouter();
+  const handleGoBack = () => {
+    // navigation.canGoBack() devuelve true si hay una pantalla previa en el stack
+    if (navigation.canGoBack()) {
+      router.back();
+    } else {
+      // Si entraste directo al login o el stack se limpió,
+      // redirigimos al home por defecto.
+      router.replace('/(main)/home');
+    }
+  };
 
-  const onSubmit = (data) => {
-    const sanitizedEmail = sanitizeInput(data.email, 'email');
-    console.log('Login intent (sanitized):', sanitizedEmail);
+  const clearError = () => {
+    if (Error) {
+      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+      setError(null);
+    }
+  };
+
+  const onSubmit = async (data) => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setError(null);
+    setIsLoading(true);
+    try {
+      const result = await login(data);
+
+      if (result?.success) {
+        router.replace('/(main)/home');
+      } else {
+        // 1. Validamos si la cuenta está bloqueada por falta de verificación
+        if (result?.code === 'UNVERIFIED_ACCOUNT') {
+          console.log('⚠️ Redirigiendo a verificación para:', data.email);
+
+          // Guardamos el correo en persistencia física para rellenar la vista del código
+          await storageHelper.saveValue(
+            'user_email_to_verify',
+            data.email.trim()
+          );
+
+          // Redirigimos directamente al flujo donde se introduce el token del correo
+          router.replace('/(auth)/register-verify');
+          return;
+        }
+
+        // Usamos el mapeador de errores basado en el código devuelto
+        LayoutAnimation.configureNext(LayoutAnimation.Presets.spring);
+        setError(getErrorMessage(result?.code));
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      setError(AUTH_ERRORS.NETWORK_ERROR);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleRegister = () => {
@@ -53,9 +119,8 @@ export default function LoginScreen() {
     <ScreenWrapper disableSafeArea={true}>
       {/* KeyboardAvoidingView evita que el teclado cubra los inputs en iOS/Android */}
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={{ flex: 1 }}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
       >
         <ScrollView
           contentContainerStyle={styles.contentContainer}
@@ -67,6 +132,14 @@ export default function LoginScreen() {
             style={styles.headerImage}
             resizeMode="cover"
           >
+            <TouchableOpacity
+              onPress={handleGoBack}
+              activeOpacity={0.7}
+              style={styles.backButton}
+            >
+              <ChevronLeft size={28} color="#fff" />
+            </TouchableOpacity>
+
             {/* Gradiente para fundir la imagen con el fondo morado */}
             <LinearGradient
               colors={[
@@ -105,7 +178,10 @@ export default function LoginScreen() {
                 }) => (
                   <Input
                     value={value}
-                    onChangeText={onChange}
+                    onChangeText={(text) => {
+                      clearError();
+                      onChange(sanitizeInput(text));
+                    }}
                     onBlur={onBlur}
                     label="Correo"
                     keyboardType="email-address"
@@ -117,7 +193,7 @@ export default function LoginScreen() {
                 control={control}
                 name="password"
                 rules={{
-                  required: 'LLenar campos faltantes',
+                  required: 'La contraseña es obligatoria',
                   validate: validatePassword,
                 }}
                 render={({
@@ -126,7 +202,10 @@ export default function LoginScreen() {
                 }) => (
                   <Input
                     value={value}
-                    onChangeText={onChange}
+                    onChangeText={(text) => {
+                      clearError();
+                      onChange(text);
+                    }}
                     onBlur={onBlur}
                     label="Contraseña"
                     secureTextEntry
@@ -147,20 +226,31 @@ export default function LoginScreen() {
               </View>
             </View>
 
-            <View style={styles.actionSection}>
-              <Button title="Ingresar" onPress={handleSubmit(onSubmit)} />
-            </View>
-
-            <View style={styles.footerSection}>
-              <AppText variant="label" style={styles.footerText}>
-                ¿No tienes una cuenta?{' '}
-              </AppText>
-              <TouchableOpacity onPress={handleRegister} activeOpacity={0.7}>
-                <AppText variant="label" style={styles.registerLink}>
-                  Regístrate aquí
+            {Error && (
+              <View style={styles.authErrorContainer}>
+                <View style={styles.authErrorAccent} />
+                <AppText variant="body" style={styles.authErrorText}>
+                  {Error}
                 </AppText>
-              </TouchableOpacity>
-            </View>
+              </View>
+            )}
+
+            <CustomButton
+              title="Ingresar"
+              onPress={handleSubmit(onSubmit)}
+              loading={isLoading}
+            />
+          </View>
+
+          <View style={styles.footerSection}>
+            <AppText variant="label" style={styles.footerText}>
+              ¿No tienes una cuenta?{' '}
+            </AppText>
+            <TouchableOpacity onPress={handleRegister} activeOpacity={0.7}>
+              <AppText variant="label" style={styles.registerLink}>
+                Regístrate aquí
+              </AppText>
+            </TouchableOpacity>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -172,6 +262,7 @@ const styles = StyleSheet.create({
   contentContainer: {
     flexGrow: 1,
     justifyContent: 'flex-start',
+    paddingBottom: 40,
   },
   headerImage: {
     width: width,
@@ -214,7 +305,37 @@ const styles = StyleSheet.create({
   actionSection: {
     width: '100%',
     marginTop: theme.spacing.s24,
-    paddingBottom: theme.spacing.s48,
+    paddingBottom: theme.spacing.s8,
+    gap: theme.spacing.s8,
+  },
+  authErrorContainer: {
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: theme.spacing.s12,
+    paddingVertical: theme.spacing.s12,
+    paddingHorizontal: theme.spacing.s14 || 14,
+    borderRadius: 16,
+    marginBottom: theme.spacing.s16,
+    backgroundColor: 'rgba(241, 118, 118, 0.14)',
+    borderWidth: 1,
+    borderColor: 'rgba(246, 190, 190, 0.35)',
+    shadowColor: theme.colors.red[400],
+    shadowOpacity: 0.18,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 3,
+  },
+  authErrorAccent: {
+    width: 4,
+    alignSelf: 'stretch',
+    borderRadius: 999,
+    backgroundColor: theme.colors.red[700],
+  },
+  authErrorText: {
+    flex: 1,
+    color: theme.colors.red[400],
+    lineHeight: 20,
   },
   forgotPasswordWrapper: {
     width: '100%',
@@ -234,8 +355,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: -theme.spacing.s32,
-    marginBottom: theme.spacing.s32,
+    marginTop: theme.spacing.s16,
+    marginBottom: theme.spacing.s24,
   },
   footerText: {
     color: theme.colors.textPrimary,
@@ -244,5 +365,15 @@ const styles = StyleSheet.create({
     color: theme.colors.primary,
     textDecorationLine: 'underline',
     fontWeight: 'bold',
+  },
+
+  backButton: {
+    position: 'absolute',
+    top: 56,
+    left: 16,
+    zIndex: 20,
+    padding: 8,
+    borderRadius: 999,
+    backgroundColor: 'rgba(0,0,0,0.25)',
   },
 });

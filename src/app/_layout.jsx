@@ -1,11 +1,46 @@
 import { DarkTheme, ThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
+import { Stack, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { AuthProvider, useAuth } from '../context/AuthContext';
 
 SplashScreen.preventAutoHideAsync();
+
+function NavigationGuard() {
+  const { isAuthenticated, isLoading } = useAuth();
+  const segments = useSegments();
+  const router = useRouter();
+
+  useEffect(() => {
+      if (isLoading) return;
+
+      // Grupos de rutas
+      const inAuthGroup = segments[0] === '(auth)';
+      const inMainGroup = segments[0] === '(main)';
+
+      //Si el usuario se loguea y está en Login/Register, mandarlo a Home
+      if (isAuthenticated && inAuthGroup) {
+        router.replace('/(main)/home');
+      } 
+      
+      //Si el usuario no está logueado e intenta entrar a una zona privada
+      const isPrivateSection = segments[1] === 'profile';
+      if (!isAuthenticated && isPrivateSection) {
+        router.replace('/(auth)/login');
+      }
+
+    }, [isAuthenticated, isLoading, segments]);
+
+    return (
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="(main)" options={{ animation: 'fade' }} />
+      <Stack.Screen name="(auth)" options={{ animation: 'slide_from_bottom' }} />
+      <Stack.Screen name="index" options={{ href: null }} />
+    </Stack>
+    );
+}
 
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({
@@ -25,16 +60,10 @@ export default function RootLayout() {
   if (!fontsLoaded) return null;
 
   return (
-  <ThemeProvider value={DarkTheme}>
-    <SafeAreaProvider>
-      <Stack screenOptions={{ headerShown: false }}>
-        {/* Pantalla de Home */}
-        <Stack.Screen name="(home)" options={{ animation: 'fade' }} />
-
-        {/* Grupo de la App Principal (Tabs) */}
-        {/* <Stack.Screen name="(tabs)" options={{ animation: 'fade' }} /> */}
-      </Stack>
-    </SafeAreaProvider>
-    </ThemeProvider>
+      <AuthProvider>
+        <SafeAreaProvider>
+          <NavigationGuard />
+        </SafeAreaProvider>
+      </AuthProvider>
   );
 }

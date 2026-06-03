@@ -18,13 +18,23 @@ export const DateInput = ({ label, value, onChange, placeholder, error }) => {
       const day = String(selectedDate.getDate()).padStart(2, '0');
 
       const standardDate = `${year}-${month}-${day}`;
-      onChange(standardDate);
+      onChange(standardDate); // Esto manda un string "YYYY-MM-DD" perfecto a React Hook Form
     }
   };
 
   // Transformamos el valor YYYY-MM-DD del estado al formato visual DD/MM/AAAA
   const displayValue =
-    value && value.includes('-') ? value.split('-').reverse().join('/') : value;
+    value && value.includes('-') ? value.split('-').reverse().join('/') : value || '';
+
+  // Lógica para que el calendario se abra en la fecha que el usuario ya eligió, o en su defecto HOY
+  const getPickerDate = () => {
+    if (value && value.includes('-')) {
+      const [year, month, day] = value.split('-');
+      // Creamos la fecha usando enteros locales para evitar desfases de huso horario
+      return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+    }
+    return new Date();
+  };
 
   return (
     <>
@@ -43,11 +53,11 @@ export const DateInput = ({ label, value, onChange, placeholder, error }) => {
 
       {show && (
         <DateTimePicker
-          value={new Date()}
+          value={getPickerDate()} // ◄ AHORA SÍ: Mantiene la fecha seleccionada de forma estable
           mode="date"
           display={Platform.OS === 'android' ? 'calendar' : 'spinner'}
           onChange={handleChange}
-          maximumDate={new Date()}
+          maximumDate={new Date()} // Evita que elijan fechas del futuro
         />
       )}
     </>

@@ -1,5 +1,6 @@
 import { useRouter } from 'expo-router';
 import { ChevronLeft } from 'lucide-react-native';
+import { Controller, useForm } from 'react-hook-form';
 import {
   KeyboardAvoidingView,
   Platform,
@@ -9,11 +10,10 @@ import {
 } from 'react-native';
 import { AppText } from '../../../components/AppText';
 import { ScreenWrapper } from '../../../components/ScreenWrapper';
-import { Button } from '../../../components/ui/Button';
+import { CustomButton } from '../../../components/ui/CustomButton';
 import { Input } from '../../../components/ui/Input';
 import { theme } from '../../../constants';
-import { useForm, Controller } from 'react-hook-form';
-import {validateEmail, sanitizeInput} from '../../../utils/validators'
+import { sanitizeInput, validateEmail } from '../../../utils/validators';
 
 export default function ForgotPasswordScreen() {
   const router = useRouter();
@@ -105,8 +105,8 @@ export default function ForgotPasswordScreen() {
             )}
             />
           <View style={styles.actionSection}>
-            <Button title="Enviar" onPress={handleSubmit(onSubmit)} />
-            <Button
+            <CustomButton title="Enviar" onPress={handleSubmit(onSubmit)} />
+            <CustomButton
               title="Cancelar"
               onPress={handleCancel}
               style={{

@@ -86,6 +86,6 @@ git checkout -b feature/nombre-de-tu-feature
 Se usarán rutas relativas para importar archivos.
 
 Ejemplo:
-../../components/Button
+../../components/CustomButton
 
 No se usarán alias (@).
