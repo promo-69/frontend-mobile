@@ -87,13 +87,8 @@ export default function RegisterScreen() {
 
   const onSubmit = async () => {
     try {
-      // 3. FUSIONAR: Combinamos lo que tiene React Hook Form al final con el respaldo local
+      // Combinamos lo que tiene React Hook Form al final con el respaldo local
       const finalForm = { ...savedFormData, ...getValues() };
-
-      console.log(
-        '📝 [DEBUG SOLUCIONADO] Datos consolidados totales:',
-        JSON.stringify(finalForm, null, 2)
-      );
 
       // Desestructuramos del objeto consolidado real
       const payload = {

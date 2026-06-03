@@ -9,10 +9,12 @@ import RegisterScreen from '../auth/RegisterScreen';
 import { AuthProvider } from '../../context/AuthContext';
 import { authService } from '../../services/auth.service';
 import { storageHelper } from '../../helper/storage.helper';
+import { jwtHelper } from '../../helper/jwt.helper';
 
 // MOCK DE NAVEGACIÓN (Expo Router)
 jest.mock('../../services/auth.service');
 jest.mock('../../helper/storage.helper');
+jest.mock('../../helper/jwt.helper');
 
 const mockPush = jest.fn();
 const mockReplace = jest.fn();
@@ -73,6 +75,8 @@ const renderWithAuth = (ui) => {
 describe('Registro - Integración Paso 1 (Validación Explícita)', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    // Aseguramos que la sesión no expire durante el renderizado del provider
+    jwtHelper.isExpired.mockReturnValue(false);
   });
 
   it('debe mostrar errores y bloquear el avance si los campos están vacíos', async () => {

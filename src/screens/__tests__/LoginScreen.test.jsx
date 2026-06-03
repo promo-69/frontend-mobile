@@ -1,5 +1,5 @@
 import { fireEvent, render, waitFor } from '@testing-library/react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useNavigation } from 'expo-router';
 import { AUTH_ERRORS } from '../../constants/errorMessages';
 import { AuthProvider } from '../../context/AuthContext';
 import { storageHelper } from '../../helper/storage.helper';
@@ -8,6 +8,7 @@ import LoginScreen from '../auth/loginScreen';
 
 jest.mock('../../services/auth.service');
 jest.mock('../../helper/storage.helper');
+jest.mock('expo-router');
 
 const mockReplace = jest.fn();
 useRouter.mockReturnValue({
@@ -15,6 +16,7 @@ useRouter.mockReturnValue({
   push: jest.fn(),
   back: jest.fn(),
 });
+useNavigation.mockReturnValue({});
 
 describe('LoginScreen Integration Tests', () => {
   let consoleSpy;

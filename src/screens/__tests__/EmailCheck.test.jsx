@@ -2,12 +2,14 @@ import { act, fireEvent, render, waitFor } from '@testing-library/react-native';
 import { Alert } from 'react-native';
 import { AuthProvider } from '../../context/AuthContext';
 import { storageHelper } from '../../helper/storage.helper';
+import { jwtHelper } from '../../helper/jwt.helper';
 import { authService } from '../../services/auth.service';
 import EmailCheck from '../auth/emailCheck';
 
 // Mocks de servicios y helpers
 jest.mock('../../services/auth.service');
 jest.mock('../../helper/storage.helper');
+jest.mock('../../helper/jwt.helper');
 
 const mockReplace = jest.fn();
 jest.mock('expo-router', () => ({
@@ -30,6 +32,8 @@ const renderWithAuth = () => {
 describe('EmailCheck Integration Tests', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    // Por defecto, asumimos que los tokens no han expirado para no interrumpir el flujo
+    jwtHelper.isExpired.mockReturnValue(false);
     jest.useFakeTimers();
   });
 

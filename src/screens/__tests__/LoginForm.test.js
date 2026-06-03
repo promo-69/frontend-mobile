@@ -1,15 +1,34 @@
 import { Animated } from 'react-native';
-import { act, fireEvent, render, waitFor } from '@testing-library/react-native';
+import { act, fireEvent, render, waitFor, queryByText } from '@testing-library/react-native';
 import LoginScreen from '../auth/LoginScreen';
+import { AuthProvider } from '../../context/AuthContext';
+import { authService } from '../../services/auth.service';
+import { storageHelper } from '../../helper/storage.helper';
+import { jwtHelper } from '../../helper/jwt.helper';
+
+// Mock de servicios y helpers
+jest.mock('../../services/auth.service');
+jest.mock('../../helper/storage.helper');
+jest.mock('../../helper/jwt.helper');
 
 // 1. MOCK DE NAVEGACIÓN (Expo Router)
 const mockPush = jest.fn();
-jest.mock('expo-router', () => ({
-  useRouter: () => ({
-    push: mockPush,
-    back: jest.fn(),
-  }),
-}));
+const mockReplace = jest.fn();
+const mockBack = jest.fn();
+
+jest.mock('expo-router', () => {
+  return {
+    useRouter: () => ({
+      push: mockPush,
+      replace: mockReplace,
+      back: mockBack,
+    }),
+    useNavigation: () => ({
+      canGoBack: jest.fn(() => true),
+      goBack: mockBack,
+    }),
+  };
+});
 
 // Mock para que las animaciones sean instantáneas y evitar warnings de act(...)
 jest.spyOn(Animated, 'timing').mockImplementation(() => ({
@@ -32,13 +51,28 @@ jest.mock('react-native-safe-area-context', () => ({
 // 4. MOCK DE COMPONENTES UI (Opcional, para simplificar el árbol)
 jest.mock('../../components/ui/Icons/Logo', () => 'Logo');
 
+// Helper para renderizar con el contexto de autenticación
+const renderWithAuth = (ui) => {
+  return render(<AuthProvider>{ui}</AuthProvider>);
+};
+
 describe('LoginScreen Integration Tests', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    // Configuramos los mocks para que el AuthContext no intente cerrar sesión al iniciar
+    jwtHelper.isExpired.mockReturnValue(false);
+    storageHelper.getUserData.mockResolvedValue(null);
+    storageHelper.getAccessToken.mockResolvedValue(null);
+    
+    // Simulamos respuesta de login por defecto
+    authService.login.mockResolvedValue({
+      success: true,
+      data: { user: {}, tokens: {} },
+    });
   });
 
   it('debe renderizar correctamente los elementos del formulario de inicio de sesión', () => {
-    const { getByText, getByLabelText } = render(<LoginScreen />);
+    const { getByText, getByLabelText } = renderWithAuth(<LoginScreen />);
 
     expect(getByText('Inicio de Sesión')).toBeTruthy();
     expect(getByLabelText('Correo')).toBeTruthy();
@@ -47,19 +81,21 @@ describe('LoginScreen Integration Tests', () => {
   });
 
   it('debe mostrar mensajes de error cuando los campos están vacíos al intentar ingresar', async () => {
-    const { getByText, findByText } = render(<LoginScreen />);
+    const { getByText, findByText } = renderWithAuth(<LoginScreen />);
 
     await act(async () => {
       fireEvent.press(getByText('Ingresar'));
     });
 
-    // Buscamos los mensajes de error asíncronos generados por react-hook-form
+    // Verificamos que aparezcan los errores de validación de react-hook-form
     expect(await findByText('El correo es obligatorio')).toBeTruthy();
-    expect(await findByText('LLenar campos faltantes')).toBeTruthy();
+    expect(await findByText('La contraseña es obligatoria')).toBeTruthy();
   });
 
   it('debe mostrar error de validación cuando el formato del correo es inválido', async () => {
-    const { getByText, getByLabelText, findByText } = render(<LoginScreen />);
+    const { getByText, getByLabelText, findByText } = renderWithAuth(
+      <LoginScreen />
+    );
 
     await act(async () => {
       fireEvent.changeText(getByLabelText('Correo'), 'usuario_invalido');
@@ -73,7 +109,7 @@ describe('LoginScreen Integration Tests', () => {
   });
 
   it('debe navegar a la pantalla de registro al presionar el link correspondiente', () => {
-    const { getByText } = render(<LoginScreen />);
+    const { getByText } = renderWithAuth(<LoginScreen />);
 
     const registerLink = getByText('Regístrate aquí');
     act(() => {
@@ -84,7 +120,7 @@ describe('LoginScreen Integration Tests', () => {
   });
 
   it('debe navegar a la pantalla de recuperación de contraseña', () => {
-    const { getByText } = render(<LoginScreen />);
+    const { getByText } = renderWithAuth(<LoginScreen />);
 
     const recoverLink = getByText('¿Olvidaste tu contraseña?');
     act(() => {
@@ -95,27 +131,26 @@ describe('LoginScreen Integration Tests', () => {
   });
 
   it('debe permitir el inicio de sesión exitoso cuando los datos son válidos', async () => {
-    const { getByText, getByLabelText, queryByText } = render(<LoginScreen />);
-    const spyLog = jest.spyOn(console, 'log').mockImplementation();
-
-    await act(async () => {
-      fireEvent.changeText(getByLabelText('Correo'), 'alexis@ucla.edu.ve');
-      fireEvent(getByLabelText('Correo'), 'blur');
-      fireEvent.changeText(getByLabelText('Contraseña'), 'Password123');
-      fireEvent(getByLabelText('Contraseña'), 'blur');
-      fireEvent.press(getByText('Ingresar'));
-    });
-
-    // Verificamos que no existan errores de validación en pantalla tras el envío exitoso
-    await waitFor(() => {
-      expect(queryByText('El correo es obligatorio')).toBeNull();
-      expect(queryByText('LLenar campos faltantes')).toBeNull();
-    });
-
-    expect(spyLog).toHaveBeenCalledWith(
-      expect.stringContaining('Login intent'),
-      'alexis@ucla.edu.ve'
+    const { getByText, getByLabelText, queryByText } = renderWithAuth(
+      <LoginScreen />
     );
-    spyLog.mockRestore();
+
+    // Esperamos a que la carga inicial de AuthProvider finalice
+    await waitFor(() => expect(getByText('Ingresar')).toBeTruthy());
+
+    fireEvent.changeText(getByLabelText('Correo'), 'alexis@ucla.edu.ve');
+    fireEvent.changeText(getByLabelText('Contraseña'), 'Password123');
+    fireEvent(getByLabelText('Correo'), 'blur');
+    fireEvent(getByLabelText('Contraseña'), 'blur');
+    fireEvent.press(getByText('Ingresar'));
+
+    await waitFor(() => {
+      expect(authService.login).toHaveBeenCalledWith({
+        email: 'alexis@ucla.edu.ve',
+        password: 'Password123',
+      });
+    });
+
+    expect(storageHelper.saveSession).toHaveBeenCalled();
   });
 });

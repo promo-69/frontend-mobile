@@ -51,11 +51,13 @@ export const AuthProvider = ({ children }) => {
         setUser(userData);
       }
       else {
-        await logout();
+        setUser(null);
+        await storageHelper.clearSession();
       }
     } catch (error) {
       console.error('Error al restaurar sesión:', error);
-      await logout();
+      setUser(null);
+      await storageHelper.clearSession();
     } finally {
       setIsLoading(false);
     }
@@ -83,7 +85,7 @@ export const AuthProvider = ({ children }) => {
     return { success: true };
 
   } catch (error) {
-    console.log('📝 [DEBUG CONTEXT] Error capturado en login:', error.response?.data);
+    console.log(error);
     
     // Extraemos el mensaje y el code directamente del payload de error de la API
     const backendCode = error.response?.data?.code; // Ej: "UNVERIFIED_ACCOUNT"
@@ -131,7 +133,9 @@ export const AuthProvider = ({ children }) => {
 
     try {
       const response=await authService.logout(); 
-      console.log(response.message);
+      if (response?.message) {
+        console.log(response.message);
+      }
     } catch (apiError) { 
       console.warn('El servidor no pudo procesar el logout o el token expiró:', apiError);
     }
