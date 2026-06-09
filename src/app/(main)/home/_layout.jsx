@@ -19,19 +19,6 @@ export default function HomeLayout() {
         name="index" 
       />
 
-      {/* Catálogo completo de películas  */}
-      <Stack.Screen 
-        name="billboard" 
-      />
-
-      {/* Perfil detallado de la película */}
-      <Stack.Screen 
-        name="[id]" 
-      />
-
-      <Stack.Screen 
-        name="showtimes" 
-      />
       
       {/* NOTA: Si más adelante se agrega la sub-pantalla de la IA ('ai-assistant.jsx'), no es obligatorio registrarla aquí. Con solo crear el archivo en la carpeta, Expo Router la mapeará automáticamente heredando estas mismas configuraciones. */}
     </Stack>

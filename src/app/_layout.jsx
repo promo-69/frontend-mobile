@@ -1,10 +1,11 @@
-import { DarkTheme, ThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import BottomSheet from '../components/ui/BottomSheet';
 import { AuthProvider, useAuth } from '../context/AuthContext';
+import { BottomSheetProvider } from '../context/BottomSheetContext';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -14,32 +15,42 @@ function NavigationGuard() {
   const router = useRouter();
 
   useEffect(() => {
-      if (isLoading) return;
+    if (isLoading) return;
 
-      // Grupos de rutas
-      const inAuthGroup = segments[0] === '(auth)';
-      const inMainGroup = segments[0] === '(main)';
+    // Grupos de rutas
+    const inAuthGroup = segments[0] === '(auth)';
+    const inMainGroup = segments[0] === '(main)';
+    const inBuyGroup = segments[0] === '(buy)';
 
-      //Si el usuario se loguea y está en Login/Register, mandarlo a Home
-      if (isAuthenticated && inAuthGroup) {
-        router.replace('/(main)/home');
-      } 
-      
-      //Si el usuario no está logueado e intenta entrar a una zona privada
-      const isPrivateSection = segments[1] === 'profile';
-      if (!isAuthenticated && isPrivateSection) {
-        router.replace('/(auth)/login');
-      }
+    // Definir qué rutas dentro de (main) requieren autenticación
+    const protectedTabs = ['profile', 'purchases'];
+    const isAccessingProtectedTab =
+      inMainGroup && protectedTabs.includes(segments[1]);
 
-    }, [isAuthenticated, isLoading, segments]);
+    // Si el usuario se loguea y está en Login/Register, mandarlo a Home
+    if (isAuthenticated && inAuthGroup) {
+      router.replace('/(main)/home');
+    }
 
-    return (
+    // Si el usuario no está logueado e intenta entrar a una zona privada
+    if (!isAuthenticated && (isAccessingProtectedTab || inBuyGroup)) {
+      router.replace('/(auth)/login');
+    }
+  }, [isAuthenticated, isLoading, segments]);
+
+  return (
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="(main)" options={{ animation: 'fade' }} />
-      <Stack.Screen name="(auth)" options={{ animation: 'slide_from_bottom' }} />
+      <Stack.Screen
+        name="(auth)"
+        options={{ animation: 'slide_from_bottom' }}
+      />
+      {/* Registramos el grupo de películas y el flujo de compra */}
+      <Stack.Screen name="movie" />
+      <Stack.Screen name="(buy)" />
       <Stack.Screen name="index" options={{ href: null }} />
     </Stack>
-    );
+  );
 }
 
 export default function RootLayout() {
@@ -60,10 +71,13 @@ export default function RootLayout() {
   if (!fontsLoaded) return null;
 
   return (
-      <AuthProvider>
+    <AuthProvider>
+      <BottomSheetProvider>
         <SafeAreaProvider>
           <NavigationGuard />
+          <BottomSheet />
         </SafeAreaProvider>
-      </AuthProvider>
+      </BottomSheetProvider>
+    </AuthProvider>
   );
 }
