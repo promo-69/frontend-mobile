@@ -1,4 +1,5 @@
 import { useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
 import {
   ChevronRight,
   MapPin,
@@ -14,8 +15,10 @@ import {
   View,
   ActivityIndicator
 } from 'react-native';
+import { Image as ExpoImage } from 'expo-image';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../context/AuthContext';
+import { getMovies } from '../../services/movies.service';
 import { checkHealth } from '../../services/api';
 
 // Constantes de diseño para mantener consistencia
@@ -30,6 +33,23 @@ const COLORS = {
 export default function HomeScreen() {
   const router = useRouter();
   const { user, isAuthenticated, isLoading } = useAuth();
+  const [movies, setMovies] = useState([]);
+  const [loadingMovies, setLoadingMovies] = useState(true);
+
+  useEffect(() => {
+    const fetchMovies = async () => {
+      try {
+        setLoadingMovies(true);
+        const data = await getMovies();
+        setMovies(data || []);
+      } catch (error) {
+        console.error('Error fetching movies:', error);
+      } finally {
+        setLoadingMovies(false);
+      }
+    };
+    fetchMovies();
+  }, []);
 
   
   const navigateProtected = (route) => {
@@ -108,41 +128,25 @@ export default function HomeScreen() {
             snapToAlignment="start"
             decelerationRate="fast"
           >
-            {/* Película 1 */}
-            <TouchableOpacity style={styles.posterWrapper}>
-              <Image
-                source={require('../../assets/images/peli1.jpg')}
-                style={styles.posterScroll}
-              />
-              <Text style={styles.peliTitleScroll}>Hajime no Ippo</Text>
-            </TouchableOpacity>
-
-            {/* Película 2 */}
-            <TouchableOpacity style={styles.posterWrapper}>
-              <Image
-                source={require('../../assets/images/peli2.jpg')}
-                style={styles.posterScroll}
-              />
-              <Text style={styles.peliTitleScroll}>Hoppers</Text>
-            </TouchableOpacity>
-
-            {/* Película 3 */}
-            <TouchableOpacity style={styles.posterWrapper}>
-              <Image
-                source={require('../../assets/images/peli3.jpg')}
-                style={styles.posterScroll}
-              />
-              <Text style={styles.peliTitleScroll}>Matrix</Text>
-            </TouchableOpacity>
-
-            {/* Película 4 */}
-            <TouchableOpacity style={styles.posterWrapper}>
-              <Image
-                source={require('../../assets/images/peli4.jpg')}
-                style={styles.posterScroll}
-              />
-              <Text style={styles.peliTitleScroll}>Lucy 2</Text>
-            </TouchableOpacity>
+            {loadingMovies ? (
+              <ActivityIndicator size="large" color={COLORS.accent} style={{ marginLeft: 20 }} />
+            ) : (
+              movies.map((movie) => (
+                <TouchableOpacity 
+                  key={movie.id}
+                  style={styles.posterWrapper}
+                  onPress={() => router.push(`/(main)/home/${movie.id}`)} 
+                >
+                  <ExpoImage
+                    source={{ uri: movie.poster_url }}
+                    style={styles.posterScroll}
+                    contentFit="cover"
+                    transition={500}
+                  />
+                  <Text style={styles.peliTitleScroll} numberOfLines={2}>{movie.title}</Text>
+                </TouchableOpacity>
+              ))
+            )}
           </ScrollView>
         </View>
 
@@ -155,41 +159,24 @@ export default function HomeScreen() {
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.carouselScrollContainer}
           >
-            {/* Película 1 */}
-            <TouchableOpacity style={styles.gridCardScroll}>
-              <Image
-                source={require('../../assets/images/peli4.jpg')}
-                style={styles.gridPosterScroll}
-              />
-              <Text style={styles.gridPeliTitle}>Hajime no Ippo</Text>
-            </TouchableOpacity>
-
-            {/* Película 2 */}
-            <TouchableOpacity style={styles.gridCardScroll}>
-              <Image
-                source={require('../../assets/images/peli5.jpg')}
-                style={styles.gridPosterScroll}
-              />
-              <Text style={styles.gridPeliTitle}>David</Text>
-            </TouchableOpacity>
-
-            {/* Película 3 */}
-            <TouchableOpacity style={styles.gridCardScroll}>
-              <Image
-                source={require('../../assets/images/peli3.jpg')}
-                style={styles.gridPosterScroll}
-              />
-              <Text style={styles.gridPeliTitle}>Matrix</Text>
-            </TouchableOpacity>
-
-            {/* Película 4 */}
-            <TouchableOpacity style={styles.gridCardScroll}>
-              <Image
-                source={require('../../assets/images/peli7.jpg')}
-                style={styles.gridPosterScroll}
-              />
-              <Text style={styles.gridPeliTitle}>Lucy 2</Text>
-            </TouchableOpacity>
+            {loadingMovies ? (
+              <ActivityIndicator size="small" color={COLORS.accent} />
+            ) : (
+              movies.slice().reverse().map((movie) => (
+                <TouchableOpacity 
+                  key={`para-ti-${movie.id}`}
+                  style={styles.gridCardScroll}
+                  onPress={() => router.push(`/movie/${movie.id}`)}
+                >
+                  <ExpoImage
+                    source={{ uri: movie.poster_url }}
+                    style={styles.gridPosterScroll}
+                    contentFit="cover"
+                  />
+                  <Text style={styles.gridPeliTitle} numberOfLines={1}>{movie.title}</Text>
+                </TouchableOpacity>
+              ))
+            )}
           </ScrollView>
         </View>
 
