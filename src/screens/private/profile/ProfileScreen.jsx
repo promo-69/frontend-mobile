@@ -3,12 +3,12 @@ import { ChevronLeft, ChevronRight, User, ShieldCheck, Moon, LogOut, Globe, Bell
 import { useState } from 'react';
 import { ScrollView, StyleSheet, TouchableOpacity, View, Switch, ActivityIndicator } from 'react-native';
 
-import { AppText } from '../../components/AppText';
-import { LogoutModal } from '../../components/ui/LogoutModal';
-import { ScreenWrapper } from '../../components/ScreenWrapper';
-import { theme } from '../../constants';
-import { useAuth } from '../../context/AuthContext';
-import { useProfile } from '../../hooks/profile/useProfile';
+import { AppText } from '../../../components/AppText';
+import { LogoutModal } from '../../../components/ui/LogoutModal';
+import { ScreenWrapper } from '../../../components/ScreenWrapper';
+import { theme } from '../../../constants';
+import { useAuth } from '../../../context/AuthContext';
+import { useProfile } from '../../../hooks/profile/useProfile';
 
 export default function ProfileScreen() {
   const router = useRouter();
