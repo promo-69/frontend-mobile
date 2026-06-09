@@ -18,7 +18,7 @@ import {
   getShowtimeById,
   getShowtimeSeats,
 } from '../../../services/showtimes.service';
-import { useCart } from '../context/CartContext'; // Asumiendo que CartContext existe
+import { useCart } from '../../../context/CartContext'; // Asumiendo que CartContext existe
 
 const COLORS = {
   bgDeep: '#231640', // Morado profundo

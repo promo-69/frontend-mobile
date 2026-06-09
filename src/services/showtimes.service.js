@@ -46,3 +46,4 @@ export const getShowtimeSeats = async (showtimeId) => {
   const response = await api.get(`/showtimes/${showtimeId}/seats`);
   return response.data.data;
 };
+
