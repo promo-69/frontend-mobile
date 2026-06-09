@@ -58,7 +58,7 @@ export default function SelectSeats() {
 
         setMovie(movieResponse);
         setShowtime(showtimeResponse);
-        setSeatsData(seatsResponse);
+        setSeatsData(seatsResponse?.seats || []);
         updateCartDetails(movieResponse, showtimeResponse); // Actualiza el carrito con los detalles de la película y la función
       } catch (err) {
         console.error('Error loading seat selection data:', err);

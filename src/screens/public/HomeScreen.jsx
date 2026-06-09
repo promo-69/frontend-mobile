@@ -166,7 +166,7 @@ export default function HomeScreen() {
                 <TouchableOpacity 
                   key={`para-ti-${movie.id}`}
                   style={styles.gridCardScroll}
-                  onPress={() => router.push(`/(main)/home/${movie.id}`)}
+                  onPress={() => router.push(`/movie/${movie.id}`)}
                 >
                   <ExpoImage
                     source={{ uri: movie.poster_url }}

@@ -70,7 +70,10 @@ export default function SeatMap({ seatsData, selectedSeats, onToggleSeat }) {
                 const isSelected = selectedSeats.some(
                   (s) => s.seatId === seat.id
                 );
-                const isOccupied = seat.status === 'occupied';
+                
+                // Basado en el nuevo API, los estados pueden ser: 'available', 'sold', 'maintenance', 'locked'
+                // Cualquier estado distinto de 'available' se considera no seleccionable por el usuario.
+                const isOccupied = seat.status !== 'available';
                 const isDisabled = isOccupied;
 
                 return (

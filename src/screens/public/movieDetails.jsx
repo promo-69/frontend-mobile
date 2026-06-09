@@ -12,8 +12,8 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import MovieSkeleton from '../../components/movie/MovieSkeleton';
-import ShowtimesList from '../../components/movie/ShowtimesList';
+import MovieSkeleton from '../../components/showtimes/MovieSkeleton';
+import ShowtimesList from '../../components/showtimes/ShowtimesList';
 import { getMovieById } from '../../services/movies.service';
 import { getShowtimesByMovie } from '../../services/showtimes.service';
 

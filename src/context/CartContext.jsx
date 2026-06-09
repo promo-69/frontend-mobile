@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react';
 
 export const CartContext = createContext();
 
@@ -42,23 +42,40 @@ export function CartProvider({ children }) {
   }, [cart]);
 
   // Agregar boletos
-  const addTicket = (ticket) => {
+  const addTicket = useCallback((ticket) => {
     setCart((prev) => ({
       ...prev,
       tickets: [...prev.tickets, ticket],
     }));
-  };
+  }, []);
+
+  // Alternar selección de asiento (Toggle) para simplificar la lógica en SelectSeats
+  const toggleSeat = useCallback((seatId, seatData) => {
+    setCart((prev) => {
+      const isSelected = prev.tickets.some((t) => t.seatId === seatId);
+      if (isSelected) {
+        return {
+          ...prev,
+          tickets: prev.tickets.filter((t) => t.seatId !== seatId),
+        };
+      }
+      return {
+        ...prev,
+        tickets: [...prev.tickets, { seatId, ...seatData }],
+      };
+    });
+  }, []);
 
   // Quitar boleto
-  const removeTicket = (seatId) => {
+  const removeTicket = useCallback((seatId) => {
     setCart((prev) => ({
       ...prev,
       tickets: prev.tickets.filter((t) => t.seatId !== seatId),
     }));
-  };
+  }, []);
 
   // Agregar producto de confitería o aumentar cantidad
-  const addProduct = (product) => {
+  const addProduct = useCallback((product) => {
     setCart((prev) => {
       const exists = prev.products.find((p) => p.productId === product.productId);
 
@@ -77,10 +94,10 @@ export function CartProvider({ children }) {
         products: [...prev.products, product],
       };
     });
-  };
+  }, []);
 
   // Actualizar cantidad directamente desde selectores numéricos
-  const updateProductQuantity = (productId, newQuantity) => {
+  const updateProductQuantity = useCallback((productId, newQuantity) => {
     if (newQuantity <= 0) {
       removeProduct(productId);
       return;
@@ -92,18 +109,18 @@ export function CartProvider({ children }) {
         p.productId === productId ? { ...p, quantity: newQuantity } : p
       ),
     }));
-  };
+  }, []);
 
   // Quitar producto por completo del carrito
-  const removeProduct = (productId) => {
+  const removeProduct = useCallback((productId) => {
     setCart((prev) => ({
       ...prev,
       products: prev.products.filter((p) => p.productId !== productId),
     }));
-  };
+  }, []);
 
   // Guardar película (Verificando si es una nueva para limpiar asientos viejos)
-  const setMovie = (movie) => {
+  const setMovie = useCallback((movie) => {
     setCart((prev) => {
       // Si la película cambia, lo ideal en mobile UX es limpiar los tickets anteriores
       if (prev.movie && prev.movie.id !== movie.id) {
@@ -117,15 +134,30 @@ export function CartProvider({ children }) {
       }
       return { ...prev, movie };
     });
-  };
+  }, []);
+
+  // Sincronizar detalles del carrito y limpiar selección si cambia la función
+  const updateCartDetails = useCallback((movieData, showtimeData) => {
+    setCart((prev) => {
+      const isDifferentShowtime = prev.showtime && prev.showtime.id !== showtimeData.id;
+      const isDifferentMovie = prev.movie && prev.movie.id !== movieData.id;
+      
+      return {
+        ...prev,
+        movie: movieData,
+        showtime: showtimeData,
+        tickets: (isDifferentShowtime || isDifferentMovie) ? [] : prev.tickets,
+      };
+    });
+  }, []);
 
   // Guardar showtime
-  const setShowtime = (showtime) => {
+  const setShowtime = useCallback((showtime) => {
     setCart((prev) => ({ ...prev, showtime }));
-  };
+  }, []);
 
   // Totales (Lógica pura, se mantiene intacta)
-  const getTotals = () => {
+  const totalsCalculated = useMemo(() => {
     const ticketTotal = cart.tickets.reduce((acc, t) => acc + t.price, 0);
     const productTotal = cart.products.reduce((acc, p) => acc + p.price * p.quantity, 0);
 
@@ -134,10 +166,10 @@ export function CartProvider({ children }) {
     const total = subtotal + iva;
 
     return { ticketTotal, productTotal, subtotal, iva, total };
-  };
+  }, [cart.tickets, cart.products]);
 
   // Limpiar carrito al finalizar el pago exitoso
-  const clearCart = async () => {
+  const clearCart = useCallback(async () => {
     setCart({
       tickets: [],
       products: [],
@@ -149,12 +181,13 @@ export function CartProvider({ children }) {
     } catch (error) {
       console.error('Error eliminando AsyncStorage:', error);
     }
-  };
+  }, []);
 
   return (
     <CartContext.Provider
       value={{
         cart,
+        toggleSeat,
         addTicket,
         removeTicket,
         addProduct,
@@ -162,8 +195,11 @@ export function CartProvider({ children }) {
         removeProduct,
         setMovie,
         setShowtime,
-        getTotals,
+        updateCartDetails,
+        ...totalsCalculated,
+        totalAmount: totalsCalculated.total,
         clearCart,
+        getTotals: () => totalsCalculated, // Retrocompatibilidad
       }}
     >
       {children}

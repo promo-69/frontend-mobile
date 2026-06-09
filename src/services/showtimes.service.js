@@ -43,7 +43,6 @@ export const getShowtimeById = async (showtimeId) => {
  * @param {string|number} showtimeId - ID de la función.
  */
 export const getShowtimeSeats = async (showtimeId) => {
-  const response = await api.get(`/showtimes/${showtimeId}/seats`);
+  const response = await api.get(`/showtimes/${showtimeId}/seat-map`);
   return response.data.data;
 };
-
