@@ -1,4 +1,4 @@
-import SelectSeats from '../../components/seats/SelectSeats';
+import SelectSeats from '../../screens/private/buy/SelectSeats';
 
 export default function SelectSeatsScreen() {
   return <SelectSeats />;
