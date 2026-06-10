@@ -78,8 +78,12 @@ export default function MovieDetails() {
           getMovieById(movieId),
           getShowtimesByMovie(movieId),
         ]);
-        setMovie(movieData);
-        setShowtimes(showtimesData || []);
+
+        const cleanShowtimes = showtimesData?.rows && Array.isArray(showtimesData.rows) 
+        ? showtimesData.rows 
+        : [];
+        setMovie(movieData || []);
+        setShowtimes(cleanShowtimes || []);
       } catch (error) {
         console.error('Error loading movie details:', error);
       } finally {
