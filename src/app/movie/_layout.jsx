@@ -14,14 +14,11 @@ export default function MovieLayout() {
             animation: 'slide_from_right',
          
           headerTransparent: true,
-          
-          headerTintColor: '#f4b400', 
-          
-         
+                  
           headerTitle: '',
           
-         
-          headerBackTitleVisible: false,
+          headerBackIcon: () => null,
+          
         }}
       >
         {/* Definimos explícitamente la pantalla dinámica para asegurar el mapeo */}

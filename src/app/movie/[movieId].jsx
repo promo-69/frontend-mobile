@@ -1,4 +1,4 @@
-import MovieDetails from '../../screens/public/movieDetails';
+import MovieDetails from '../../screens/public/MovieDetails';
 
 export default function MovieDetailsScreen() {
   return <MovieDetails />;
