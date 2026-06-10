@@ -3,7 +3,7 @@ import { Animated, Dimensions, StyleSheet, View } from 'react-native';
 
 const { width } = Dimensions.get('window');
 
-export default function MovieSkeleton() {
+export default function MovieSkeleton({ variant = 'details' }) {
   const opacity = useRef(new Animated.Value(0.3)).current;
 
   useEffect(() => {
@@ -22,6 +22,18 @@ export default function MovieSkeleton() {
       ])
     ).start();
   }, [opacity]);
+
+  if (variant === 'card') {
+    return (
+      <View style={styles.cardContainer}>
+        <Animated.View style={[styles.cardPoster, { opacity }]} />
+        <View style={{ marginTop: 8 }}>
+          <Animated.View style={[styles.cardTitle, { opacity }]} />
+          <Animated.View style={[styles.cardSubtitle, { opacity }]} />
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -65,4 +77,13 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     marginBottom: 10,
   },
+  cardContainer: { width: 150, marginRight: 16 },
+  cardPoster: {
+    width: 150,
+    height: 225,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+  },
+  cardTitle: { height: 14, width: '80%', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 4, marginBottom: 4 },
+  cardSubtitle: { height: 10, width: '50%', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 4 },
 });
