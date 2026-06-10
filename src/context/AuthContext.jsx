@@ -68,11 +68,12 @@ export const AuthProvider = ({ children }) => {
   try {
     const response = await authService.login(credentials);
     
+    // Si la API responde HTTP 200 pero success es false
     if (!response?.success) {
       return { 
         success: false, 
-        code: response?.code,
-        message: getErrorMessage(response?.code) 
+        code: response?.code || 'AUTH_ERROR',
+        message: response?.message || getErrorMessage(response?.code) 
       };
     }
   
@@ -85,14 +86,21 @@ export const AuthProvider = ({ children }) => {
     return { success: true };
 
   } catch (error) {
-    console.log(error);
+    console.log('--- [DEBUG LOGIN CATCH] ---');
+    console.log('Status de la respuesta del servidor:', error.response?.status);
+    console.log('Payload de error completo del backend:', error.response?.data);
     
-    // Extraemos el mensaje y el code directamente del payload de error de la API
-    const backendCode = error.response?.data?.code; // Ej: "UNVERIFIED_ACCOUNT"
+    // Extraemos el código de error. Si tu backend no envía la propiedad .code, 
+    // puedes usar una validación basada en el mensaje o un fallback seguro.
+    const backendCode = error.response?.data?.code || error.response?.data?.error; 
+    
+    // Extraemos el mensaje literal enviado por tu controlador del backend
+    const backendMessage = error.response?.data?.message || error.response?.data?.error;
 
     return {
       success: false,
-      message: getErrorMessage(backendCode),
+      // Si el backend envía un mensaje específico, usamos ese. Si no, usamos el mapeador local.
+      message: backendMessage || getErrorMessage(backendCode),
       code: backendCode || null, 
       status: error.response?.status ?? null,
     };

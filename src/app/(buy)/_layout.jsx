@@ -14,11 +14,8 @@ export default function BuyLayout() {
           headerStyle: {
             backgroundColor: '#231640', // Color de tu fondo base oscuro
           },
-          headerTintColor: '#F6AD38', // Tus textos/iconos importantes en amarillo/dorado
-          headerTitleStyle: {
-            fontWeight: 'bold',
-            fontSize: 18,
-          },
+          headerBackIcon: () => null, // Eliminamos el ícono de retroceso predeterminado para usar uno personalizado
+        
           headerShadowVisible: false, // Eliminamos la línea divisoria para un look más moderno
           headerBackTitleVisible: false, 
           

@@ -7,14 +7,13 @@ import {
   Dimensions,
   ImageBackground,
   KeyboardAvoidingView,
-  LayoutAnimation,
   Platform,
   ScrollView,
   StyleSheet,
   TouchableOpacity,
-  UIManager,
   View,
 } from 'react-native';
+import Animated, { FadeInUp, FadeOutDown } from 'react-native-reanimated';
 import { AppText } from '../../components/AppText';
 import { ScreenWrapper } from '../../components/ScreenWrapper';
 import { CustomButton } from '../../components/ui/CustomButton';
@@ -29,11 +28,6 @@ import {
   validateEmail,
   validatePassword,
 } from '../../utils/validators';
-
-// Habilitar LayoutAnimation en Android
-if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
-  UIManager.setLayoutAnimationEnabledExperimental(true);
-}
 
 const { width } = Dimensions.get('window');
 
@@ -65,47 +59,55 @@ export default function LoginScreen() {
 
   const clearError = () => {
     if (Error) {
-      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
       setError(null);
     }
   };
 
-  const onSubmit = async (data) => {
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    setError(null);
-    setIsLoading(true);
-    try {
-      const result = await login(data);
+ const onSubmit = async (data) => {
+  setError(null);
+  setIsLoading(true);
 
-      if (result?.success) {
-        router.replace('/(main)/home');
-      } else {
-        // 1. Validamos si la cuenta está bloqueada por falta de verificación
-        if (result?.code === 'UNVERIFIED_ACCOUNT') {
-          console.log('⚠️ Redirigiendo a verificación para:', data.email);
-
-          // Guardamos el correo en persistencia física para rellenar la vista del código
-          await storageHelper.saveValue(
-            'user_email_to_verify',
-            data.email.trim()
-          );
-
-          // Redirigimos directamente al flujo donde se introduce el token del correo
-          router.replace('/(auth)/register-verify');
-          return;
-        }
-
-        // Usamos el mapeador de errores basado en el código devuelto
-        LayoutAnimation.configureNext(LayoutAnimation.Presets.spring);
-        setError(getErrorMessage(result?.code));
-      }
-    } catch (error) {
-      console.error('Login error:', error);
-      setError(AUTH_ERRORS.NETWORK_ERROR);
-    } finally {
-      setIsLoading(false);
-    }
+  // 1. Limpieza rigurosa de datos (Evita el espacio invisible del teclado)
+  const cleanedData = {
+    email: data.email?.trim().toLowerCase(), // Pasamos a minúsculas para estandarizar
+    password: data.password // La contraseña NO se limpia con trim si acepta espacios válidos
   };
+
+  // DEBUGGING: Revisa exactamente qué va a salir hacia el backend
+  console.log('🚀 DATOS ENVIADOS DESDE EL MÓVIL:', cleanedData);
+
+  try {
+    const result = await login(cleanedData);
+    
+    // DEBUGGING: Revisa qué respondió tu función de servicio
+    console.log('📩 RESPUESTA DEL SERVICIO LOGIN:', result);
+
+    if (result?.success) {
+      router.replace('/(main)/home');
+    } else {
+      // Validamos si la cuenta está bloqueada por falta de verificación
+      if (result?.code === 'UNVERIFIED_ACCOUNT') {
+        console.log('⚠️ Redirigiendo a verificación para:', cleanedData.email);
+
+        await storageHelper.saveValue(
+          'user_email_to_verify',
+          cleanedData.email
+        );
+
+        router.replace('/(auth)/register-verify');
+        return;
+      }
+
+      // Usamos el mapeador de errores basado en el código devuelto
+      setError(getErrorMessage(result?.code));
+    }
+  } catch (error) {
+    console.error('Login error en el componente:', error);
+    setError(AUTH_ERRORS.NETWORK_ERROR);
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   const handleRegister = () => {
     router.push('/register');
@@ -227,12 +229,16 @@ export default function LoginScreen() {
             </View>
 
             {Error && (
-              <View style={styles.authErrorContainer}>
+              <Animated.View 
+                entering={FadeInUp} 
+                exiting={FadeOutDown}
+                style={styles.authErrorContainer}
+              >
                 <View style={styles.authErrorAccent} />
                 <AppText variant="body" style={styles.authErrorText}>
                   {Error}
                 </AppText>
-              </View>
+              </Animated.View>
             )}
 
             <CustomButton

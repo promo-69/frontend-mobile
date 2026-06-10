@@ -1,4 +1,4 @@
-import { Ionicons } from '@expo/vector-icons';
+import { Film, ChevronLeft, Play } from 'lucide-react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -28,8 +28,35 @@ const COLORS = {
   border: 'rgba(255, 255, 255, 0.1)',
 };
 
-const formatGenres = (genres) =>
-  genres?.map((g) => g.description).join(', ') || 'N/A';
+const formatGenres = (genres) => {
+  if (!Array.isArray(genres) || genres.length === 0) return 'Desconocido';
+  return genres
+    .map((g) => g?._Genres?.description)
+    .filter(Boolean) 
+};
+
+const formatDate = (dateString) => {
+  // Si no hay fecha, viene vacía o es nula, salimos de inmediato de forma segura
+  if (!dateString || typeof dateString !== 'string') return 'No definida';
+  
+  try {
+    // Extrae solo la parte de la fecha ignorando la hora si existiera (YYYY-MM-DD)
+    const cleanDate = dateString.split('T')[0];
+    // Separa por el guion 
+    const parts = cleanDate.split('-');
+    //Valida que tengamos los 3 componentes esenciales (Año, Mes, Día)
+    if (parts.length !== 3) return dateString;
+    
+    const [year, month, day] = parts;
+    
+    // Retorna el formato: DD/MM/AAAA
+    return `${day}/${month}/${year}`;
+  } catch (error) {
+    console.error('Error al formatear fecha de forma manual:', error);
+    return dateString; 
+  }
+};
+
 
 export default function MovieDetails() {
   const { movieId } = useLocalSearchParams();
@@ -39,15 +66,24 @@ export default function MovieDetails() {
   const [showtimes, setShowtimes] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  const [imageError, setImageError] = useState(false);
+
   useEffect(() => {
     async function loadData() {
+      // Cláusula que evita peticiones si movieId aún no está definido por el router
+      if (!movieId) return;
+
       try {
         const [movieData, showtimesData] = await Promise.all([
           getMovieById(movieId),
           getShowtimesByMovie(movieId),
         ]);
-        setMovie(movieData);
-        setShowtimes(showtimesData || []);
+
+        const cleanShowtimes = showtimesData?.rows && Array.isArray(showtimesData.rows) 
+        ? showtimesData.rows 
+        : [];
+        setMovie(movieData || []);
+        setShowtimes(cleanShowtimes || []);
       } catch (error) {
         console.error('Error loading movie details:', error);
       } finally {
@@ -69,6 +105,9 @@ export default function MovieDetails() {
 
   if (!movie) return null;
 
+  const showPlaceholder = !movie.poster_url || imageError;
+
+
   return (
     <View style={styles.container}>
       <LinearGradient
@@ -78,12 +117,20 @@ export default function MovieDetails() {
 
       <ScrollView bounces={false} showsVerticalScrollIndicator={false}>
         <View style={styles.heroContainer}>
+          {showPlaceholder ? (
+            <View style={styles.placeholderHero}>
+              <Film size={64} color={COLORS.accent} />
+              <Text style={styles.placeholderText}>Cineflix</Text>
+            </View>
+          ) : (
           <Image
             source={{ uri: movie.poster_url }}
             style={styles.mainPoster}
             contentFit="cover"
             transition={500}
+            onError={() => setImageError(true)}
           />
+          )}
           <LinearGradient
             colors={['transparent', 'rgba(35, 22, 64, 0.5)', COLORS.bgDeep]}
             style={styles.gradient}
@@ -93,7 +140,7 @@ export default function MovieDetails() {
             style={styles.backButton}
             onPress={() => router.back()}
           >
-            <Ionicons name="chevron-back" color="white" size={28} />
+            <ChevronLeft color="white" size={28} />
           </TouchableOpacity>
 
           {movie.trailer_url && (
@@ -101,7 +148,7 @@ export default function MovieDetails() {
               style={styles.trailerButton}
               onPress={handleWatchTrailer}
             >
-              <Ionicons name="play" size={20} color="black" />
+              <Play size={20} color="black" />
               <Text style={styles.trailerText}>VER TRAILER</Text>
             </TouchableOpacity>
           )}
@@ -121,19 +168,19 @@ export default function MovieDetails() {
               <View style={[styles.techItem, styles.techBorderLeft]}>
                 <Text style={styles.techLabel}>CLASIFICACIÓN</Text>
                 <Text style={styles.techValue}>
-                  {movie.age_classification?.description}
+                  {movie.age_classification?.description || 'Apto para todo público'}
                 </Text>
               </View>
             </View>
             <View style={[styles.techRow, styles.techBorderTop]}>
               <View style={styles.techItem}>
                 <Text style={styles.techLabel}>ESTRENO</Text>
-                <Text style={styles.techValue}>{movie.release_date}</Text>
+                <Text style={styles.techValue}>{formatDate(movie.release_date) || 'No definida'}</Text>
               </View>
               <View style={[styles.techItem, styles.techBorderLeft]}>
                 <Text style={styles.techLabel}>ESTADO</Text>
                 <Text style={[styles.techValue, { color: COLORS.accent }]}>
-                  {movie.lifecycle_state?.description}
+                  {movie.lifecycle_state?.description || 'Desconocido'}
                 </Text>
               </View>
             </View>
@@ -161,14 +208,32 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.bgDeep },
   heroContainer: { width: '100%', height: width * 1.1 },
   mainPoster: { width: '100%', height: '100%', resizeMode: 'cover' },
+ 
+  placeholderHero: {
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#2E1E4E',
+  },
+  placeholderText: {
+    color: COLORS.textGray,
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginTop: 10,
+    letterSpacing: 2,
+    textTransform: 'uppercase',
+  },
+
   gradient: { ...StyleSheet.absoluteFillObject },
   backButton: {
     position: 'absolute',
     top: 50,
     left: 20,
-    backgroundColor: 'rgba(0,0,0,0.3)',
+    backgroundColor: 'rgba(0,0,0,0.4)',
     borderRadius: 25,
     padding: 8,
+    zIndex: 10,
   },
   trailerButton: {
     position: 'absolute',
