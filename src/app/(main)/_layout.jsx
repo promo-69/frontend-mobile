@@ -52,6 +52,13 @@ export default function MainLayout() {
           tabBarIcon: ({ color }) => <User color={color} size={24} />,
         }}
       />
+      <Tabs.Screen
+        name="cinemas"
+        options={{
+          title: 'Cines',
+          tabBarIcon: ({ color }) => <MapPin color={color} size={24} />,
+        }}
+      />
     </Tabs>
   );
 }
