@@ -199,7 +199,7 @@ export function CartProvider({ children }) {
         ...totalsCalculated,
         totalAmount: totalsCalculated.total,
         clearCart,
-        getTotals: () => totalsCalculated, // Retrocompatibilidad
+        getTotals: () => totalsCalculated, 
       }}
     >
       {children}
@@ -208,5 +208,9 @@ export function CartProvider({ children }) {
 }
 
 export function useCart() {
-  return useContext(CartContext);
+  const context = useContext(CartContext);
+  if (context === undefined) {
+    throw new Error('useCart must be used within a CartProvider');
+  }
+  return context;
 }
