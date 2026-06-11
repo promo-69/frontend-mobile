@@ -1,24 +1,5 @@
-import { Stack } from 'expo-router';
-import { theme } from '../../../constants';
+import ConcessionsCatalogScreen from '../../../screens/private/concessions/ConcessionsCatalogScreen';
 
-export default function ConcessionsLayout() {
-  return (
-    <Stack
-      screenOptions={{
-       
-        headerShown: false, 
-        contentStyle: {
-          backgroundColor: theme.colors.background
-        },
-        animation: 'slide_from_bottom', 
-      }}
-    >
-      
-      <Stack.Screen 
-        name="index" 
-        options={{ title: 'Confitería' }} 
-      />
-
-    </Stack>
-  );
+export default function ConcessionsRoute() {
+  return <ConcessionsCatalogScreen />;
 }

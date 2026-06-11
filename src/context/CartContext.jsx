@@ -1,12 +1,19 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react';
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useCallback,
+  useMemo,
+} from 'react';
 
 export const CartContext = createContext();
 
 const ASYNC_STORAGE_KEY = 'cineflix_cart';
 
 export function CartProvider({ children }) {
-  // Estado global del carrito 
+  // Estado global del carrito
   const [cart, setCart] = useState({
     tickets: [],
     products: [],
@@ -74,16 +81,19 @@ export function CartProvider({ children }) {
     }));
   }, []);
 
-  // Agregar producto de confitería o aumentar cantidad
+  // Agregar producto o combo de confitería, o aumentar cantidad si ya existe
   const addProduct = useCallback((product) => {
     setCart((prev) => {
-      const exists = prev.products.find((p) => p.productId === product.productId);
+      const isCombo = !!product.comboId;
+      const matchKey = isCombo ? 'comboId' : 'productId';
+      const matchId = isCombo ? product.comboId : product.productId;
+      const exists = prev.products.find((p) => p[matchKey] === matchId);
 
       if (exists) {
         return {
           ...prev,
           products: prev.products.map((p) =>
-            p.productId === product.productId
+            p[matchKey] === matchId
               ? { ...p, quantity: p.quantity + product.quantity }
               : p
           ),
@@ -97,32 +107,37 @@ export function CartProvider({ children }) {
   }, []);
 
   // Actualizar cantidad directamente desde selectores numéricos
-  const updateProductQuantity = useCallback((productId, newQuantity) => {
-    if (newQuantity <= 0) {
-      removeProduct(productId);
-      return;
-    }
+  // isCombo: true cuando el item es un combo (usa comboId en lugar de productId)
+  const updateProductQuantity = useCallback(
+    (itemId, newQuantity, isCombo = false) => {
+      if (newQuantity <= 0) {
+        removeProduct(itemId, isCombo);
+        return;
+      }
+      const matchKey = isCombo ? 'comboId' : 'productId';
+      setCart((prev) => ({
+        ...prev,
+        products: prev.products.map((p) =>
+          p[matchKey] === itemId ? { ...p, quantity: newQuantity } : p
+        ),
+      }));
+    },
+    []
+  );
 
+  // Quitar producto o combo por completo del carrito
+  const removeProduct = useCallback((itemId, isCombo = false) => {
+    const matchKey = isCombo ? 'comboId' : 'productId';
     setCart((prev) => ({
       ...prev,
-      products: prev.products.map((p) =>
-        p.productId === productId ? { ...p, quantity: newQuantity } : p
-      ),
-    }));
-  }, []);
-
-  // Quitar producto por completo del carrito
-  const removeProduct = useCallback((productId) => {
-    setCart((prev) => ({
-      ...prev,
-      products: prev.products.filter((p) => p.productId !== productId),
+      products: prev.products.filter((p) => p[matchKey] !== itemId),
     }));
   }, []);
 
   // Guardar película (Verificando si es una nueva para limpiar asientos viejos)
   const setMovie = useCallback((movie) => {
     setCart((prev) => {
-      // Si la película cambia, lo ideal en mobile UX es limpiar los tickets anteriores
+      // Si la película cambia, se limpian los tickets anteriores
       if (prev.movie && prev.movie.id !== movie.id) {
         return {
           ...prev,
@@ -139,14 +154,15 @@ export function CartProvider({ children }) {
   // Sincronizar detalles del carrito y limpiar selección si cambia la función
   const updateCartDetails = useCallback((movieData, showtimeData) => {
     setCart((prev) => {
-      const isDifferentShowtime = prev.showtime && prev.showtime.id !== showtimeData.id;
+      const isDifferentShowtime =
+        prev.showtime && prev.showtime.id !== showtimeData.id;
       const isDifferentMovie = prev.movie && prev.movie.id !== movieData.id;
-      
+
       return {
         ...prev,
         movie: movieData,
         showtime: showtimeData,
-        tickets: (isDifferentShowtime || isDifferentMovie) ? [] : prev.tickets,
+        tickets: isDifferentShowtime || isDifferentMovie ? [] : prev.tickets,
       };
     });
   }, []);
@@ -159,10 +175,13 @@ export function CartProvider({ children }) {
   // Totales (Lógica pura, se mantiene intacta)
   const totalsCalculated = useMemo(() => {
     const ticketTotal = cart.tickets.reduce((acc, t) => acc + t.price, 0);
-    const productTotal = cart.products.reduce((acc, p) => acc + p.price * p.quantity, 0);
+    const productTotal = cart.products.reduce(
+      (acc, p) => acc + p.price * p.quantity,
+      0
+    );
 
     const subtotal = ticketTotal + productTotal;
-    const iva = subtotal * 0.16; // IVA de Venezuela (16%) 
+    const iva = subtotal * 0.16; // IVA de Venezuela (16%)
     const total = subtotal + iva;
 
     return { ticketTotal, productTotal, subtotal, iva, total };
@@ -191,7 +210,7 @@ export function CartProvider({ children }) {
         addTicket,
         removeTicket,
         addProduct,
-        updateProductQuantity, // Expuesto para tus botones +/- de la vista de snacks
+        updateProductQuantity, // Expuesto para los botones +/- de la vista de snacks
         removeProduct,
         setMovie,
         setShowtime,
@@ -199,7 +218,7 @@ export function CartProvider({ children }) {
         ...totalsCalculated,
         totalAmount: totalsCalculated.total,
         clearCart,
-        getTotals: () => totalsCalculated, // Retrocompatibilidad
+        getTotals: () => totalsCalculated,
       }}
     >
       {children}
