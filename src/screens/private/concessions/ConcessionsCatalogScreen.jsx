@@ -1,4 +1,4 @@
-import { Search, X } from 'lucide-react-native';
+import { Search, ShoppingCart, X } from 'lucide-react-native';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -11,8 +11,12 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 import { AppText } from '../../../components/AppText';
 import { ScreenWrapper } from '../../../components/ScreenWrapper';
+import { useAuth } from '../../../context/AuthContext';
+import { useCart } from '../../../context/CartContext';
 import {
   getAllCombos,
   getAllProducts,
@@ -21,17 +25,15 @@ import { theme } from '../../../constants';
 
 const { colors, spacing, borderRadius } = theme;
 
+const LINE_TYPE_PRODUCT = 1;
+const LINE_TYPE_COMBO = 2;
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const getPrice = (item) => {
   if (item.pricing?.final_price !== undefined)
     return Number(item.pricing.final_price);
   if (item.price !== undefined) return Number(item.price);
   return 0;
-};
-const getBasePrice = (item) => {
-  if (item.pricing?.base_price !== undefined)
-    return Number(item.pricing.base_price);
-  return null;
 };
 const fmt = (n) => `$${Number(n || 0).toFixed(2)}`;
 const getCategoryName = (item) =>
@@ -53,71 +55,160 @@ function buildCategoryTabs(products) {
   return [...seen.entries()].map(([id, label]) => ({ id, label }));
 }
 
-// ─── Card ─────────────────────────────────────────────────────────────────────
-// Diseño fiel a la referencia:
-//  • Fondo oscuro midnight[900] para combos, midnight[800] para productos
-//  • Imagen grande que ocupa la parte superior (4:3 ratio)
-//  • Overlay sutil en la parte inferior de la imagen para el badge COMBO
-//  • Zona inferior blanca-oscura con nombre en mayúsculas, precio dorado y puntos
-function CatalogCard({ item, isCombo }) {
+// ─── Card con botones +/- ─────────────────────────────────────────────────────
+function CatalogCard({ item, isCombo, quantity, onAdd, onRemove }) {
   const price = getPrice(item);
-  const basePrice = getBasePrice(item);
-  const hasDiscount = basePrice !== null && basePrice > price;
   const imageUri = item.image_url || item.imageUrl;
-  const cardBg = isCombo ? colors.midnight[900] : colors.midnight[800];
 
   return (
-    <View style={[styles.card, { backgroundColor: cardBg }]}>
-      {/* ── Zona de imagen ── */}
-      <View style={styles.imageZone}>
+    <View style={cardStyles.card}>
+      {/* Imagen */}
+      <View style={cardStyles.imageZone}>
         {imageUri ? (
           <Image
             source={{ uri: imageUri }}
-            style={styles.image}
+            style={cardStyles.image}
             resizeMode="cover"
           />
         ) : (
-          <View style={[styles.imageFallback, { backgroundColor: cardBg }]}>
-            <AppText style={styles.fallbackEmoji}>
+          <View style={cardStyles.imageFallback}>
+            <AppText style={cardStyles.fallbackEmoji}>
               {isCombo ? '🎁' : '🍿'}
             </AppText>
           </View>
         )}
-        {/* Badge COMBO — esquina superior izquierda */}
         {isCombo && (
-          <View style={styles.comboBadge}>
-            <AppText style={styles.comboBadgeText}>COMBO</AppText>
+          <View style={cardStyles.badge}>
+            <AppText style={cardStyles.badgeText}>COMBO</AppText>
           </View>
         )}
       </View>
 
-      {/* ── Zona de info ── */}
-      <View style={styles.infoZone}>
-        {/* Nombre en mayúsculas, estilo referencia */}
-        <AppText style={styles.itemName} numberOfLines={2}>
+      {/* Info */}
+      <View style={cardStyles.infoZone}>
+        <AppText style={cardStyles.name} numberOfLines={2}>
           {item.name?.toUpperCase()}
         </AppText>
 
-        {/* Precio */}
-        <View style={styles.priceRow}>
-          <AppText style={styles.finalPrice}>{fmt(price)}</AppText>
-          {hasDiscount && (
-            <AppText style={styles.originalPrice}>{fmt(basePrice)}</AppText>
-          )}
+        <View style={cardStyles.footerRow}>
+          <AppText style={cardStyles.price}>{fmt(price)}</AppText>
+          <View style={cardStyles.counter}>
+            <TouchableOpacity
+              style={[cardStyles.btn, quantity === 0 && cardStyles.btnDisabled]}
+              onPress={onRemove}
+              disabled={quantity === 0}
+              activeOpacity={0.7}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <AppText
+                style={[
+                  cardStyles.btnText,
+                  quantity === 0 && cardStyles.btnTextDisabled,
+                ]}
+              >
+                −
+              </AppText>
+            </TouchableOpacity>
+            <AppText style={cardStyles.qty}>{quantity}</AppText>
+            <TouchableOpacity
+              style={cardStyles.btn}
+              onPress={onAdd}
+              activeOpacity={0.7}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <AppText style={cardStyles.btnText}>+</AppText>
+            </TouchableOpacity>
+          </View>
         </View>
-
-        {/* CinePuntos */}
-        {item.earned_loyalty_points > 0 && (
-          <AppText style={styles.loyaltyPts}>
-            +{item.earned_loyalty_points} pts
-          </AppText>
-        )}
       </View>
     </View>
   );
 }
 
-// ─── Tab pill ────────────────────────────────────────────────────────────────
+const BTN = 28;
+const cardStyles = StyleSheet.create({
+  card: {
+    flex: 1,
+    backgroundColor: colors.midnight[900],
+    borderRadius: borderRadius.s16,
+    overflow: 'hidden',
+  },
+  imageZone: { width: '100%', aspectRatio: 1, position: 'relative' },
+  image: { width: '100%', height: '100%' },
+  imageFallback: {
+    width: '100%',
+    height: '100%',
+    backgroundColor: colors.midnight[800],
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  fallbackEmoji: { fontSize: 36 },
+  badge: {
+    position: 'absolute',
+    top: spacing.s8,
+    left: spacing.s8,
+    backgroundColor: colors.primary,
+    borderRadius: borderRadius.s4,
+    paddingHorizontal: spacing.s8,
+    paddingVertical: 3,
+  },
+  badgeText: {
+    color: colors.midnight[950],
+    fontSize: 9,
+    fontFamily: theme.typography.family.primary.bold,
+    letterSpacing: 0.6,
+  },
+  infoZone: {
+    paddingHorizontal: spacing.s8,
+    paddingTop: spacing.s8,
+    paddingBottom: spacing.s12,
+    gap: spacing.s8,
+  },
+  name: {
+    color: colors.textPrimary,
+    fontSize: 11,
+    fontFamily: theme.typography.family.primary.regular,
+    lineHeight: 15,
+    minHeight: 30,
+  },
+  footerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  price: {
+    color: colors.primary,
+    fontSize: 15,
+    fontFamily: theme.typography.family.primary.bold,
+  },
+  counter: { flexDirection: 'row', alignItems: 'center', gap: spacing.s4 },
+  btn: {
+    width: BTN,
+    height: BTN,
+    borderRadius: borderRadius.s4,
+    backgroundColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  btnDisabled: { backgroundColor: colors.midnight[700] },
+  btnText: {
+    color: colors.midnight[950],
+    fontSize: 17,
+    lineHeight: BTN,
+    fontFamily: theme.typography.family.primary.bold,
+    textAlign: 'center',
+  },
+  btnTextDisabled: { color: colors.textSecondary },
+  qty: {
+    color: colors.textPrimary,
+    fontSize: 13,
+    fontFamily: theme.typography.family.primary.bold,
+    minWidth: 18,
+    textAlign: 'center',
+  },
+});
+
+// ─── Tab pill ─────────────────────────────────────────────────────────────────
 function CategoryTab({ label, isActive, onPress }) {
   return (
     <TouchableOpacity
@@ -132,8 +223,13 @@ function CategoryTab({ label, isActive, onPress }) {
   );
 }
 
-// ─── Pantalla ─────────────────────────────────────────────────────────────────
+// ─── Pantalla principal ───────────────────────────────────────────────────────
 export default function ConcessionsCatalogScreen() {
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const { isAuthenticated } = useAuth();
+  const { cart, addProduct, updateProductQuantity, removeProduct } = useCart();
+
   const [products, setProducts] = useState([]);
   const [combos, setCombos] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -142,6 +238,7 @@ export default function ConcessionsCatalogScreen() {
   const [activeTab, setActiveTab] = useState('all');
   const searchRef = useRef(null);
 
+  // ─── Carga ───────────────────────────────────────────────────────────────
   const fetchAll = useCallback(async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true);
     else setLoading(true);
@@ -164,10 +261,13 @@ export default function ConcessionsCatalogScreen() {
     fetchAll();
   }, [fetchAll]);
 
-  const categoryTabs = useMemo(() => {
-    return [ALL_TAB, COMBOS_TAB, ...buildCategoryTabs(products)];
-  }, [products]);
+  // ─── Tabs dinámicas ──────────────────────────────────────────────────────
+  const categoryTabs = useMemo(
+    () => [ALL_TAB, COMBOS_TAB, ...buildCategoryTabs(products)],
+    [products]
+  );
 
+  // ─── Datos filtrados ──────────────────────────────────────────────────────
   const filteredItems = useMemo(() => {
     const q = search.trim().toLowerCase();
     let items =
@@ -176,18 +276,83 @@ export default function ConcessionsCatalogScreen() {
         : activeTab === 'combos'
           ? combos.map((c) => ({ ...c, _isCombo: true }))
           : products.filter((p) => getCategoryId(p) === activeTab);
-
     if (q) items = items.filter((i) => i.name?.toLowerCase().includes(q));
     return items;
   }, [products, combos, activeTab, search]);
 
+  // ─── Carrito ──────────────────────────────────────────────────────────────
+  const getItemQuantity = useCallback(
+    (itemId, lineType) => {
+      const key = lineType === LINE_TYPE_COMBO ? 'comboId' : 'productId';
+      const found = cart.products.find((p) => p[key] === itemId);
+      return found?.quantity || 0;
+    },
+    [cart.products]
+  );
+
+  const handleAdd = useCallback(
+    (item, lineType) => {
+      const isCombo = lineType === LINE_TYPE_COMBO;
+      const key = isCombo ? 'comboId' : 'productId';
+      const existing = cart.products.find((p) => p[key] === item.id);
+      const price = getPrice(item);
+      if (existing) {
+        updateProductQuantity(item.id, existing.quantity + 1, isCombo);
+      } else {
+        addProduct({
+          productId: isCombo ? undefined : item.id,
+          comboId: isCombo ? item.id : undefined,
+          name: item.name,
+          price,
+          imageUrl: item.image_url || item.imageUrl,
+          line_type: lineType,
+          quantity: 1,
+        });
+      }
+    },
+    [cart.products, addProduct, updateProductQuantity]
+  );
+
+  const handleRemove = useCallback(
+    (item, lineType) => {
+      const isCombo = lineType === LINE_TYPE_COMBO;
+      const key = isCombo ? 'comboId' : 'productId';
+      const existing = cart.products.find((p) => p[key] === item.id);
+      if (!existing) return;
+      if (existing.quantity <= 1) removeProduct(item.id, isCombo);
+      else updateProductQuantity(item.id, existing.quantity - 1, isCombo);
+    },
+    [cart.products, removeProduct, updateProductQuantity]
+  );
+
+  const { itemCount, concessionTotal } = useMemo(
+    () => ({
+      itemCount: cart.products.reduce((acc, p) => acc + p.quantity, 0),
+      concessionTotal: cart.products.reduce(
+        (acc, p) => acc + p.price * p.quantity,
+        0
+      ),
+    }),
+    [cart.products]
+  );
+
+  // ─── Render por item ──────────────────────────────────────────────────────
   const renderItem = useCallback(
-    ({ item }) => (
-      <View style={styles.cardWrapper}>
-        <CatalogCard item={item} isCombo={!!item._isCombo} />
-      </View>
-    ),
-    []
+    ({ item }) => {
+      const lineType = item._isCombo ? LINE_TYPE_COMBO : LINE_TYPE_PRODUCT;
+      return (
+        <View style={styles.cardWrapper}>
+          <CatalogCard
+            item={item}
+            isCombo={!!item._isCombo}
+            quantity={getItemQuantity(item.id, lineType)}
+            onAdd={() => handleAdd(item, lineType)}
+            onRemove={() => handleRemove(item, lineType)}
+          />
+        </View>
+      );
+    },
+    [getItemQuantity, handleAdd, handleRemove]
   );
 
   const renderEmpty = () =>
@@ -199,6 +364,8 @@ export default function ConcessionsCatalogScreen() {
         </AppText>
       </View>
     );
+
+  const bottomPad = (insets.bottom || 16) + 56 + spacing.s12 + spacing.s16;
 
   return (
     <ScreenWrapper>
@@ -234,7 +401,7 @@ export default function ConcessionsCatalogScreen() {
         )}
       </View>
 
-      {/* Tabs — scroll horizontal con marginRight en cada item */}
+      {/* Tabs */}
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -259,7 +426,7 @@ export default function ConcessionsCatalogScreen() {
         </AppText>
       )}
 
-      {/* Grid — flex:1 para que no haya espacio muerto debajo */}
+      {/* Grid */}
       {loading ? (
         <View style={styles.centered}>
           <ActivityIndicator size="large" color={colors.primary} />
@@ -272,7 +439,10 @@ export default function ConcessionsCatalogScreen() {
           }
           numColumns={2}
           columnWrapperStyle={styles.row}
-          contentContainerStyle={styles.gridContent}
+          contentContainerStyle={[
+            styles.gridContent,
+            { paddingBottom: bottomPad + (itemCount > 0 ? 36 : 0) },
+          ]}
           style={styles.flatList}
           renderItem={renderItem}
           ListEmptyComponent={renderEmpty}
@@ -287,17 +457,60 @@ export default function ConcessionsCatalogScreen() {
           }
         />
       )}
+
+      {/* Barra inferior — solo visible cuando hay ítems */}
+      {itemCount > 0 && (
+        <View
+          style={[
+            styles.bottomBar,
+            { paddingBottom: insets.bottom || spacing.s16 },
+          ]}
+        >
+          <View style={styles.bottomInfo}>
+            <View style={styles.bottomInfoLeft}>
+              <ShoppingCart size={16} color={colors.primary} />
+              <AppText style={styles.bottomInfoText}>
+                {itemCount} {itemCount === 1 ? 'artículo' : 'artículos'}
+              </AppText>
+            </View>
+            <AppText style={styles.bottomPrice}>{fmt(concessionTotal)}</AppText>
+          </View>
+
+          <TouchableOpacity
+            style={styles.continueBtn}
+            onPress={() => {
+              if (!isAuthenticated) {
+                // Usuario no registrado: ir al login y volver al checkout después
+                router.push({
+                  pathname: '/(auth)/login',
+                  params: {
+                    redirectTo: '/(main)/concessions/checkout',
+                    mode: 'concessions',
+                  },
+                });
+              } else {
+                router.push({
+                  pathname: '/(main)/concessions/checkout',
+                  params: { mode: 'concessions' },
+                });
+              }
+            }}
+            activeOpacity={0.8}
+          >
+            <AppText style={styles.continueBtnText}>
+              {isAuthenticated
+                ? 'Ver resumen del pedido'
+                : 'Iniciar sesión para continuar'}
+            </AppText>
+          </TouchableOpacity>
+        </View>
+      )}
     </ScreenWrapper>
   );
 }
 
 // ─── Estilos ──────────────────────────────────────────────────────────────────
-const CARD_GAP = spacing.s8;
-// Ancho de cada card: 50% del contenedor menos la mitad del gap entre ellas
-const CARD_WIDTH = '48.5%';
-
 const styles = StyleSheet.create({
-  // Header
   header: {
     paddingHorizontal: spacing.s16,
     paddingTop: spacing.s16,
@@ -309,11 +522,9 @@ const styles = StyleSheet.create({
   },
   headerSub: {
     color: colors.textSecondary,
-    fontSize: theme.typography.size.s12,
+    fontSize: 13,
     marginTop: spacing.s4,
   },
-
-  // Búsqueda
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -334,12 +545,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     padding: 0,
   },
-
-  // Tabs — gap real con marginRight por item
-  tabsScroll: {
-    flexGrow: 0,
-    flexShrink: 0,
-  },
+  tabsScroll: { flexGrow: 0, flexShrink: 0 },
   tabsContent: {
     paddingHorizontal: spacing.s16,
     paddingBottom: spacing.s12,
@@ -354,11 +560,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.midnight[800],
     marginRight: spacing.s8,
   },
-  tabActive: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
-  },
-  // Usamos fontSize explícito para evitar dependencia de variantes
+  tabActive: { backgroundColor: colors.primary, borderColor: colors.primary },
   tabLabel: {
     fontSize: 13,
     fontFamily: theme.typography.family.primary.regular,
@@ -368,108 +570,63 @@ const styles = StyleSheet.create({
     color: colors.midnight[950],
     fontFamily: theme.typography.family.primary.bold,
   },
-
-  // Contador
   resultCount: {
     color: colors.textSecondary,
     fontSize: 12,
     paddingHorizontal: spacing.s16,
     marginBottom: spacing.s8,
   },
-
-  // Grid
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  flatList: { flex: 1 }, // ← elimina el espacio morado al fondo
-  gridContent: {
+  flatList: { flex: 1 },
+  gridContent: { paddingHorizontal: spacing.s16 },
+  row: { justifyContent: 'space-between', marginBottom: spacing.s8 },
+  cardWrapper: { width: '48.5%' },
+  emptyBox: { paddingTop: spacing.s48, alignItems: 'center', gap: spacing.s12 },
+  emptyEmoji: { fontSize: 40 },
+  emptyText: { color: colors.textSecondary, textAlign: 'center', fontSize: 14 },
+
+  // Barra inferior
+  bottomBar: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'rgba(35, 22, 64, 0.97)',
     paddingHorizontal: spacing.s16,
-    paddingBottom: spacing.s32,
+    paddingTop: spacing.s12,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    borderTopWidth: 1,
+    borderTopColor: colors.midnight[700],
   },
-  row: {
+  bottomInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: CARD_GAP,
+    marginBottom: spacing.s8,
   },
-  cardWrapper: { width: CARD_WIDTH },
-
-  // ── Card ──────────────────────────────────────────────────────────────────
-  card: {
-    borderRadius: borderRadius.s16,
-    overflow: 'hidden',
+  bottomInfoLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.s8,
   },
-
-  // Imagen: ocupa la parte superior, ratio 4:3 para ser más alta que el cuadrado
-  imageZone: {
+  bottomInfoText: { color: colors.textSecondary, fontSize: 13 },
+  bottomPrice: {
+    color: colors.primary,
+    fontFamily: theme.typography.family.primary.bold,
+    fontSize: 15,
+  },
+  continueBtn: {
     width: '100%',
-    aspectRatio: 1, // cuadrado, igual que la referencia
-    position: 'relative',
-  },
-  image: { width: '100%', height: '100%' },
-  imageFallback: {
-    width: '100%',
-    height: '100%',
+    height: 56,
+    backgroundColor: colors.primary,
+    borderRadius: borderRadius.s8,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  fallbackEmoji: { fontSize: 40 },
-
-  // Badge COMBO
-  comboBadge: {
-    position: 'absolute',
-    top: spacing.s8,
-    left: spacing.s8,
-    backgroundColor: colors.primary,
-    borderRadius: borderRadius.s4,
-    paddingHorizontal: spacing.s8,
-    paddingVertical: 3,
-  },
-  comboBadgeText: {
+  continueBtnText: {
     color: colors.midnight[950],
-    fontSize: 9,
-    fontFamily: theme.typography.family.primary.bold,
-    letterSpacing: 0.6,
-  },
-
-  // Zona de texto inferior — fondo ligeramente distinto para contraste
-  infoZone: {
-    paddingHorizontal: spacing.s8,
-    paddingTop: spacing.s8,
-    paddingBottom: spacing.s12,
-    gap: spacing.s4,
-  },
-  itemName: {
-    color: colors.textPrimary,
-    fontSize: 11,
-    fontFamily: theme.typography.family.primary.regular,
-    lineHeight: 15,
-    letterSpacing: 0.2,
-  },
-  priceRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.s4,
-  },
-  finalPrice: {
-    color: colors.primary,
-    fontSize: 16,
-    fontFamily: theme.typography.family.primary.bold,
-    lineHeight: 20,
-  },
-  originalPrice: {
-    color: colors.textSecondary,
-    fontSize: 11,
-    textDecorationLine: 'line-through',
-  },
-  loyaltyPts: {
-    color: colors.gold[300],
-    fontSize: 11,
+    fontSize: 15,
     fontFamily: theme.typography.family.primary.bold,
   },
-
-  // Vacío
-  emptyBox: {
-    paddingTop: spacing.s48,
-    alignItems: 'center',
-    gap: spacing.s12,
-  },
-  emptyEmoji: { fontSize: 40 },
-  emptyText: { color: colors.textSecondary, textAlign: 'center', fontSize: 14 },
 });

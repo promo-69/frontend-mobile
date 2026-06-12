@@ -1,5 +1,6 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Film } from 'lucide-react-native';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -9,7 +10,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppText } from '../../../components/AppText';
 import { useCart } from '../../../context/CartContext';
 import { createQuote, processCheckout } from '../../../services/orders.service';
@@ -17,13 +18,11 @@ import { theme } from '../../../constants';
 
 const { colors, spacing, borderRadius } = theme;
 
-// ─── Helpers de formato ─────────────────────────────────────────────────────────
 const fmt = (n) => `$${Number(n || 0).toFixed(2)}`;
 
-const formatDate = (isoString) => {
-  if (!isoString) return '';
-  const d = new Date(isoString);
-  return d.toLocaleDateString('es-VE', {
+const formatDate = (iso) => {
+  if (!iso) return '';
+  return new Date(iso).toLocaleDateString('es-VE', {
     weekday: 'short',
     day: 'numeric',
     month: 'short',
@@ -33,14 +32,13 @@ const formatDate = (isoString) => {
   });
 };
 
-// ─── Sub-componente: fila de línea ───────────────────────────────────────────────
+// ─── Sub-componentes ──────────────────────────────────────────────────────────
 function LineRow({ label, value, bold, accent, separator }) {
   return (
     <>
       {separator && <View style={styles.separator} />}
       <View style={styles.lineRow}>
         <AppText
-          variant={bold ? 'smallText' : 'caption'}
           style={[
             styles.lineLabel,
             bold && styles.bold,
@@ -50,7 +48,6 @@ function LineRow({ label, value, bold, accent, separator }) {
           {label}
         </AppText>
         <AppText
-          variant={bold ? 'smallText' : 'caption'}
           style={[
             styles.lineValue,
             bold && styles.bold,
@@ -64,69 +61,68 @@ function LineRow({ label, value, bold, accent, separator }) {
   );
 }
 
-// ─── Sub-componente: card de sección ─────────────────────────────────────────────
-function SectionCard({ title, children }) {
+function SectionCard({ title, children, action }) {
   return (
     <View style={styles.card}>
-      <AppText variant="smallText" style={styles.cardTitle}>
-        {title}
-      </AppText>
+      <View style={styles.cardHeader}>
+        <AppText style={styles.cardTitle}>{title}</AppText>
+        {action}
+      </View>
       {children}
     </View>
   );
 }
 
+// ─── Pantalla ─────────────────────────────────────────────────────────────────
 export default function CheckoutScreen() {
   const router = useRouter();
-  const { showtimeId, movieId, cinemaId } = useLocalSearchParams();
-  const {
-    cart,
-    tickets: cartTickets,
-    productTotal,
-    ticketTotal,
-    subtotal,
-    iva,
-    total,
-  } = useCart();
+  const insets = useSafeAreaInsets();
 
-  // totales definitivos provenientes del backend (reemplazan los locales)
+  // mode='concessions' → flujo desde catálogo público (sin película obligatoria)
+  // mode='buy' (default) → flujo desde selección de asientos
+  const {
+    showtimeId,
+    movieId,
+    cinemaId,
+    mode = 'buy',
+  } = useLocalSearchParams();
+  const isConcessionsOnly = mode === 'concessions';
+
+  const { cart, subtotal, iva, total } = useCart();
+
   const [serverTotals, setServerTotals] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
-
-  // Guardamos el orderId para pasarlo a la pantalla de pago
   const orderIdRef = useRef(null);
 
-  // ─── PASO 1 y 2: quote → checkout al montar ────────────────────────────────
+  // ─── Quote + checkout al montar ──────────────────────────────────────────
   useEffect(() => {
     let cancelled = false;
 
     async function initOrder() {
       setLoading(true);
       try {
-        // PASO 1: abrir sesión en Redis
-        await createQuote(Number(cinemaId));
+        // cinemaId es obligatorio para quote. En flujo concessions-only
+        // puede venir como param o podemos omitirlo si el backend lo permite.
+        const cid = cinemaId ? Number(cinemaId) : undefined;
+        if (cid) await createQuote(cid);
 
-        // Construir payload para el backend ─────────────────────────────────
         const ticketsPayload = cart.tickets.map((t) => ({
           seatId: t.seatId,
           booking: t.booking,
-          audienceCategoryId: t.audienceCategoryId || 1, // default: adulto
+          audienceCategoryId: t.audienceCategoryId || 1,
         }));
 
         const concessionsPayload = cart.products.map((p) => ({
-          line_type: p.line_type, // 1=producto, 2=combo
+          line_type: p.line_type,
           product: p.productId ?? null,
           combo: p.comboId ?? null,
           quantity: p.quantity,
         }));
 
-        // PASO 2: obtener totales reales del backend
         const result = await processCheckout(
           ticketsPayload,
           concessionsPayload
         );
-
         if (!cancelled) {
           setServerTotals(result);
           orderIdRef.current = result.order_id || null;
@@ -137,7 +133,7 @@ export default function CheckoutScreen() {
           Alert.alert(
             'Error al procesar la orden',
             err?.response?.data?.message ||
-              'Ocurrió un problema. Por favor intenta de nuevo.',
+              'Ocurrió un problema. Intenta de nuevo.',
             [{ text: 'Volver', onPress: () => router.back() }]
           );
         }
@@ -150,9 +146,8 @@ export default function CheckoutScreen() {
     return () => {
       cancelled = true;
     };
-  }, []); // solo al montar
+  }, []);
 
-  // ─── Navegar a la pantalla de pago ────────────────────────────────────────────
   const handleGoToPayment = useCallback(() => {
     if (!serverTotals) return;
     router.push({
@@ -164,7 +159,11 @@ export default function CheckoutScreen() {
     });
   }, [router, serverTotals]);
 
-  // ─── Render: loading ─────────────────────────────────────────────────────────
+  // Navegar a cartelera para agregar una película al pedido de confitería
+  const handleAddMovie = () => {
+    router.push('/(main)/home');
+  };
+
   if (loading) {
     return (
       <LinearGradient
@@ -172,16 +171,13 @@ export default function CheckoutScreen() {
         style={styles.centered}
       >
         <ActivityIndicator size="large" color={colors.primary} />
-        <AppText variant="body" style={styles.loadingText}>
-          Calculando tu orden...
-        </AppText>
+        <AppText style={styles.loadingText}>Calculando tu orden...</AppText>
       </LinearGradient>
     );
   }
 
   const displayTotal = serverTotals?.total_amount_base_currency ?? total;
   const displaySubtotal = serverTotals?.subtotal_base_currency ?? subtotal;
-  // IVA = diferencia entre total y subtotal del servidor, o cálculo local como fallback
   const displayIva = serverTotals
     ? serverTotals.total_amount_base_currency -
       serverTotals.subtotal_base_currency
@@ -189,52 +185,80 @@ export default function CheckoutScreen() {
 
   const movie = cart.movie;
   const showtime = cart.showtime;
-  const selectedSeats = cart.tickets
-    .map((t) => `${t.row || ''}${t.column || t.seatId}`)
-    .join(', ');
+  const hasTickets = cart.tickets.length > 0;
+  const hasConcessions = cart.products.length > 0;
+
+  const bottomBarHeight =
+    56 + spacing.s12 + spacing.s16 + (insets.bottom || 16);
 
   return (
-    <SafeAreaView style={styles.screen} edges={['bottom']}>
+    <View style={styles.screen}>
       <LinearGradient
         {...theme.colors.gradients.bgColor}
         style={StyleSheet.absoluteFill}
       />
 
       <ScrollView
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[
+          styles.scrollContent,
+          { paddingBottom: bottomBarHeight + 16 },
+        ]}
         showsVerticalScrollIndicator={false}
       >
-        {/* ── Película y función ── */}
-        <SectionCard title="Película y función">
-          <AppText variant="subtitle" style={styles.movieTitle}>
-            {movie?.title || 'Película'}
-          </AppText>
-          {showtime && (
-            <AppText variant="caption" style={styles.showtimeText}>
-              {formatDate(showtime.start_time)}
-              {showtime.room?.name ? `  •  ${showtime.room.name}` : ''}
-            </AppText>
-          )}
-
-          {/* Boletos */}
-          {cart.tickets.length > 0 && (
-            <View style={styles.subsection}>
-              <AppText variant="label" style={styles.subsectionTitle}>
-                Boletos
+        {/* ── Sección película/función ── */}
+        <SectionCard
+          title="Película y función"
+          action={
+            isConcessionsOnly && !hasTickets ? (
+              // Botón para agregar película si venimos del flujo de confitería
+              <TouchableOpacity
+                style={styles.addMovieBtn}
+                onPress={handleAddMovie}
+                activeOpacity={0.8}
+              >
+                <Film size={14} color={colors.midnight[950]} />
+                <AppText style={styles.addMovieBtnText}>
+                  Agregar película
+                </AppText>
+              </TouchableOpacity>
+            ) : null
+          }
+        >
+          {hasTickets ? (
+            <>
+              <AppText style={styles.movieTitle}>
+                {movie?.title || 'Película'}
               </AppText>
-              {cart.tickets.map((t, i) => (
-                <LineRow
-                  key={t.seatId || i}
-                  label={`Asiento ${t.row || ''}${t.column || t.seatId}`}
-                  value={fmt(t.price)}
-                />
-              ))}
+              {showtime && (
+                <AppText style={styles.showtimeText}>
+                  {formatDate(showtime.start_time)}
+                  {showtime.room?.name ? `  •  ${showtime.room.name}` : ''}
+                </AppText>
+              )}
+              <View style={styles.subsection}>
+                <AppText style={styles.subsectionTitle}>Boletos</AppText>
+                {cart.tickets.map((t, i) => (
+                  <LineRow
+                    key={t.seatId || i}
+                    label={`Asiento ${t.row || ''}${t.column || t.seatId}`}
+                    value={fmt(t.price)}
+                  />
+                ))}
+              </View>
+            </>
+          ) : (
+            // Estado vacío de película — solo visible en modo confitería
+            <View style={styles.emptyMovieBox}>
+              <AppText style={styles.emptyMovieText}>
+                Sin película seleccionada. Puedes continuar solo con confitería
+                o agregar una función.
+              </AppText>
             </View>
           )}
         </SectionCard>
 
         {/* ── Confitería ── */}
-        {cart.products.length > 0 && (
+        {hasConcessions && (
           <SectionCard title="Confitería">
             {cart.products.map((p, i) => (
               <LineRow
@@ -246,7 +270,7 @@ export default function CheckoutScreen() {
           </SectionCard>
         )}
 
-        {/* ── Resumen de totales ── */}
+        {/* ── Totales ── */}
         <SectionCard title="Resumen">
           <LineRow label="Subtotal" value={fmt(displaySubtotal)} />
           <LineRow label="I.V.A." value={fmt(displayIva)} />
@@ -260,87 +284,127 @@ export default function CheckoutScreen() {
         </SectionCard>
       </ScrollView>
 
-      {/* ── Botón fijo inferior ── */}
-      <View style={styles.bottomBar}>
+      {/* Barra inferior */}
+      <View
+        style={[
+          styles.bottomBar,
+          { paddingBottom: insets.bottom || spacing.s16 },
+        ]}
+      >
         <TouchableOpacity
-          style={[styles.payBtn, submitting && styles.payBtnDisabled]}
+          style={[styles.payBtn, !serverTotals && styles.payBtnDisabled]}
           onPress={handleGoToPayment}
-          disabled={submitting || !serverTotals}
+          disabled={!serverTotals}
           activeOpacity={0.8}
         >
-          {submitting ? (
-            <ActivityIndicator color={colors.midnight[950]} />
-          ) : (
-            <AppText variant="button" style={styles.payBtnText}>
-              Ir al pago · {fmt(displayTotal)}
-            </AppText>
-          )}
+          <AppText style={styles.payBtnText}>
+            Ir al pago · {fmt(displayTotal)}
+          </AppText>
         </TouchableOpacity>
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  loadingText: { color: colors.textSecondary, marginTop: spacing.s12 },
+  loadingText: {
+    color: colors.textSecondary,
+    marginTop: spacing.s12,
+    fontSize: 14,
+  },
 
   scrollContent: {
     paddingHorizontal: spacing.s16,
-    paddingTop: spacing.s24,
-    paddingBottom: spacing.s80,
-    gap: spacing.s16,
+    paddingTop: spacing.s16,
+    gap: spacing.s12,
   },
 
-  // ── Cards ──
+  // Cards
   card: {
     backgroundColor: colors.midnight[800],
     borderRadius: borderRadius.s16,
     padding: spacing.s16,
     gap: spacing.s8,
-    borderWidth: 1,
-    borderColor: colors.midnight[700],
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: spacing.s4,
   },
   cardTitle: {
     color: colors.primary,
     fontFamily: theme.typography.family.primary.bold,
+    fontSize: 14,
     letterSpacing: 0.5,
-    marginBottom: spacing.s4,
   },
 
-  // ── Movie ──
+  // Botón "Agregar película"
+  addMovieBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.s4,
+    backgroundColor: colors.primary,
+    borderRadius: borderRadius.s8,
+    paddingHorizontal: spacing.s12,
+    paddingVertical: spacing.s4,
+  },
+  addMovieBtnText: {
+    color: colors.midnight[950],
+    fontSize: 12,
+    fontFamily: theme.typography.family.primary.bold,
+  },
+
+  // Película
   movieTitle: {
     color: colors.textPrimary,
     fontFamily: theme.typography.family.primary.bold,
+    fontSize: 16,
   },
   showtimeText: {
     color: colors.textSecondary,
+    fontSize: 13,
     marginBottom: spacing.s4,
   },
-
-  // ── Sub-secciones ──
-  subsection: {
-    marginTop: spacing.s8,
-    gap: spacing.s4,
-  },
+  subsection: { marginTop: spacing.s8, gap: spacing.s4 },
   subsectionTitle: {
     color: colors.textSecondary,
+    fontSize: 12,
+    fontFamily: theme.typography.family.primary.bold,
     marginBottom: spacing.s4,
   },
 
-  // ── Filas ──
+  // Estado vacío película
+  emptyMovieBox: {
+    paddingVertical: spacing.s8,
+    borderRadius: borderRadius.s8,
+    borderWidth: 1,
+    borderColor: colors.midnight[700],
+    borderStyle: 'dashed',
+    paddingHorizontal: spacing.s12,
+  },
+  emptyMovieText: {
+    color: colors.textSecondary,
+    fontSize: 13,
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+
+  // Filas
   lineRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingVertical: spacing.s4,
   },
-  lineLabel: { color: colors.textSecondary, flex: 1 },
-  lineValue: { color: colors.textSecondary },
+  lineLabel: { color: colors.textSecondary, flex: 1, fontSize: 13 },
+  lineValue: { color: colors.textSecondary, fontSize: 13 },
   bold: {
     color: colors.textPrimary,
     fontFamily: theme.typography.family.primary.bold,
+    fontSize: 14,
   },
   accentText: { color: colors.primary },
   separator: {
@@ -349,7 +413,7 @@ const styles = StyleSheet.create({
     marginVertical: spacing.s8,
   },
 
-  // ── Barra inferior ──
+  // Barra inferior
   bottomBar: {
     position: 'absolute',
     bottom: 0,
@@ -358,7 +422,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(35, 22, 64, 0.97)',
     paddingHorizontal: spacing.s16,
     paddingTop: spacing.s12,
-    paddingBottom: spacing.s24,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     borderTopWidth: 1,
@@ -372,6 +435,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  payBtnDisabled: { opacity: 0.5 },
-  payBtnText: { color: colors.midnight[950] },
+  payBtnDisabled: { opacity: 0.4 },
+  payBtnText: {
+    color: colors.midnight[950],
+    fontSize: 15,
+    fontFamily: theme.typography.family.primary.bold,
+  },
 });

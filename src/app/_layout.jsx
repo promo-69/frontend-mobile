@@ -6,6 +6,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import BottomSheet from '../components/ui/BottomSheet';
 import { AuthProvider, useAuth } from '../context/AuthContext';
 import { BottomSheetProvider } from '../context/BottomSheetContext';
+import { CartProvider } from '../context/CartContext';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -17,22 +18,19 @@ function NavigationGuard() {
   useEffect(() => {
     if (isLoading) return;
 
-    // Grupos de rutas
     const inAuthGroup = segments[0] === '(auth)';
     const inMainGroup = segments[0] === '(main)';
     const inBuyGroup = segments[0] === '(buy)';
 
-    // Definir qué rutas dentro de (main) requieren autenticación
+    // Tabs de (main) que requieren sesión
     const protectedTabs = ['profile', 'purchases'];
     const isAccessingProtectedTab =
       inMainGroup && protectedTabs.includes(segments[1]);
 
-    // Si el usuario se loguea y está en Login/Register, mandarlo a Home
     if (isAuthenticated && inAuthGroup) {
       router.replace('/(main)/home');
     }
 
-    // Si el usuario no está logueado e intenta entrar a una zona privada
     if (!isAuthenticated && (isAccessingProtectedTab || inBuyGroup)) {
       router.replace('/(auth)/login');
     }
@@ -45,7 +43,6 @@ function NavigationGuard() {
         name="(auth)"
         options={{ animation: 'slide_from_bottom' }}
       />
-      {/* Registramos el grupo de películas y el flujo de compra */}
       <Stack.Screen name="movie" />
       <Stack.Screen name="(buy)" />
       <Stack.Screen name="index" options={{ href: null }} />
@@ -63,21 +60,21 @@ export default function RootLayout() {
   });
 
   useEffect(() => {
-    if (fontsLoaded) {
-      SplashScreen.hideAsync();
-    }
+    if (fontsLoaded) SplashScreen.hideAsync();
   }, [fontsLoaded]);
 
   if (!fontsLoaded) return null;
 
   return (
     <AuthProvider>
-      <BottomSheetProvider>
-        <SafeAreaProvider>
-          <NavigationGuard />
-          <BottomSheet />
-        </SafeAreaProvider>
-      </BottomSheetProvider>
+      <CartProvider>
+        <BottomSheetProvider>
+          <SafeAreaProvider>
+            <NavigationGuard />
+            <BottomSheet />
+          </SafeAreaProvider>
+        </BottomSheetProvider>
+      </CartProvider>
     </AuthProvider>
   );
 }
