@@ -30,4 +30,3 @@ export const theme = {
 
 // Exporta las constantes directamente
 export { COLORS, FONTS, SIZE, SPACING, TEXT_VARIANTS };
-

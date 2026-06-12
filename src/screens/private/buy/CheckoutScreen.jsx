@@ -1,10 +1,12 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Film } from 'lucide-react-native';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  Modal,
+  FlatList,
   ScrollView,
   StyleSheet,
   TouchableOpacity,
@@ -13,10 +15,18 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppText } from '../../../components/AppText';
 import { useCart } from '../../../context/CartContext';
-import { createQuote, processCheckout } from '../../../services/orders.service';
+import {
+  createQuote,
+  processCheckout,
+  cancelSession,
+  getSessionState,
+} from '../../../services/orders.service';
+import { getCinemas } from '../../../services/cinemas.service';
+import { storageHelper } from '../../../helper/storage.helper';
 import { theme } from '../../../constants';
 
 const { colors, spacing, borderRadius } = theme;
+
 const fmt = (n) => `$${Number(n || 0).toFixed(2)}`;
 
 const formatDate = (iso) => {
@@ -31,7 +41,6 @@ const formatDate = (iso) => {
   });
 };
 
-// ─── Sub-componentes ──────────────────────────────────────────────────────────
 function LineRow({ label, value, bold, accent, separator }) {
   return (
     <>
@@ -72,35 +81,31 @@ function SectionCard({ title, children, action }) {
   );
 }
 
-// ─── Pantalla ─────────────────────────────────────────────────────────────────
 export default function CheckoutScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-
-  // mode='concessions' → viene del catálogo público (sin película obligatoria)
-  // mode='buy' (default) → viene del flujo de asientos
   const {
     showtimeId,
     movieId,
-    cinemaId,
+    cinemaId: paramCinemaId,
     mode = 'buy',
   } = useLocalSearchParams();
   const isConcessionsMode = mode === 'concessions';
-
   const { cart, subtotal, iva, total } = useCart();
 
-  // Los totales del servidor se calculan SOLO al presionar "Ir al pago"
   const [serverTotals, setServerTotals] = useState(null);
   const [processing, setProcessing] = useState(false);
+  const [cinemas, setCinemas] = useState([]);
+  const [loadingCinemas, setLoadingCinemas] = useState(true);
+  const [selectedCinema, setSelectedCinema] = useState(null);
+  const [modalVisible, setModalVisible] = useState(false);
 
   const hasTickets = cart.tickets.length > 0;
   const hasConcessions = cart.products.length > 0;
   const hasItems = hasTickets || hasConcessions;
-
   const movie = cart.movie;
   const showtime = cart.showtime;
 
-  // ─── Totales a mostrar: servidor si ya calculó, local como estimado ───────
   const displayTotal = serverTotals?.total_amount_base_currency ?? total;
   const displaySubtotal = serverTotals?.subtotal_base_currency ?? subtotal;
   const displayIva = serverTotals
@@ -108,7 +113,54 @@ export default function CheckoutScreen() {
       serverTotals.subtotal_base_currency
     : iva;
 
-  // ─── "Ir al pago": aquí sí llama a la API ────────────────────────────────
+  // cinemaId final: parámetro de ruta > sala del showtime > null
+  const effectiveCinemaId = paramCinemaId
+    ? Number(paramCinemaId)
+    : cart.showtime?.room?.cinema?.id || null;
+
+  // Cargar cines solo si no tenemos cinemaId todavía
+  useEffect(() => {
+    if (effectiveCinemaId) {
+      setSelectedCinema({ id: effectiveCinemaId });
+      setLoadingCinemas(false);
+      return;
+    }
+    if (selectedCinema) return;
+
+    let isMounted = true;
+    const fetchCinemas = async () => {
+      setLoadingCinemas(true);
+      try {
+        const data = await getCinemas();
+        if (isMounted && data && data.length > 0) {
+          setCinemas(data);
+          setModalVisible(true);
+        } else if (isMounted) {
+          Alert.alert('Sin sucursales', 'No hay sucursales disponibles.');
+        }
+      } catch (error) {
+        if (isMounted) {
+          Alert.alert(
+            'Error de conexión',
+            'No se pudo cargar la lista de sucursales.',
+            [{ text: 'Reintentar', onPress: fetchCinemas }]
+          );
+        }
+      } finally {
+        if (isMounted) setLoadingCinemas(false);
+      }
+    };
+    fetchCinemas();
+    return () => {
+      isMounted = false;
+    };
+  }, [effectiveCinemaId, selectedCinema]);
+
+  const handleSelectCinema = (cinema) => {
+    setSelectedCinema(cinema);
+    setModalVisible(false);
+  };
+
   const handleGoToPayment = useCallback(async () => {
     if (!hasItems) {
       Alert.alert(
@@ -118,25 +170,55 @@ export default function CheckoutScreen() {
       return;
     }
 
+    const finalCinemaId = selectedCinema?.id;
+    if (!finalCinemaId) {
+      Alert.alert('Sucursal requerida', 'Por favor selecciona una sucursal.');
+      if (!modalVisible && !loadingCinemas) setModalVisible(true);
+      return;
+    }
+
+    // Verificar que el usuario tenga sesión activa (el back necesita el JWT para leer el customerId)
+    const token = await storageHelper.getAccessToken();
+    if (!token) {
+      Alert.alert(
+        'Sesión requerida',
+        'Necesitás iniciar sesión para completar la compra.',
+        [
+          {
+            text: 'Iniciar sesión',
+            onPress: () => router.replace('/(auth)/login'),
+          },
+        ]
+      );
+      return;
+    }
+
     setProcessing(true);
     try {
-      // Quote requiere cinemaId. En modo confitería puede no tenerlo aún;
-      // si falta, omitimos createQuote y el backend asigna el cine por defecto.
-      const cid = cinemaId ? Number(cinemaId) : null;
-      if (cid) await createQuote(cid);
+      // Limpiar sesión anterior si existe en Redis
+      try {
+        await cancelSession();
+      } catch (_) {}
+
+      await createQuote(finalCinemaId);
 
       const ticketsPayload = cart.tickets.map((t) => ({
         seatId: t.seatId,
         booking: t.booking,
         audienceCategoryId: t.audienceCategoryId || 1,
       }));
-
       const concessionsPayload = cart.products.map((p) => ({
         line_type: p.line_type,
         product: p.productId ?? null,
         combo: p.comboId ?? null,
         quantity: p.quantity,
       }));
+
+      if (hasTickets && ticketsPayload.some((t) => !t.booking)) {
+        throw new Error(
+          'Falta el ID de reserva en algunos boletos. Reintentá la selección de asientos.'
+        );
+      }
 
       const result = await processCheckout(ticketsPayload, concessionsPayload);
       setServerTotals(result);
@@ -149,21 +231,45 @@ export default function CheckoutScreen() {
         },
       });
     } catch (err) {
-      console.error('Error en checkout:', err);
+      // TEMPORAL - borrar después de depurar
+      console.log('=== ERROR COMPLETO ===');
+      console.log('status:', err?.response?.status);
+      console.log('data:', JSON.stringify(err?.response?.data, null, 2));
+      console.log('message:', err?.message);
+      console.log('=== FIN ERROR ===');
+
       Alert.alert(
         'Error al procesar la orden',
-        err?.response?.data?.message ||
-          'Ocurrió un problema. Por favor intenta de nuevo.'
+        err.response?.data?.message || err.message || 'Ocurrió un problema.'
       );
     } finally {
       setProcessing(false);
     }
-  }, [cart, cinemaId, hasItems, router]);
+  }, [
+    cart,
+    hasItems,
+    hasTickets,
+    router,
+    selectedCinema,
+    modalVisible,
+    loadingCinemas,
+  ]);
 
   const handleAddMovie = () => router.push('/(main)/home');
 
   const bottomBarHeight =
     56 + spacing.s12 + spacing.s16 + (insets.bottom || 16);
+
+  if (loadingCinemas && !selectedCinema && !effectiveCinemaId) {
+    return (
+      <View
+        style={[styles.centered, { backgroundColor: colors.midnight[950] }]}
+      >
+        <ActivityIndicator size="large" color={colors.primary} />
+        <AppText style={styles.loadingText}>Cargando sucursales...</AppText>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.screen}>
@@ -172,6 +278,28 @@ export default function CheckoutScreen() {
         style={StyleSheet.absoluteFill}
       />
 
+      {/* Modal selector de sucursal */}
+      <Modal visible={modalVisible} animationType="slide" transparent>
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <AppText style={styles.modalTitle}>Selecciona tu sucursal</AppText>
+            <FlatList
+              data={cinemas}
+              keyExtractor={(item) => String(item.id)}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={styles.cinemaOption}
+                  onPress={() => handleSelectCinema(item)}
+                >
+                  <AppText style={styles.cinemaName}>{item.name}</AppText>
+                  <AppText style={styles.cinemaAddress}>{item.address}</AppText>
+                </TouchableOpacity>
+              )}
+            />
+          </View>
+        </View>
+      </Modal>
+
       <ScrollView
         contentContainerStyle={[
           styles.scrollContent,
@@ -179,7 +307,6 @@ export default function CheckoutScreen() {
         ]}
         showsVerticalScrollIndicator={false}
       >
-        {/* ── Película / función ── */}
         <SectionCard
           title="Película y función"
           action={
@@ -229,7 +356,6 @@ export default function CheckoutScreen() {
           )}
         </SectionCard>
 
-        {/* ── Confitería ── */}
         {hasConcessions && (
           <SectionCard title="Confitería">
             {cart.products.map((p, i) => (
@@ -242,7 +368,6 @@ export default function CheckoutScreen() {
           </SectionCard>
         )}
 
-        {/* ── Carrito vacío ── */}
         {!hasItems && (
           <View style={styles.emptyBox}>
             <AppText style={styles.emptyEmoji}>🛒</AppText>
@@ -250,7 +375,6 @@ export default function CheckoutScreen() {
           </View>
         )}
 
-        {/* ── Totales ── */}
         {hasItems && (
           <SectionCard title="Resumen">
             <LineRow label="Subtotal" value={fmt(displaySubtotal)} />
@@ -262,7 +386,6 @@ export default function CheckoutScreen() {
               accent
               separator
             />
-            {/* Nota: los totales son una estimación hasta confirmar el pago */}
             {!serverTotals && (
               <AppText style={styles.estimateNote}>
                 * Precios estimados. El total definitivo se confirma al procesar
@@ -273,7 +396,6 @@ export default function CheckoutScreen() {
         )}
       </ScrollView>
 
-      {/* ── Barra inferior ── */}
       <View
         style={[
           styles.bottomBar,
@@ -306,20 +428,16 @@ export default function CheckoutScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-
   scrollContent: {
     paddingHorizontal: spacing.s16,
     paddingTop: spacing.s24,
-    paddingBottom: spacing.s120,
     gap: spacing.s24,
   },
-
-  // Cards
   card: {
     backgroundColor: colors.midnight[800],
     borderRadius: borderRadius.s16,
     padding: spacing.s16,
-    gap: spacing.s11,
+    gap: spacing.s1,
     borderWidth: 1,
     borderColor: colors.midnight[700],
   },
@@ -327,7 +445,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: spacing.s2,
+    marginBottom: spacing.s4,
   },
   cardTitle: {
     color: colors.primary,
@@ -335,8 +453,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     letterSpacing: 0.5,
   },
-
-  // Botón agregar película
   addMovieBtn: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -351,8 +467,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontFamily: theme.typography.family.primary.bold,
   },
-
-  // Película
   movieTitle: {
     color: colors.textPrimary,
     fontFamily: theme.typography.family.primary.bold,
@@ -370,8 +484,6 @@ const styles = StyleSheet.create({
     fontFamily: theme.typography.family.primary.bold,
     marginBottom: spacing.s4,
   },
-
-  // Estado vacío película
   emptyMovieBox: {
     paddingVertical: spacing.s8,
     borderRadius: borderRadius.s8,
@@ -386,8 +498,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 20,
   },
-
-  // Filas de resumen
   lineRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -413,17 +523,9 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     marginTop: spacing.s4,
   },
-
-  // Carrito vacío
-  emptyBox: {
-    paddingTop: spacing.s48,
-    alignItems: 'center',
-    gap: spacing.s12,
-  },
+  emptyBox: { paddingTop: spacing.s48, alignItems: 'center', gap: spacing.s12 },
   emptyEmoji: { fontSize: 40 },
   emptyText: { color: colors.textSecondary, fontSize: 14, textAlign: 'center' },
-
-  // Barra inferior
   bottomBar: {
     position: 'absolute',
     bottom: 0,
@@ -451,4 +553,37 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontFamily: theme.typography.family.primary.bold,
   },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.85)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    width: '80%',
+    maxHeight: '70%',
+    backgroundColor: colors.midnight[900],
+    borderRadius: borderRadius.s16,
+    padding: spacing.s16,
+  },
+  modalTitle: {
+    color: colors.primary,
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: spacing.s12,
+    textAlign: 'center',
+  },
+  cinemaOption: {
+    paddingVertical: spacing.s12,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.midnight[700],
+  },
+  cinemaName: {
+    color: colors.textPrimary,
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  cinemaAddress: { color: colors.textSecondary, fontSize: 12, marginTop: 4 },
+  loadingText: { color: colors.textSecondary, marginTop: spacing.s12 },
+  centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
 });
