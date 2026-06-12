@@ -1,7 +1,7 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Film } from 'lucide-react-native';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -17,7 +17,6 @@ import { createQuote, processCheckout } from '../../../services/orders.service';
 import { theme } from '../../../constants';
 
 const { colors, spacing, borderRadius } = theme;
-
 const fmt = (n) => `$${Number(n || 0).toFixed(2)}`;
 
 const formatDate = (iso) => {
@@ -78,104 +77,30 @@ export default function CheckoutScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
-  // mode='concessions' → flujo desde catálogo público (sin película obligatoria)
-  // mode='buy' (default) → flujo desde selección de asientos
+  // mode='concessions' → viene del catálogo público (sin película obligatoria)
+  // mode='buy' (default) → viene del flujo de asientos
   const {
     showtimeId,
     movieId,
     cinemaId,
     mode = 'buy',
   } = useLocalSearchParams();
-  const isConcessionsOnly = mode === 'concessions';
+  const isConcessionsMode = mode === 'concessions';
 
   const { cart, subtotal, iva, total } = useCart();
 
+  // Los totales del servidor se calculan SOLO al presionar "Ir al pago"
   const [serverTotals, setServerTotals] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const orderIdRef = useRef(null);
+  const [processing, setProcessing] = useState(false);
 
-  // ─── Quote + checkout al montar ──────────────────────────────────────────
-  useEffect(() => {
-    let cancelled = false;
+  const hasTickets = cart.tickets.length > 0;
+  const hasConcessions = cart.products.length > 0;
+  const hasItems = hasTickets || hasConcessions;
 
-    async function initOrder() {
-      setLoading(true);
-      try {
-        // cinemaId es obligatorio para quote. En flujo concessions-only
-        // puede venir como param o podemos omitirlo si el backend lo permite.
-        const cid = cinemaId ? Number(cinemaId) : undefined;
-        if (cid) await createQuote(cid);
+  const movie = cart.movie;
+  const showtime = cart.showtime;
 
-        const ticketsPayload = cart.tickets.map((t) => ({
-          seatId: t.seatId,
-          booking: t.booking,
-          audienceCategoryId: t.audienceCategoryId || 1,
-        }));
-
-        const concessionsPayload = cart.products.map((p) => ({
-          line_type: p.line_type,
-          product: p.productId ?? null,
-          combo: p.comboId ?? null,
-          quantity: p.quantity,
-        }));
-
-        const result = await processCheckout(
-          ticketsPayload,
-          concessionsPayload
-        );
-        if (!cancelled) {
-          setServerTotals(result);
-          orderIdRef.current = result.order_id || null;
-        }
-      } catch (err) {
-        console.error('Error en checkout:', err);
-        if (!cancelled) {
-          Alert.alert(
-            'Error al procesar la orden',
-            err?.response?.data?.message ||
-              'Ocurrió un problema. Intenta de nuevo.',
-            [{ text: 'Volver', onPress: () => router.back() }]
-          );
-        }
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    }
-
-    initOrder();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  const handleGoToPayment = useCallback(() => {
-    if (!serverTotals) return;
-    router.push({
-      pathname: '/(buy)/payment',
-      params: {
-        total: serverTotals.total_amount_base_currency,
-        subtotal: serverTotals.subtotal_base_currency,
-      },
-    });
-  }, [router, serverTotals]);
-
-  // Navegar a cartelera para agregar una película al pedido de confitería
-  const handleAddMovie = () => {
-    router.push('/(main)/home');
-  };
-
-  if (loading) {
-    return (
-      <LinearGradient
-        {...theme.colors.gradients.bgColor}
-        style={styles.centered}
-      >
-        <ActivityIndicator size="large" color={colors.primary} />
-        <AppText style={styles.loadingText}>Calculando tu orden...</AppText>
-      </LinearGradient>
-    );
-  }
-
+  // ─── Totales a mostrar: servidor si ya calculó, local como estimado ───────
   const displayTotal = serverTotals?.total_amount_base_currency ?? total;
   const displaySubtotal = serverTotals?.subtotal_base_currency ?? subtotal;
   const displayIva = serverTotals
@@ -183,10 +108,59 @@ export default function CheckoutScreen() {
       serverTotals.subtotal_base_currency
     : iva;
 
-  const movie = cart.movie;
-  const showtime = cart.showtime;
-  const hasTickets = cart.tickets.length > 0;
-  const hasConcessions = cart.products.length > 0;
+  // ─── "Ir al pago": aquí sí llama a la API ────────────────────────────────
+  const handleGoToPayment = useCallback(async () => {
+    if (!hasItems) {
+      Alert.alert(
+        'Carrito vacío',
+        'Agrega al menos un producto o boleto para continuar.'
+      );
+      return;
+    }
+
+    setProcessing(true);
+    try {
+      // Quote requiere cinemaId. En modo confitería puede no tenerlo aún;
+      // si falta, omitimos createQuote y el backend asigna el cine por defecto.
+      const cid = cinemaId ? Number(cinemaId) : null;
+      if (cid) await createQuote(cid);
+
+      const ticketsPayload = cart.tickets.map((t) => ({
+        seatId: t.seatId,
+        booking: t.booking,
+        audienceCategoryId: t.audienceCategoryId || 1,
+      }));
+
+      const concessionsPayload = cart.products.map((p) => ({
+        line_type: p.line_type,
+        product: p.productId ?? null,
+        combo: p.comboId ?? null,
+        quantity: p.quantity,
+      }));
+
+      const result = await processCheckout(ticketsPayload, concessionsPayload);
+      setServerTotals(result);
+
+      router.push({
+        pathname: '/(buy)/payment',
+        params: {
+          total: result.total_amount_base_currency,
+          subtotal: result.subtotal_base_currency,
+        },
+      });
+    } catch (err) {
+      console.error('Error en checkout:', err);
+      Alert.alert(
+        'Error al procesar la orden',
+        err?.response?.data?.message ||
+          'Ocurrió un problema. Por favor intenta de nuevo.'
+      );
+    } finally {
+      setProcessing(false);
+    }
+  }, [cart, cinemaId, hasItems, router]);
+
+  const handleAddMovie = () => router.push('/(main)/home');
 
   const bottomBarHeight =
     56 + spacing.s12 + spacing.s16 + (insets.bottom || 16);
@@ -205,12 +179,11 @@ export default function CheckoutScreen() {
         ]}
         showsVerticalScrollIndicator={false}
       >
-        {/* ── Sección película/función ── */}
+        {/* ── Película / función ── */}
         <SectionCard
           title="Película y función"
           action={
-            isConcessionsOnly && !hasTickets ? (
-              // Botón para agregar película si venimos del flujo de confitería
+            isConcessionsMode && !hasTickets ? (
               <TouchableOpacity
                 style={styles.addMovieBtn}
                 onPress={handleAddMovie}
@@ -247,7 +220,6 @@ export default function CheckoutScreen() {
               </View>
             </>
           ) : (
-            // Estado vacío de película — solo visible en modo confitería
             <View style={styles.emptyMovieBox}>
               <AppText style={styles.emptyMovieText}>
                 Sin película seleccionada. Puedes continuar solo con confitería
@@ -270,21 +242,38 @@ export default function CheckoutScreen() {
           </SectionCard>
         )}
 
+        {/* ── Carrito vacío ── */}
+        {!hasItems && (
+          <View style={styles.emptyBox}>
+            <AppText style={styles.emptyEmoji}>🛒</AppText>
+            <AppText style={styles.emptyText}>Tu carrito está vacío</AppText>
+          </View>
+        )}
+
         {/* ── Totales ── */}
-        <SectionCard title="Resumen">
-          <LineRow label="Subtotal" value={fmt(displaySubtotal)} />
-          <LineRow label="I.V.A." value={fmt(displayIva)} />
-          <LineRow
-            label="Total a pagar"
-            value={fmt(displayTotal)}
-            bold
-            accent
-            separator
-          />
-        </SectionCard>
+        {hasItems && (
+          <SectionCard title="Resumen">
+            <LineRow label="Subtotal" value={fmt(displaySubtotal)} />
+            <LineRow label="I.V.A." value={fmt(displayIva)} />
+            <LineRow
+              label="Total a pagar"
+              value={fmt(displayTotal)}
+              bold
+              accent
+              separator
+            />
+            {/* Nota: los totales son una estimación hasta confirmar el pago */}
+            {!serverTotals && (
+              <AppText style={styles.estimateNote}>
+                * Precios estimados. El total definitivo se confirma al procesar
+                el pago.
+              </AppText>
+            )}
+          </SectionCard>
+        )}
       </ScrollView>
 
-      {/* Barra inferior */}
+      {/* ── Barra inferior ── */}
       <View
         style={[
           styles.bottomBar,
@@ -292,14 +281,23 @@ export default function CheckoutScreen() {
         ]}
       >
         <TouchableOpacity
-          style={[styles.payBtn, !serverTotals && styles.payBtnDisabled]}
+          style={[
+            styles.payBtn,
+            (!hasItems || processing) && styles.payBtnDisabled,
+          ]}
           onPress={handleGoToPayment}
-          disabled={!serverTotals}
+          disabled={!hasItems || processing}
           activeOpacity={0.8}
         >
-          <AppText style={styles.payBtnText}>
-            Ir al pago · {fmt(displayTotal)}
-          </AppText>
+          {processing ? (
+            <ActivityIndicator color={colors.midnight[950]} />
+          ) : (
+            <AppText style={styles.payBtnText}>
+              {hasItems
+                ? `Ir al pago  ·  ${fmt(displayTotal)}`
+                : 'Agrega productos para continuar'}
+            </AppText>
+          )}
         </TouchableOpacity>
       </View>
     </View>
@@ -308,17 +306,12 @@ export default function CheckoutScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  loadingText: {
-    color: colors.textSecondary,
-    marginTop: spacing.s12,
-    fontSize: 14,
-  },
 
   scrollContent: {
     paddingHorizontal: spacing.s16,
-    paddingTop: spacing.s16,
-    gap: spacing.s12,
+    paddingTop: spacing.s24,
+    paddingBottom: spacing.s120,
+    gap: spacing.s24,
   },
 
   // Cards
@@ -326,7 +319,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.midnight[800],
     borderRadius: borderRadius.s16,
     padding: spacing.s16,
-    gap: spacing.s8,
+    gap: spacing.s16,
+    borderWicth: 1,
+    borderColor: colors.mignight[700],
   },
   cardHeader: {
     flexDirection: 'row',
@@ -341,7 +336,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
 
-  // Botón "Agregar película"
+  // Botón agregar película
   addMovieBtn: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -381,7 +376,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.s8,
     borderRadius: borderRadius.s8,
     borderWidth: 1,
-    borderColor: colors.midnight[700],
+    borderColor: colors.midnight[600],
     borderStyle: 'dashed',
     paddingHorizontal: spacing.s12,
   },
@@ -392,7 +387,7 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
 
-  // Filas
+  // Filas de resumen
   lineRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -412,6 +407,21 @@ const styles = StyleSheet.create({
     backgroundColor: colors.midnight[700],
     marginVertical: spacing.s8,
   },
+  estimateNote: {
+    color: colors.textSecondary,
+    fontSize: 11,
+    fontStyle: 'italic',
+    marginTop: spacing.s4,
+  },
+
+  // Carrito vacío
+  emptyBox: {
+    paddingTop: spacing.s48,
+    alignItems: 'center',
+    gap: spacing.s12,
+  },
+  emptyEmoji: { fontSize: 40 },
+  emptyText: { color: colors.textSecondary, fontSize: 14, textAlign: 'center' },
 
   // Barra inferior
   bottomBar: {

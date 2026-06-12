@@ -26,7 +26,7 @@ const fmt = (n) => `$${Number(n || 0).toFixed(2)}`;
 const METHODS = [
   { key: 'mobile_payment', label: 'Pago Móvil', icon: '📱' },
   { key: 'transfer', label: 'Transferencia', icon: '🏦' },
-  { key: 'cash', label: 'Efectivo', icon: '💵' },
+  { key: 'cine_points', label: 'Cine Puntos', icon: '🎟️' },
 ];
 
 // ─── Datos bancarios del negocio (fijos, solo para mostrar al usuario) ────────
@@ -179,6 +179,7 @@ export default function PaymentScreen() {
   const totalAmount = Number(total || 0);
 
   const [selectedMethod, setSelectedMethod] = useState(null);
+  const [pointsToRedeem, setPointsToRedeem] = useState(''); // Estado añadido para Cine Puntos
   const [formData, setFormData] = useState({
     bank: '',
     reference: '',
@@ -227,6 +228,7 @@ export default function PaymentScreen() {
         return false;
       }
     }
+    // Si es 'cine_points', puedes agregar aquí tu validación para el campo `pointsToRedeem`
     return true;
   };
 
@@ -248,6 +250,10 @@ export default function PaymentScreen() {
           : {}),
         ...(formData.holder.trim()
           ? { account_holder: formData.holder.trim() }
+          : {}),
+        // Si quisieras enviar los puntos al backend, podrías agregarlo aquí:
+        ...(selectedMethod === 'cine_points'
+          ? { redeem_points: pointsToRedeem }
           : {}),
       };
 
@@ -343,13 +349,27 @@ export default function PaymentScreen() {
         {selectedMethod === 'transfer' && (
           <TransferForm data={formData} onChange={setFormData} />
         )}
-        {selectedMethod === 'cash' && (
-          <View style={styles.cashNote}>
-            <AppText style={styles.cashNoteEmoji}>🏧</AppText>
-            <AppText variant="body" style={styles.cashNoteText}>
-              Realiza el pago en taquilla al momento de retirar tus boletos.
-              Lleva el monto exacto.
+
+        {/* ── Bloque condicional de Cine Puntos ── */}
+        {selectedMethod === 'cine_points' && (
+          <View style={styles.bankCard}>
+            <AppText variant="caption" style={styles.bankCardLabel}>
+              CANJEAR CINE PUNTOS
             </AppText>
+            <View style={styles.fieldWrapper}>
+              <AppText style={styles.fieldLabel}>Puntos a utilizar</AppText>
+              <TextInput
+                style={styles.redeemInput}
+                placeholder="Ej: 1000"
+                placeholderTextColor={colors.midnight[400]}
+                keyboardType="numeric"
+                value={pointsToRedeem}
+                onChangeText={setPointsToRedeem}
+              />
+              <AppText style={styles.estimateNote}>
+                Tienes disponibles: 5,000 Cine Puntos
+              </AppText>
+            </View>
           </View>
         )}
       </ScrollView>
@@ -480,21 +500,21 @@ const styles = StyleSheet.create({
     fontSize: 15,
   },
 
-  // ── Efectivo ──
-  cashNote: {
-    backgroundColor: colors.midnight[800],
-    borderRadius: borderRadius.s16,
-    padding: spacing.s16,
-    alignItems: 'center',
-    gap: spacing.s12,
+  // ── Estilo personalizado TextInput para Cine Puntos ──
+  redeemInput: {
+    backgroundColor: colors.midnight[900],
+    borderRadius: borderRadius.s8,
+    padding: spacing.s12,
+    color: colors.textPrimary,
+    marginTop: spacing.s8,
     borderWidth: 1,
-    borderColor: colors.midnight[700],
+    borderColor: colors.midnight[600],
   },
-  cashNoteEmoji: { fontSize: 36 },
-  cashNoteText: {
+  estimateNote: {
     color: colors.textSecondary,
-    textAlign: 'center',
-    lineHeight: 22,
+    fontSize: 11,
+    fontStyle: 'italic',
+    marginTop: spacing.s4,
   },
 
   // ── Botón inferior ──
@@ -502,6 +522,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(35, 22, 64, 0.97)',
     paddingHorizontal: spacing.s16,
     paddingTop: spacing.s12,
+    paddingBottom: spacing.s12,
     borderTopWidth: 1,
     borderTopColor: colors.midnight[700],
     borderTopLeftRadius: 20,

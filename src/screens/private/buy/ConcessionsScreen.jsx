@@ -428,7 +428,9 @@ export default function ConcessionsScreen() {
               itemCount === 0 && styles.continueBtnTextOutline,
             ]}
           >
-            {itemCount > 0 ? 'Continuar' : 'Continuar sin confitería'}
+            {itemCount > 0
+              ? 'Ver resumen del pedido'
+              : 'Continuar sin confitería'}
           </AppText>
         </TouchableOpacity>
       </View>
