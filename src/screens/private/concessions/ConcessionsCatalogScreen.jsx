@@ -12,7 +12,7 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { AppText } from '../../../components/AppText';
 import { ScreenWrapper } from '../../../components/ScreenWrapper';
 import { useAuth } from '../../../context/AuthContext';
@@ -21,7 +21,7 @@ import {
   getAllCombos,
   getAllProducts,
 } from '../../../services/concessions.service';
-import { theme } from '../../../constants';
+import { theme, DEFAULT_CINEMA_ID } from '../../../constants';
 
 const { colors, spacing, borderRadius } = theme;
 
@@ -229,6 +229,10 @@ export default function ConcessionsCatalogScreen() {
   const insets = useSafeAreaInsets();
   const { isAuthenticated } = useAuth();
   const { cart, addProduct, updateProductQuantity, removeProduct } = useCart();
+  // cinemaId puede venir como param si se llega desde selección de sala;
+  // de lo contrario se usa el cine por defecto.
+  const { cinemaId: cinemaIdParam } = useLocalSearchParams();
+  const cinemaId = cinemaIdParam ? Number(cinemaIdParam) : DEFAULT_CINEMA_ID;
 
   const [products, setProducts] = useState([]);
   const [combos, setCombos] = useState([]);
@@ -484,14 +488,15 @@ export default function ConcessionsCatalogScreen() {
                 router.push({
                   pathname: '/(auth)/login',
                   params: {
-                    redirectTo: '/(main)/concessions/checkout',
+                    redirectTo: '/(buy)/checkout',
                     mode: 'concessions',
+                    cinemaId: String(cinemaId),
                   },
                 });
               } else {
                 router.push({
-                  pathname: '/(main)/concessions/checkout',
-                  params: { mode: 'concessions' },
+                  pathname: '/(buy)/checkout',
+                  params: { mode: 'concessions', cinemaId: String(cinemaId) },
                 });
               }
             }}
