@@ -1,8 +1,8 @@
-import { Film, ChevronLeft, Play } from 'lucide-react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { ChevronLeft, Film, Play } from 'lucide-react-native';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Dimensions,
   Linking,
@@ -12,10 +12,12 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import MovieSkeleton from '../../components/showtimes/MovieSkeleton';
+import DateSelector from '../../components/showtimes/DateSelector';
 import ShowtimesList from '../../components/showtimes/ShowtimesList';
+import MovieSkeleton from '../../components/showtimes/MovieSkeleton';
 import { getMovieById } from '../../services/movies.service';
 import { getShowtimesByMovie } from '../../services/showtimes.service';
+import { formatHumanDate, generateNextDays } from '../../utils/dateUtils';
 
 const { width } = Dimensions.get('window');
 const COLORS = {
@@ -30,33 +32,11 @@ const COLORS = {
 
 const formatGenres = (genres) => {
   if (!Array.isArray(genres) || genres.length === 0) return 'Desconocido';
-  return genres
+  const cleanGenres = genres
     .map((g) => g?._Genres?.description)
-    .filter(Boolean) 
+    .filter(Boolean);
+  return cleanGenres.length > 0 ? cleanGenres.join(', ') : 'Desconocido';
 };
-
-const formatDate = (dateString) => {
-  // Si no hay fecha, viene vacía o es nula, salimos de inmediato de forma segura
-  if (!dateString || typeof dateString !== 'string') return 'No definida';
-  
-  try {
-    // Extrae solo la parte de la fecha ignorando la hora si existiera (YYYY-MM-DD)
-    const cleanDate = dateString.split('T')[0];
-    // Separa por el guion 
-    const parts = cleanDate.split('-');
-    //Valida que tengamos los 3 componentes esenciales (Año, Mes, Día)
-    if (parts.length !== 3) return dateString;
-    
-    const [year, month, day] = parts;
-    
-    // Retorna el formato: DD/MM/AAAA
-    return `${day}/${month}/${year}`;
-  } catch (error) {
-    console.error('Error al formatear fecha de forma manual:', error);
-    return dateString; 
-  }
-};
-
 
 export default function MovieDetails() {
   const { movieId } = useLocalSearchParams();
@@ -67,6 +47,16 @@ export default function MovieDetails() {
   const [loading, setLoading] = useState(true);
 
   const [imageError, setImageError] = useState(false);
+
+  const todayShortString = useMemo(() => {
+  const localDate = new Date();
+  const year = localDate.getFullYear();
+  const month = (localDate.getMonth() + 1).toString().padStart(2, '0');
+  const day = localDate.getDate().toString().padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}, []);
+
+  const [selectedDate, setSelectedDate] = useState(todayShortString);
 
   useEffect(() => {
     async function loadData() {
@@ -79,10 +69,13 @@ export default function MovieDetails() {
           getShowtimesByMovie(movieId),
         ]);
 
-        const cleanShowtimes = showtimesData?.rows && Array.isArray(showtimesData.rows) 
-        ? showtimesData.rows 
-        : [];
-        setMovie(movieData || []);
+        // Normalizar la data por si viene el array directo o envuelto en un objeto 'data'
+        const cleanShowtimes = Array.isArray(showtimesData)
+          ? showtimesData
+          : (showtimesData?.data && Array.isArray(showtimesData.data) ? showtimesData.data : []);
+
+        // Usamos null como valor por defecto para que el chequeo !movie funcione correctamente
+        setMovie(movieData || null);
         setShowtimes(cleanShowtimes || []);
       } catch (error) {
         console.error('Error loading movie details:', error);
@@ -92,6 +85,30 @@ export default function MovieDetails() {
     }
     loadData();
   }, [movieId]);
+
+  //Filtrar carrusel para mostrar solo los días con funciones
+  const availableDatesCarousel = useMemo(() => {
+    const next7Days = generateNextDays(7);
+    if (showtimes.length === 0) return [];
+
+    // Crear un Set con los strings "YYYY-MM-DD" de las funciones que vienen del backend
+    const activeDatesSet = new Set(
+    showtimes
+      .map(st => st.start_time ? st.start_time.substring(0, 10) : null)
+      .filter(Boolean)
+  );
+    // Retornar únicamente los días del calendario que tengan funciones asociadas
+    return next7Days.filter(day => activeDatesSet.has(day.fullDate));
+  }, [showtimes]);
+
+  useEffect(() => {
+    if (availableDatesCarousel.length > 0) {
+      const isCurrentDateAvailable = availableDatesCarousel.some(d => d.fullDate === selectedDate);
+      if (!isCurrentDateAvailable) {
+        setSelectedDate(availableDatesCarousel[0].fullDate);
+      }
+    }
+  }, [availableDatesCarousel, selectedDate]);
 
   const handleWatchTrailer = () => {
     if (movie?.trailer_url) {
@@ -106,7 +123,6 @@ export default function MovieDetails() {
   if (!movie) return null;
 
   const showPlaceholder = !movie.poster_url || imageError;
-
 
   return (
     <View style={styles.container}>
@@ -123,13 +139,13 @@ export default function MovieDetails() {
               <Text style={styles.placeholderText}>Cineflix</Text>
             </View>
           ) : (
-          <Image
-            source={{ uri: movie.poster_url }}
-            style={styles.mainPoster}
-            contentFit="cover"
-            transition={500}
-            onError={() => setImageError(true)}
-          />
+            <Image
+              source={{ uri: movie.poster_url }}
+              style={styles.mainPoster}
+              contentFit="cover"
+              transition={500}
+              onError={() => setImageError(true)}
+            />
           )}
           <LinearGradient
             colors={['transparent', 'rgba(35, 22, 64, 0.5)', COLORS.bgDeep]}
@@ -168,14 +184,17 @@ export default function MovieDetails() {
               <View style={[styles.techItem, styles.techBorderLeft]}>
                 <Text style={styles.techLabel}>CLASIFICACIÓN</Text>
                 <Text style={styles.techValue}>
-                  {movie.age_classification?.description || 'Apto para todo público'}
+                  {movie.age_classification?.description ||
+                    'Apto para todo público'}
                 </Text>
               </View>
             </View>
             <View style={[styles.techRow, styles.techBorderTop]}>
               <View style={styles.techItem}>
                 <Text style={styles.techLabel}>ESTRENO</Text>
-                <Text style={styles.techValue}>{formatDate(movie.release_date) || 'No definida'}</Text>
+                <Text style={styles.techValue}>
+                  {formatHumanDate(movie.release_date) || 'No definida'}
+                </Text>
               </View>
               <View style={[styles.techItem, styles.techBorderLeft]}>
                 <Text style={styles.techLabel}>ESTADO</Text>
@@ -197,7 +216,17 @@ export default function MovieDetails() {
           <Text style={styles.sectionTitle}>Sinopsis</Text>
           <Text style={styles.synopsis}>{movie.synopsis}</Text>
 
-          <ShowtimesList movieId={movieId} showtimes={showtimes} />
+          <DateSelector
+            selectedDate={selectedDate}
+            onSelectDate={setSelectedDate}
+            weekdays={availableDatesCarousel}
+          />
+
+          <ShowtimesList 
+            showtimes={showtimes}
+            movieId={movieId}
+            selectedDate={selectedDate}
+          />
         </View>
       </ScrollView>
     </View>
@@ -208,7 +237,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.bgDeep },
   heroContainer: { width: '100%', height: width * 1.1 },
   mainPoster: { width: '100%', height: '100%', resizeMode: 'cover' },
- 
+
   placeholderHero: {
     width: '100%',
     height: '100%',

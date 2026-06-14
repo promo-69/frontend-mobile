@@ -19,12 +19,10 @@ export const getShowtimesByMovie = async (movieId) => {
 
 /**
  * Obtiene las funciones disponibles para una película específica en un cine específico.
- * @param {string|number} movieId - ID de la película.
- * @param {string|number} cinemaId - ID del cine.
  */
 export const getShowtimesByMovieAndCinema = async (movieId, cinemaId) => {
   const response = await api.get(
-    `/showtimes?movieId=${movieId}&cinemaId=${cinemaId}`
+    `/cinemas/${cinemaId}/showtimes/movies/${movieId}`
   );
   return response.data.data;
 };
