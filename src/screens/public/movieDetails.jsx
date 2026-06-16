@@ -15,6 +15,8 @@ import {
 import DateSelector from '../../components/showtimes/DateSelector';
 import ShowtimesList from '../../components/showtimes/ShowtimesList';
 import MovieSkeleton from '../../components/showtimes/MovieSkeleton';
+import AppText from '../../components/AppText';
+import ScreenWrapper from '../../components/ScreenWrapper'
 import { getMovieById } from '../../services/movies.service';
 import { getShowtimesByMovie } from '../../services/showtimes.service';
 import { formatHumanDate, generateNextDays } from '../../utils/dateUtils';
@@ -115,9 +117,15 @@ export default function MovieDetails() {
 
   if (loading) return <MovieSkeleton />;
 
-  if (!movie) return null;
+  if (!movie) {
+    return (
+      <ScreenWrapper style={styles.centered}>
+        <AppText variant="subtitle">Película No Encontrada</AppText>
+      </ScreenWrapper>
+    );
+  }
 
-  const showPlaceholder = !movie.poster_url || imageError;
+  const showPlaceholder = !movie.banner_url && !movie.poster_url;
 
   return (
     <View style={styles.container}>
@@ -128,15 +136,15 @@ export default function MovieDetails() {
 
       <ScrollView bounces={false} showsVerticalScrollIndicator={false}>
         <View style={styles.heroContainer}>
-          {showPlaceholder ? (
+          {showPlaceholder || imageError ? (
             <View style={styles.placeholderHero}>
               <Film size={64} color={COLORS.accent} />
               <Text style={styles.placeholderText}>Cineflix</Text>
             </View>
           ) : (
             <Image
-              source={{ uri: movie.poster_url }}
-              style={styles.mainPoster}
+              source={{ uri: movie.banner_url || movie.poster_url }}
+              style={styles.bannerImage}
               contentFit="cover"
               transition={500}
               onError={() => setImageError(true)}
@@ -154,20 +162,48 @@ export default function MovieDetails() {
             <ChevronLeft color="white" size={28} />
           </TouchableOpacity>
 
-          {movie.trailer_url && (
-            <TouchableOpacity
-              style={styles.trailerButton}
-              onPress={handleWatchTrailer}
-            >
-              <Play size={20} color="black" />
-              <Text style={styles.trailerText}>VER TRAILER</Text>
-            </TouchableOpacity>
-          )}
         </View>
 
+        {/* CONTENEDOR DE INFORMACION PRINCIPAL */}
         <View style={styles.infoContent}>
-          <Text style={styles.title}>{movie.title}</Text>
+          
+          {/* FILA DE CABECERA: Solapa el póster completo y agrupa el título a su lado */}
+          <View style={styles.headerRow}>
+            <View style={styles.posterWrapper}>
+              <Image
+                source={{ uri: movie.poster_url }}
+                style={styles.moviePoster}
+                contentFit="cover"
+              />
+              {movie.trailer_url && (
+                <TouchableOpacity
+                  style={styles.trailerPlayBadge}
+                  onPress={handleWatchTrailer}
+                  activeOpacity={0.8}
+                >
+                  <Play size={14} color="black" fill="black" />
+                </TouchableOpacity>
+              )}
+            </View>
 
+            {/* Título y metadatos rápidos */}
+            <View style={styles.titleBlock}>
+              <Text style={styles.title} numberOfLines={2}>
+                {movie.title}
+              </Text>
+              {movie.trailer_url && (
+                <TouchableOpacity
+                  style={styles.trailerTextLink}
+                  onPress={handleWatchTrailer}
+                >
+                  <Play size={12} color={COLORS.accent} fill={COLORS.accent} />
+                  <Text style={styles.trailerLinkText}>VER TRÁILER</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          </View>
+       
+        {/* 3. FICHA TÉCNICA Y CONTENIDO */}
           <View style={styles.techSheet}>
             <View style={styles.techRow}>
               <View style={styles.techItem}>
@@ -179,8 +215,7 @@ export default function MovieDetails() {
               <View style={[styles.techItem, styles.techBorderLeft]}>
                 <Text style={styles.techLabel}>CLASIFICACIÓN</Text>
                 <Text style={styles.techValue}>
-                  {movie.age_classification?.description ||
-                    'Apto para todo público'}
+                  {movie.age_classification?.description || 'Apto todo público'}
                 </Text>
               </View>
             </View>
@@ -211,13 +246,14 @@ export default function MovieDetails() {
           <Text style={styles.sectionTitle}>Sinopsis</Text>
           <Text style={styles.synopsis}>{movie.synopsis}</Text>
 
+          {/* Selectores de Horarios */}
           <DateSelector
             selectedDate={selectedDate}
             onSelectDate={setSelectedDate}
             weekdays={availableDatesCarousel}
           />
 
-          <ShowtimesList 
+          <ShowtimesList
             showtimes={showtimes}
             movieId={movieId}
             selectedDate={selectedDate}
@@ -230,10 +266,14 @@ export default function MovieDetails() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.bgDeep },
+  centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+ // Estructura Banner Panorámico 16:9
   heroContainer: { 
     width: '100%', 
-    height: width * 1.35 },
-  mainPoster: { width: '100%', height: '100%', resizeMode: 'cover' },
+    aspectRatio: 16 / 9,
+    position: 'relative'
+  },
+  bannerImage: { width: '100%', height: '100%' },
 
   placeholderHero: {
     width: '100%',
@@ -254,45 +294,79 @@ const styles = StyleSheet.create({
   gradient: { ...StyleSheet.absoluteFillObject },
   backButton: {
     position: 'absolute',
-    top: 50,
+    top: 45,
     left: 20,
-    width: 44,                
-    height: 44,
-    marginRight: 2,
-    justifyContent: 'center',   // Centrado vertical de los hijos (icono)
+    width: 40,                
+    height: 40,
+    justifyContent: 'center',   
     alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    borderRadius: 25,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    borderRadius: 20,
     zIndex: 10,
   },
-  trailerButton: {
-    position: 'absolute',
-    bottom: 20,
-    right: 20,
-    backgroundColor: COLORS.accent,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 10,
-    paddingHorizontal: 18,
-    borderRadius: 30,
-    elevation: 5,
-  },
-  trailerText: {
-    color: 'black',
-    fontWeight: '900',
-    fontSize: 13,
-    marginLeft: 8,
-  },
+
+  // Contenedor principal de info con desfase hacia arriba
   infoContent: { 
     paddingHorizontal: 20, 
-    marginTop: 0 
+    marginTop: -75, // subir el bloque completo sobre el banner
   },
-  title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: COLORS.textMain,
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end', // Alistar base del texto con base del póster
     marginBottom: 20,
   },
+  posterWrapper: {
+    position: 'relative',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.5,
+    shadowRadius: 10,
+    elevation: 8,
+  },
+  moviePoster: { 
+    width: 110, 
+    height: 165, // Proporción 2:3 
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+    backgroundColor: '#231640',
+  },
+  trailerPlayBadge: {
+    position: 'absolute',
+    bottom: 8,
+    right: 8,
+    backgroundColor: COLORS.accent,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  titleBlock: {
+    flex: 1, 
+    marginLeft: 16,
+    marginBottom: 4,
+  },
+  title: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: COLORS.textMain,
+    lineHeight: 28,
+  },
+  trailerTextLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+    gap: 6,
+  },
+  trailerLinkText: {
+    color: COLORS.accent,
+    fontWeight: '900',
+    fontSize: 11,
+    letterSpacing: 1,
+  },
+
+  // Ficha Técnica
   techSheet: {
     backgroundColor: COLORS.techSheetBg,
     borderRadius: 16,
@@ -312,14 +386,16 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 4,
   },
-  techValue: { color: COLORS.textMain, fontSize: 14, fontWeight: '600' },
+  techValue: { color: COLORS.textMain, fontSize: 13, fontWeight: '600' },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
     color: COLORS.accent,
-    marginTop: 25,
+    marginTop: 10,
     marginBottom: 10,
     textTransform: 'uppercase',
+    letterSpacing: 0.5
   },
-  synopsis: { color: COLORS.textGray, fontSize: 15, lineHeight: 22 },
+  synopsis: { color: COLORS.textGray, fontSize: 14, lineHeight: 22, marginBottom: 20 },
+  errorText: { color: '#FF5252', textAlign: 'center', padding: 20 },
 });
