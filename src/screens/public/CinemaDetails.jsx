@@ -188,7 +188,10 @@ export default function CinemaDetails() {
                       style={styles.timeBadge}
                       onPress={() => router.push({
                         pathname: '/buy/selectSeats',
-                        params: { showtimeId: st.id }
+                        params: { 
+                          showtimeId: st.id,
+                          movieId: item.id 
+                        }
                       })}
                     >
                       <AppText style={styles.timeText}>
