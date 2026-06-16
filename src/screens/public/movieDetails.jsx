@@ -69,14 +69,9 @@ export default function MovieDetails() {
           getShowtimesByMovie(movieId),
         ]);
 
-        // Normalizar la data por si viene el array directo o envuelto en un objeto 'data'
-        const cleanShowtimes = Array.isArray(showtimesData)
-          ? showtimesData
-          : (showtimesData?.data && Array.isArray(showtimesData.data) ? showtimesData.data : []);
-
-        // Usamos null como valor por defecto para que el chequeo !movie funcione correctamente
-        setMovie(movieData || null);
-        setShowtimes(cleanShowtimes || []);
+        // Los servicios ya retornan response.data.data, por lo que usamos la data directa
+        setMovie(movieData);
+        setShowtimes(Array.isArray(showtimesData) ? showtimesData : []);
       } catch (error) {
         console.error('Error loading movie details:', error);
       } finally {
@@ -235,7 +230,9 @@ export default function MovieDetails() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.bgDeep },
-  heroContainer: { width: '100%', height: width * 1.1 },
+  heroContainer: { 
+    width: '100%', 
+    height: width * 1.35 },
   mainPoster: { width: '100%', height: '100%', resizeMode: 'cover' },
 
   placeholderHero: {
@@ -259,9 +256,13 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 50,
     left: 20,
+    width: 44,                
+    height: 44,
+    marginRight: 2,
+    justifyContent: 'center',   // Centrado vertical de los hijos (icono)
+    alignItems: 'center',
     backgroundColor: 'rgba(0,0,0,0.4)',
     borderRadius: 25,
-    padding: 8,
     zIndex: 10,
   },
   trailerButton: {
@@ -282,7 +283,10 @@ const styles = StyleSheet.create({
     fontSize: 13,
     marginLeft: 8,
   },
-  infoContent: { paddingHorizontal: 20, marginTop: -30 },
+  infoContent: { 
+    paddingHorizontal: 20, 
+    marginTop: 0 
+  },
   title: {
     fontSize: 32,
     fontWeight: 'bold',

@@ -16,9 +16,10 @@ export default function ShowtimeCard({ showtime, movieId }) {
   //Extraer las descripciones
   const projectionType = showtime.projection_type?.description ||  'Proyección Desconocida';
   const language = showtime.language?.description || 'Idioma Desconocido';
-  const roomName = showtime.booking?.room?.name || 'Sala General';
-  const availableSeats= showtime.booking?.room?.available_seats;
-  const isSoldOut = availableSeats === 0;
+  
+  // Acceso directo a room según el JSON recibido
+  const roomName = showtime.room?.name || 'Sala General';
+  const isSoldOut = showtime.room?.available_seats === 0; 
   
   const { time, ampm } = formatTime12hrs(showtime.start_time);
 

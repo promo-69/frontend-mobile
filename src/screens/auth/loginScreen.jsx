@@ -73,14 +73,9 @@ export default function LoginScreen() {
     password: data.password // La contraseña NO se limpia con trim si acepta espacios válidos
   };
 
-  // DEBUGGING: Revisa exactamente qué va a salir hacia el backend
-  console.log('🚀 DATOS ENVIADOS DESDE EL MÓVIL:', cleanedData);
-
   try {
     const result = await login(cleanedData);
-    
-    // DEBUGGING: Revisa qué respondió tu función de servicio
-    console.log('📩 RESPUESTA DEL SERVICIO LOGIN:', result);
+
 
     if (result?.success) {
       router.replace('/(main)/home');

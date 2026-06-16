@@ -40,16 +40,14 @@ export default function HomeScreen() {
       try {
         setLoading(true);
         const [relData, upData] = await Promise.all([
-          getMoviesReleases(1, 10),
-          getUpcomingMovies(1, 10)
+          getMoviesReleases(),
+          getUpcomingMovies()
         ]);
 
-        const cleanUpcoming = upData?.rows && Array.isArray(upData.rows) 
-          ? upData.rows 
-          : [];
+      
 
         setReleases(relData || []);
-        setUpcoming(cleanUpcoming);
+        setUpcoming(upData || []);
       } catch (error) {
         console.error('Error crítico cargando la data del Home:', error);
       } finally {
