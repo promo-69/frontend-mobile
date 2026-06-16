@@ -1,12 +1,15 @@
 import { useFonts } from 'expo-font';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
+import * as NavigationBar from 'expo-navigation-bar';
 import { useEffect } from 'react';
+import { Platform } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import BottomSheet from '../components/ui/BottomSheet';
 import { AuthProvider, useAuth } from '../context/AuthContext';
 import { CartProvider } from '../context/CartContext';
 import { BottomSheetProvider } from '../context/BottomSheetContext';
+import { theme } from '../constants';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -62,6 +65,14 @@ export default function RootLayout() {
     MainMedium: require('../assets/fonts/Montserrat-Medium.ttf'),
     DisplayRegular: require('../assets/fonts/BebasNeue-Regular.ttf'),
   });
+
+  useEffect(() => {
+    if (Platform.OS === 'android') {
+      // Sincroniza la barra de botones de Android con el color del Tab Bar
+      NavigationBar.setBackgroundColorAsync(theme.colors.background.accent);
+      NavigationBar.setButtonStyleAsync('light'); // Iconos claros para fondo oscuro
+    }
+  }, []);
 
   useEffect(() => {
     if (fontsLoaded) {

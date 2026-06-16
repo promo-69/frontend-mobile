@@ -17,6 +17,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import MovieCarousel from '../../components/home/MovieCarousel';
+import { theme } from '../../constants';
 import { useAuth } from '../../context/AuthContext';
 import { getMoviesReleases, getUpcomingMovies } from '../../services/movies.service';
 
@@ -44,10 +45,12 @@ export default function HomeScreen() {
           getUpcomingMovies()
         ]);
 
-      
+        // Normalizamos la respuesta por si la API devuelve el objeto con la propiedad .data (paginación)
+        const releasesArray = Array.isArray(relData) ? relData : relData?.data || [];
+        const upcomingArray = Array.isArray(upData) ? upData : upData?.data || [];
 
-        setReleases(relData || []);
-        setUpcoming(upData || []);
+        setReleases(releasesArray);
+        setUpcoming(upcomingArray);
       } catch (error) {
         console.error('Error crítico cargando la data del Home:', error);
       } finally {
@@ -58,19 +61,11 @@ export default function HomeScreen() {
   }, []);
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor={COLORS.headerBg} />
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+      <StatusBar barStyle="light-content" backgroundColor={theme.colors.background.accent} translucent={false} />
 
       {/* Header */}
-      <View style={styles.header}>
-        <View style={styles.headerLeft}>
-          <TouchableOpacity style={styles.locationContainer}>
-            <MapPin size={18} color={COLORS.accent} />
-            <Text style={styles.locationText}>Barquisimeto</Text>
-            <ChevronRight size={16} color={COLORS.accent} />
-          </TouchableOpacity>
-        </View>
-        
+      <View style={styles.header}> 
         <Image
           source={require('../../assets/images/android-icon-foreground.png')}
           style={styles.logo}
@@ -78,7 +73,7 @@ export default function HomeScreen() {
 
         {/* Botón Ingresar */}
         {isLoading ? (
-          <ActivityIndicator size="small" color={COLORS.accent} />
+          <ActivityIndicator size="small" color={theme.colors.accent} />
         ) : (isAuthenticated && !!user?.firstName) ? (
           <TouchableOpacity
             style={styles.userProfileHeader}
@@ -91,7 +86,7 @@ export default function HomeScreen() {
               </Text>
             </View>
             <View style={styles.avatarMini}>
-              <UserCircle size={20} color={COLORS.bgDark} />
+              <UserCircle size={20} color={theme.colors.background.accent} />
             </View>
           </TouchableOpacity>
         ) : (
@@ -100,7 +95,7 @@ export default function HomeScreen() {
             onPress={() => router.push('/(auth)/login')}
           >
             <Text style={styles.loginButtonText}>Ingresar</Text>
-            <UserCircle size={18} color={COLORS.bgDark} />
+            <UserCircle size={18} color={theme.colors.background.accent} />
           </TouchableOpacity>
         )}
       </View>
@@ -132,7 +127,7 @@ const styles = StyleSheet.create({
 
     flex: 1, // Ocupa todo el alto de la pantalla
 
-    backgroundColor: COLORS.bgDark, // Fondo morado oscuro
+    backgroundColor: theme.colors.background.main, // Fondo morado oscuro
 
   },
 
@@ -142,11 +137,12 @@ const styles = StyleSheet.create({
 
   header: {
 
-    paddingTop: 20, // Espacio superior para no pegar con el notch
-
     height: 70, // Altura fija
 
-    backgroundColor: COLORS.headerBg, // Fondo morado medio
+    backgroundColor: theme.colors.background.accent,
+
+    borderBottomColor: 'rgba(255, 200, 100, 0.3)',
+    borderBottomWidth: 1,
 
     flexDirection: 'row', // Elementos en fila
 
@@ -154,19 +150,17 @@ const styles = StyleSheet.create({
 
     justifyContent: 'space-between', // Espacio entre izquierda y derecha
 
-    paddingHorizontal: 20, // Espacio interno lateral
+    paddingHorizontal: 16, // Espacio interno lateral
 
-    shadowColor: '#000',
-
-    shadowOffset: { width: 0, height: 3 },
-
-    shadowOpacity: 0.3,
-
-    shadowRadius: 3,
-
-    elevation: 6,
-
-    zIndex: 10, // Asegura que esté por encima del ScrollView
+    shadowColor: '#000000',
+    shadowOffset: {
+      width: 0,
+      height: 8, 
+    },
+    shadowOpacity: 0.1, 
+    shadowRadius: 16,    
+    elevation: 8,
+    zIndex: 16, 
 
   },
 
@@ -234,7 +228,7 @@ const styles = StyleSheet.create({
 
     flexDirection: 'row',
 
-    backgroundColor: COLORS.accent, // Fondo dorado
+    backgroundColor: theme.colors.accent, // Fondo dorado
 
     paddingVertical: 8,
 
@@ -248,7 +242,7 @@ const styles = StyleSheet.create({
 
   loginButtonText: {
 
-    color: COLORS.bgDark, // Texto morado oscuro
+    color: theme.colors.background.accent, // Texto morado oscuro
 
     fontSize: 14,
 
