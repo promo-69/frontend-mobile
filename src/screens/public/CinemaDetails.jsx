@@ -128,6 +128,40 @@ export default function CinemaDetails() {
         </View>
       </View>
 
+      {/*CARD DE INFORMACIÓN DE LA SUCURSAL */}
+    <View style={styles.cinemaInfoCard}>
+      {/* Dirección */}
+      <View style={styles.infoRow}>
+        <AppText style={styles.infoText} numberOfLines={2}>
+          {cinema.address}
+        </AppText>
+      </View>
+
+      <View style={styles.divider} />
+
+      {/* Horario y Teléfono en paralelo para ahorrar espacio vertical */}
+      <View style={styles.twoColumnRow}>
+        
+        {/* Horarios */}
+        <View style={[styles.infoRow, { flex: 1 }]}>
+          <View>
+            <AppText style={styles.infoLabel}>Horario</AppText>
+            <AppText style={styles.infoSubText}>
+              {cinema.opening_time?.substring(0, 5)} - {cinema.closing_time?.substring(0, 5)}
+            </AppText>
+          </View>
+        </View>
+
+        {/* Teléfono */}
+        <View style={[styles.infoRow, { flex: 1, marginLeft: 10 }]}>
+          <View>
+            <AppText style={styles.infoLabel}>Contacto</AppText>
+            <AppText style={styles.infoSubText}>{cinema.phone}</AppText>
+          </View>
+        </View>
+      </View>
+    </View>
+
       {/** SELECTOR DE FECHAS */}
       <View style={styles.carouselContainer}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.dateScroll}>
@@ -422,5 +456,47 @@ const styles = StyleSheet.create({
     color: '#B0A8C5',
     textAlign: 'center',
     fontSize: 14,
+  },
+  cinemaInfoCard: {
+    backgroundColor: 'rgba(35, 22, 64, 0.4)', // Fondo translúcido integrado
+    borderRadius: 16,
+    padding: 16,
+    marginHorizontal: 20,
+    marginTop: 15, // Separación del banner
+    marginBottom: 5,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.06)',
+  },
+  infoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  twoColumnRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  infoText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    lineHeight: 20,
+    flex: 1,
+  },
+  infoLabel: {
+    color: '#B0A8C5',
+    fontSize: 11,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+  },
+  infoSubText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: 'bold',
+    marginTop: 1,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    marginVertical: 12,
   },
 });

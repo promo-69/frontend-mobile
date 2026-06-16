@@ -16,7 +16,7 @@ export default function CinemaCard({ cinema, onPress }) {
       {/* Contenedor de la imagen */}
       <View style={styles.imageContainer}>
         <Image
-          source={{ uri: cinema.posterUrl || 'https://images.unsplash.com/photo-1594909122845-11baa439b7bf?q=80&w=1000' }}
+          source={{ uri: cinema.posterUrl || 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?q=80&w=1000' }}
           style={styles.cinemaImage}
           contentFit="cover"
           transition={300}
