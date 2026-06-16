@@ -11,23 +11,40 @@ export default function BuyLayout() {
       <Stack
         screenOptions={{
           // Estilo global para las cabeceras del flujo de compra
-          headerStyle: {
-            backgroundColor: '#231640', // Color de tu fondo base oscuro
-          },
           headerBackIcon: () => null, // Eliminamos el ícono de retroceso predeterminado para usar uno personalizado
         
-          headerShadowVisible: false, // Eliminamos la línea divisoria para un look más moderno
-          headerBackTitleVisible: false, 
+          headerStatusBarHeight: 48,
+          headerStyle: {
+            backgroundColor: '#231640', 
+          },
+          
+          headerTitleStyle: {
+            color: '#FFFFFF',       
+            
+            fontSize: 18,           
+            fontWeight: 'bold',     
+          },
+          contentStyle: { backgroundColor: '#231640' },
+          headerTitleContainerStyle: {
+            paddingVertical: 10, 
+          },
+
+          headerTitleAlign: 'center',
           
           // Animación de transición lateral nativa estándar (Deslizar desde la derecha)
           animation: 'slide_from_right', 
+
+        
         }}
+
+        
       >
         {/* Pantalla 1: Selección de Asientos    */}
         <Stack.Screen 
           name="selectSeats" 
           options={{ 
             title: 'Selecciona tus Asientos',
+
           }} 
         />
        

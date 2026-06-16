@@ -1,7 +1,8 @@
-import { FlatList, StyleSheet, View, Text } from 'react-native';
+import { ActivityIndicator, FlatList, StyleSheet, View, Text } from 'react-native';
 import CinemaCard from './CinemaCard';
 
-export default function CinemaGrid({ cinemas = [] }) {
+export default function CinemaGrid({ cinemas = [], onPress, onLoadMore, loadingMore }) {
+  
   if (!cinemas || cinemas.length === 0) {
     return (
       <View style={styles.emptyContainer}>
@@ -10,13 +11,31 @@ export default function CinemaGrid({ cinemas = [] }) {
     );
   }
 
+  const renderFooter = () => {
+    if (!loadingMore) return null;
+    return (
+      <View style={styles.footerLoader}>
+        <ActivityIndicator size="small" color="#FFC864" />
+      </View>
+    );
+  };
+
   return (
     <FlatList
       data={cinemas}
       keyExtractor={(item) => item.id.toString()}
-      renderItem={({ item }) => <CinemaCard cinema={item} />}
+      renderItem={({ item }) => (
+        <CinemaCard 
+        cinema={item} 
+        onPress={() => onPress(item.id)}
+        />
+
+      ) }
       contentContainerStyle={styles.container}
       showsVerticalScrollIndicator={false}
+      onEndReached={onLoadMore}
+      onEndReachedThreshold={0.3}
+      ListFooterComponent={renderFooter}
     />
   );
 }
