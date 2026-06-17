@@ -1,4 +1,5 @@
 import { StyleSheet, Text, View } from 'react-native';
+import { formatTime12hrs } from '../../utils/TimeUtils';
 
 const COLORS = {
   textMain: '#FFFFFF',
@@ -6,19 +7,11 @@ const COLORS = {
   accent: '#f4b400',
 };
 
-// Función para formatear la hora ISO a formato local (es-VE)
-const formatTime = (isoString) => {
-  if (!isoString) return 'N/A';
-  const date = new Date(isoString);
-  return date.toLocaleTimeString('es-VE', {
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: true,
-  });
-};
-
 export default function ShowtimeHeader({ movie, showtime }) {
   if (!movie || !showtime) return null;
+
+  console.log('→ ShowtimeHeader recibe:', showtime);
+  const formattedTime = formatTime12hrs(showtime.booking?.start_time);
 
   return (
     <View style={styles.container}>
@@ -27,7 +20,7 @@ export default function ShowtimeHeader({ movie, showtime }) {
       </Text>
       <View style={styles.detailsRow}>
         <Text style={styles.detailText}>
-          {showtime.room?.name || 'Sala Desconocida'}
+          {showtime.booking?.room || 'Sala Desconocida'}
         </Text>
         <Text style={styles.detailSeparator}>•</Text>
         <Text style={styles.detailText}>
@@ -38,7 +31,9 @@ export default function ShowtimeHeader({ movie, showtime }) {
           {showtime.language?.description || 'Idioma Desconocido'}
         </Text>
       </View>
-      <Text style={styles.timeText}>{formatTime(showtime.start_time)}</Text>
+      <Text style={styles.timeText}>
+        {formattedTime?.time} {formattedTime?.ampm}
+      </Text>
     </View>
   );
 }
