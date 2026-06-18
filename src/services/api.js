@@ -7,13 +7,20 @@ const api = axios.create({
   timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
-    'Accept': 'application/json',
-  }
+    Accept: 'application/json',
+  },
 });
 
 //  Interceptor de Peticiones: Inyectar el Bearer Token
 api.interceptors.request.use(
   async (config) => {
+    // Log de la URL completa antes de realizar la petición
+    const fullUrl = `${config.baseURL || ''}${config.url}`;
+    console.log(
+      `🚀 [Axios Request] ${config.method?.toUpperCase()} ${fullUrl}`,
+      config.params ? { params: config.params } : ''
+    );
+
     const token = await storageHelper.getAccessToken();
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -30,24 +37,20 @@ api.interceptors.response.use(
     const originalRequest = error.config;
 
     if (
-      originalRequest.url?.includes('/auth/login') || 
+      originalRequest.url?.includes('/auth/login') ||
       originalRequest.url?.includes('/auth/refresh') ||
       originalRequest.url?.includes('/auth/signup')
     ) {
       return Promise.reject(error);
     }
 
-    /*
     if (error.response) {
-      console.error('Error de respuesta:', {
+      console.error('❌ [Axios Error Response]:', {
+        url: error.config?.url,
         status: error.response.status,
         data: error.response.data,
       });
-    } else if (error.request) {
-      console.error('Error de conexión:', error.request);
-    } else {
-      console.error('Error desconocido:', error.message);
-    }*/
+    }
 
     // Si el error es 401 (No autorizado) y no hemos reintentado ya esta petición
     if (error.response?.status === 401 && !originalRequest._retry) {
@@ -55,23 +58,35 @@ api.interceptors.response.use(
 
       try {
         const refreshToken = await storageHelper.getRefreshToken();
-        
+
         if (!refreshToken) {
           throw new Error('No refresh token available');
         }
 
-        // Intentar renovar el token usando el endpoint 
+        // Intentar renovar el token usando el endpoint
         // Nota: Usamos axios directamente para evitar bucles infinitos con la instancia 'api'
-        const response = await axios.post(`${ENV.API_URL}/auth/refresh`, {}, {
-          headers: 
-          { Authorization: `Bearer ${refreshToken}` }
-        });
+        const response = await axios.post(
+          `${ENV.API_URL}/auth/refresh`,
+          {},
+          {
+            headers: { Authorization: `Bearer ${refreshToken}` },
+          }
+        );
 
         // Extraer tokens de forma defensiva (varios formatos posibles)
         const respPayload = response.data?.data ?? response.data ?? {};
 
-        const accessToken = respPayload.accessToken || respPayload.access_token || respPayload.token || respPayload?.tokens?.accessToken || respPayload?.tokens?.access_token;
-        const newRefreshToken = respPayload.refreshToken || respPayload.refresh_token || respPayload?.tokens?.refreshToken || respPayload?.tokens?.refresh_token;
+        const accessToken =
+          respPayload.accessToken ||
+          respPayload.access_token ||
+          respPayload.token ||
+          respPayload?.tokens?.accessToken ||
+          respPayload?.tokens?.access_token;
+        const newRefreshToken =
+          respPayload.refreshToken ||
+          respPayload.refresh_token ||
+          respPayload?.tokens?.refreshToken ||
+          respPayload?.tokens?.refresh_token;
 
         if (!accessToken) {
           throw new Error('Refresh response did not include an access token');
@@ -84,7 +99,6 @@ api.interceptors.response.use(
         originalRequest.headers = originalRequest.headers || {};
         originalRequest.headers.Authorization = `Bearer ${accessToken}`;
         return api(originalRequest);
-
       } catch (refreshError) {
         // Si el refresh también falla, limpiar sesión y forzar logout
         console.error('Error al intentar refrescar el token:', refreshError);

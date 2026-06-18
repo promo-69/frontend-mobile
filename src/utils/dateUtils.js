@@ -40,7 +40,7 @@ export const generateNextDays = (daysCount = 7) => {
   const tomorrowString = formatDateString(tomorrowObj);
 
     for(let i = 0; i < daysCount; i++) {
-        const currentDate = new Date();
+        const currentDate = new Date(baseDate);
         currentDate.setDate(currentDate.getDate() + i);
         
         //Formato de control ("2026-02-01")

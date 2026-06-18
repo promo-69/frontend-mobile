@@ -50,7 +50,7 @@ function NavigationGuard() {
         options={{ animation: 'slide_from_bottom' }}
       />
       {/* Registramos el grupo de películas y el flujo de compra */}
-      <Stack.Screen name="movie" />
+      <Stack.Screen name="content" />
       <Stack.Screen name="(buy)" />
       <Stack.Screen name="index" options={{ href: null }} />
     </Stack>
