@@ -74,7 +74,7 @@ export default function HomeScreen() {
         {/* Botón Ingresar */}
         {isLoading ? (
           <ActivityIndicator size="small" color={theme.colors.accent} />
-        ) : isAuthenticated && !!user?.firstName ? (
+        ) : isAuthenticated ? (
           <TouchableOpacity
             style={styles.userProfileHeader}
             onPress={() => router.push('/(main)/profile')}

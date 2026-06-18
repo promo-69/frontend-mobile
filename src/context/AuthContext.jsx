@@ -79,6 +79,14 @@ export const AuthProvider = ({ children }) => {
   
     const { user, tokens } = response.data;
     const { accessToken, refreshToken } = tokens;
+
+    // Validación de integridad: Si el objeto user viene vacío
+    if (!user || Object.keys(user).length === 0) {
+      return { 
+        success: false, 
+        message: 'Error de integridad: No se recibieron datos del perfil de usuario.' 
+      };
+    }
     
     await storageHelper.saveSession(accessToken, refreshToken, user);
     setUser(user);
@@ -229,7 +237,7 @@ export const AuthProvider = ({ children }) => {
         login, 
         register, 
         logout,
-        isAuthenticated: !!user,
+        isAuthenticated: !!user && Object.keys(user).length > 0,
         verifyAccount,
         sendRecoveryEmail,
         verifyRecoveryCode,
