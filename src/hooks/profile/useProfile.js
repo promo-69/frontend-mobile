@@ -33,7 +33,7 @@ export const useProfile = () => {
         personalEmail: newProfileData.personalEmail,
       };
       
-      const result = await userService.updateProfile(payload);
+      const result = await usersService.updateProfile(payload);
       
       if (result || result?.success) {
         await loadProfile(); 
@@ -58,7 +58,7 @@ export const useProfile = () => {
         newPassword: securityData.newPassword || undefined,
       };
 
-      const result = await userService.updateSecurity(payload);
+      const result = await usersService.changePassword(payload);
       
       if (result || result?.success) {
         await loadProfile(); 

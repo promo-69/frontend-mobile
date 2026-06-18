@@ -52,7 +52,7 @@ export default function ShowtimeCard({ showtime, contentId, type }) {
     // Navegación segura hacia el flujo de reserva (Flujo de compra de boletos)
     // Pasamos el showtimeId, el id del contenido y el tipo para mapear la compra en el checkout
     router.push({
-      pathname: '/buy/selectSeats',
+      pathname: '(buy)/selectSeats',
       params: { 
         showtimeId: showtime.id,
         contentId: contentId,

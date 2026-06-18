@@ -48,13 +48,10 @@ export default function ProfileScreen() {
   );
 
   const handleLogout = async () => {
-    setIsLogoutModalVisible(true);
-
+    setIsLogoutModalVisible(false);
     await logout();
-
     router.replace('/(main)/home');
-
-  }
+  };
 
   return (
     <ScreenWrapper>

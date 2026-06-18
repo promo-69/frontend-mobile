@@ -37,10 +37,20 @@ export const AuthProvider = ({ children }) => {
             }
 
             // 3. Intentar renovar la sesión proactivamente
-            const response = await authService.refreshToken();
-            if (!response.success) {
+            const response = await authService.refreshToken(refreshToken);
+            if (!response?.success) {
               throw new Error('No se pudo renovar la sesión');
             }
+
+            const refreshedData = response?.data ?? response;
+            const newAccessToken = refreshedData?.tokens?.accessToken;
+            const newRefreshToken = refreshedData?.tokens?.refreshToken;
+
+            if (!newAccessToken) {
+              throw new Error('La respuesta de refresh no incluyó access token');
+            }
+
+            await storageHelper.saveTokens(newAccessToken, newRefreshToken);
           } else {
             // No hay refresh token para rescatar la sesión
             await logout();
