@@ -14,13 +14,7 @@ const api = axios.create({
 //  Interceptor de Peticiones: Inyectar el Bearer Token
 api.interceptors.request.use(
   async (config) => {
-    // Log de la URL completa antes de realizar la petición
-    const fullUrl = `${config.baseURL || ''}${config.url}`;
-    console.log(
-      `🚀 [Axios Request] ${config.method?.toUpperCase()} ${fullUrl}`,
-      config.params ? { params: config.params } : ''
-    );
-
+  
     const token = await storageHelper.getAccessToken();
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -45,13 +39,13 @@ api.interceptors.response.use(
     }
 
     if (error.response) {
-      console.error('❌ [Axios Error Response]:', {
+      console.error('[Axios Error Response]:', {
         url: error.config?.url,
         status: error.response.status,
         data: error.response.data,
       });
     }
-
+    
     // Si el error es 401 (No autorizado) y no hemos reintentado ya esta petición
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
@@ -74,19 +68,10 @@ api.interceptors.response.use(
         );
 
         // Extraer tokens de forma defensiva (varios formatos posibles)
-        const respPayload = response.data?.data ?? response.data ?? {};
+        const res = response.data?.data ?? response.data ?? {};
 
-        const accessToken =
-          respPayload.accessToken ||
-          respPayload.access_token ||
-          respPayload.token ||
-          respPayload?.tokens?.accessToken ||
-          respPayload?.tokens?.access_token;
-        const newRefreshToken =
-          respPayload.refreshToken ||
-          respPayload.refresh_token ||
-          respPayload?.tokens?.refreshToken ||
-          respPayload?.tokens?.refresh_token;
+        const accessToken = res?.tokens?.accessToken || null;
+        const newRefreshToken = res?.tokens?.refreshToken || null;       
 
         if (!accessToken) {
           throw new Error('Refresh response did not include an access token');
