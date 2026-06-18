@@ -38,14 +38,21 @@ export default function ShowtimeCard({ showtime, contentId, type }) {
 
     if (!isAuthenticated) {
       // Si el usuario no está autenticado, disparamos el BottomSheet global de Login
-      showBottomSheet();
+      showBottomSheet({
+        title: 'Sesión Requerida',
+        message: 'Inicia sesión en tu cuenta de Cineflix para agendar tus boletos.',
+        primaryButton: {
+          text: 'Iniciar Sesión',
+          onPress: () => router.push('/login'),
+        },  
+    });
       return;
     }
 
     // Navegación segura hacia el flujo de reserva (Flujo de compra de boletos)
     // Pasamos el showtimeId, el id del contenido y el tipo para mapear la compra en el checkout
     router.push({
-      pathname: '/booking/seats',
+      pathname: '/buy/selectSeats',
       params: { 
         showtimeId: showtime.id,
         contentId: contentId,
