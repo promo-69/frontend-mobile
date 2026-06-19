@@ -9,10 +9,11 @@ import BottomSheet from '../components/ui/BottomSheet';
 import { AuthProvider, useAuth } from '../context/AuthContext';
 import { CartProvider } from '../context/CartContext';
 import { BottomSheetProvider } from '../context/BottomSheetContext';
+import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { theme } from '../constants';
 
 SplashScreen.preventAutoHideAsync();
-
+ 
 function NavigationGuard() {
   const { isAuthenticated, isLoading } = useAuth();
   const segments = useSegments();
@@ -83,15 +84,19 @@ export default function RootLayout() {
   if (!fontsLoaded) return null;
 
   return (
+    <GestureHandlerRootView style={{flex: 1}}>
+      <SafeAreaProvider>
     <AuthProvider>
       <CartProvider>
         <BottomSheetProvider>
-          <SafeAreaProvider>
+          
             <NavigationGuard />
             <BottomSheet />
-          </SafeAreaProvider>
+          
         </BottomSheetProvider>
       </CartProvider>
     </AuthProvider>
+    </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }
