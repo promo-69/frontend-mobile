@@ -1,9 +1,15 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { Dimensions, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import {
+    Dimensions,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
+} from 'react-native';
 import { useAuth } from '../../context/AuthContext';
-import { formatTime12hrs } from '../../utils/TimeUtils';
 import { useBottomSheet } from '../../context/BottomSheetContext';
+import { formatTime12hrs } from '../../utils/TimeUtils';
 
 const { width } = Dimensions.get('window');
 // Ajustamos dinámicamente el ancho de la tarjeta para que quepan 2 por fila con sus márgenes comunes
@@ -15,13 +21,14 @@ export default function ShowtimeCard({ showtime, contentId, type }) {
   const { showBottomSheet } = useBottomSheet();
 
   // Extraer las descripciones desde las relaciones del JSON
-  const projectionType = showtime.projection_type?.description || 'Proyección Desconocida';
+  const projectionType =
+    showtime.projection_type?.description || 'Proyección Desconocida';
   const language = showtime.language?.description || 'Idioma Desconocido';
-  
+
   // Acceso directo a la sala y validación de disponibilidad
   const roomName = showtime.booking.room?.name || 'Sala General';
-  const isSoldOut = showtime.booking.room?.available_seats === 0; 
-  
+  const isSoldOut = showtime.booking.room?.available_seats === 0;
+
   // Formateador de hora militar a formato 12 horas (Ej: { time: '07:30', ampm: 'PM' })
   const { time, ampm } = formatTime12hrs(showtime.booking?.start_time);
 
@@ -40,24 +47,35 @@ export default function ShowtimeCard({ showtime, contentId, type }) {
       // Si el usuario no está autenticado, disparamos el BottomSheet global de Login
       showBottomSheet({
         title: 'Sesión Requerida',
-        message: 'Inicia sesión en tu cuenta de Cineflix para agendar tus boletos.',
+        message:
+          'Inicia sesión en tu cuenta de Cineflix para agendar tus boletos.',
         primaryButton: {
           text: 'Iniciar Sesión',
           onPress: () => router.push('/login'),
-        },  
-    });
+        },
+      });
       return;
     }
 
     // Navegación segura hacia el flujo de reserva (Flujo de compra de boletos)
     // Pasamos el showtimeId, el id del contenido y el tipo para mapear la compra en el checkout
-    router.push({
-      pathname: '(buy)/selectSeats',
-      params: { 
+    console.log('ShowtimeCard -> navigate params', {
+        pathname: '/(buy)/selectSeats',
         showtimeId: showtime.id,
-        contentId: contentId,
-        contentType: type 
-      }
+        movieId: contentId,
+        contentType: type
+    });
+    
+    
+    
+    
+    router.push({
+      pathname: '/(buy)/selectSeats',
+      params: {
+        showtimeId: showtime.id,
+        movieId: contentId,
+        contentType: type,
+      },
     });
   };
 
@@ -65,10 +83,7 @@ export default function ShowtimeCard({ showtime, contentId, type }) {
     <TouchableOpacity
       activeOpacity={isSoldOut ? 1 : 0.7}
       onPress={handleBookingPress}
-      style={[
-        styles.cardContainer,
-        isSoldOut && styles.cardDisabled
-      ]}
+      style={[styles.cardContainer, isSoldOut && styles.cardDisabled]}
     >
       {/* Reloj y Bloque Horario */}
       <View style={styles.timeContainer}>
@@ -76,7 +91,8 @@ export default function ShowtimeCard({ showtime, contentId, type }) {
           {time}
         </Text>
         <Text style={[styles.ampmText, isSoldOut && styles.textDisabled]}>
-          {" "}{ampm}
+          {' '}
+          {ampm}
         </Text>
       </View>
 
@@ -87,17 +103,20 @@ export default function ShowtimeCard({ showtime, contentId, type }) {
             {formatBadgeText(projectionType)}
           </Text>
         </View>
-        <Text style={[styles.langText, isSoldOut && styles.textDisabled]} numberOfLines={1}>
+        <Text
+          style={[styles.langText, isSoldOut && styles.textDisabled]}
+          numberOfLines={1}
+        >
           {language}
         </Text>
       </View>
 
       {/* Identificador de Sala / Badge de Agotado */}
       <View style={styles.roomContainer}>
-        <Ionicons 
-          name={isSoldOut ? "close-circle-outline" : "film-outline"} 
-          size={14} 
-          color={isSoldOut ? "#EF4444" : "#B0A8C5"} 
+        <Ionicons
+          name={isSoldOut ? 'close-circle-outline' : 'film-outline'}
+          size={14}
+          color={isSoldOut ? '#EF4444' : '#B0A8C5'}
         />
         <Text style={[styles.roomText, isSoldOut && styles.roomSoldOutText]}>
           {isSoldOut ? 'AGOTADO' : roomName}
@@ -126,15 +145,15 @@ const styles = StyleSheet.create({
     alignItems: 'baseline',
     marginBottom: 10,
   },
-  hourText: { 
-    color: '#f4b400', 
-    fontSize: 26, 
-    fontWeight: 'bold' 
+  hourText: {
+    color: '#f4b400',
+    fontSize: 26,
+    fontWeight: 'bold',
   },
-  ampmText: { 
-    color: '#B0A8C5', 
-    fontSize: 14, 
-    marginTop: 2 
+  ampmText: {
+    color: '#B0A8C5',
+    fontSize: 14,
+    marginTop: 2,
   },
   textDisabled: {
     color: 'rgba(255, 255, 255, 0.25)',
@@ -146,7 +165,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: 12,
     gap: 6,
-    width: '100%'
+    width: '100%',
   },
   formatBadge: {
     borderWidth: 1,
@@ -158,7 +177,7 @@ const styles = StyleSheet.create({
   },
   badgeDisabled: {
     borderColor: 'transparent',
-    backgroundColor: 'rgba(255, 255, 255, 0.05)'
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
   },
   formatText: {
     color: '#FFFFFF',
@@ -184,5 +203,5 @@ const styles = StyleSheet.create({
   roomSoldOutText: {
     color: '#EF4444',
     fontWeight: 'bold',
-  }
+  },
 });

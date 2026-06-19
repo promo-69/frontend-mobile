@@ -221,7 +221,7 @@ export default function CinemaDetails() {
                       key={st.id} 
                       style={styles.timeBadge}
                       onPress={() => router.push({
-                        pathname: '/buy/selectSeats',
+                        pathname: '/(buy)/selectSeats',
                         params: { 
                           showtimeId: st.id,
                           movieId: item.id 
