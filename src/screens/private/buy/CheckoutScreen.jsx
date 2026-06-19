@@ -1,12 +1,10 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Film } from 'lucide-react-native';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
-  Modal,
-  FlatList,
   ScrollView,
   StyleSheet,
   TouchableOpacity,
@@ -19,15 +17,15 @@ import {
   createQuote,
   processCheckout,
   cancelSession,
-  getSessionState,
 } from '../../../services/orders.service';
-import { getCinemas } from '../../../services/cinemas.service';
 import { storageHelper } from '../../../helper/storage.helper';
 import { theme } from '../../../constants';
 
 const { colors, spacing, borderRadius } = theme;
 
-const fmt = (n) => `$${Number(n || 0).toFixed(2)}`;
+const fmtUsd = (n) => `$${Number(n || 0).toFixed(2)}`;
+const fmtVes = (n) =>
+  `Bs. ${Number(n || 0).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 const formatDate = (iso) => {
   if (!iso) return '';
@@ -41,7 +39,8 @@ const formatDate = (iso) => {
   });
 };
 
-function LineRow({ label, value, bold, accent, separator }) {
+// ─── Sub-componentes ──────────────────────────────────────────────────────────
+function LineRow({ label, value, subValue, bold, accent, separator }) {
   return (
     <>
       {separator && <View style={styles.separator} />}
@@ -55,15 +54,20 @@ function LineRow({ label, value, bold, accent, separator }) {
         >
           {label}
         </AppText>
-        <AppText
-          style={[
-            styles.lineValue,
-            bold && styles.bold,
-            accent && styles.accentText,
-          ]}
-        >
-          {value}
-        </AppText>
+        <View style={styles.lineValueGroup}>
+          <AppText
+            style={[
+              styles.lineValue,
+              bold && styles.bold,
+              accent && styles.accentText,
+            ]}
+          >
+            {value}
+          </AppText>
+          {subValue ? (
+            <AppText style={styles.lineSubValue}>{subValue}</AppText>
+          ) : null}
+        </View>
       </View>
     </>
   );
@@ -81,6 +85,7 @@ function SectionCard({ title, children, action }) {
   );
 }
 
+// ─── Pantalla principal ───────────────────────────────────────────────────────
 export default function CheckoutScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -95,10 +100,48 @@ export default function CheckoutScreen() {
 
   const [serverTotals, setServerTotals] = useState(null);
   const [processing, setProcessing] = useState(false);
-  const [cinemas, setCinemas] = useState([]);
-  const [loadingCinemas, setLoadingCinemas] = useState(true);
-  const [selectedCinema, setSelectedCinema] = useState(null);
-  const [modalVisible, setModalVisible] = useState(false);
+
+  // Timer local: comienza en 600 segundos (10 min) al montar la pantalla
+  const [timeLeft, setTimeLeft] = useState(600);
+  const intervalRef = useRef(null);
+  const alertShownRef = useRef(false);
+
+  // Iniciar el timer al montar
+  useEffect(() => {
+    intervalRef.current = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          clearInterval(intervalRef.current);
+          intervalRef.current = null;
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, []);
+
+  // Manejar expiración (solo una vez)
+  useEffect(() => {
+    if (timeLeft === 0 && !alertShownRef.current) {
+      alertShownRef.current = true;
+      Alert.alert(
+        'Sesión expirada',
+        'Tu sesión de compra de 10 minutos ha vencido. Vuelve a intentarlo.',
+        [
+          {
+            text: 'Entendido',
+            onPress: () => {
+              alertShownRef.current = false;
+              router.back();
+            },
+          },
+        ]
+      );
+    }
+  }, [timeLeft, router]);
 
   const hasTickets = cart.tickets.length > 0;
   const hasConcessions = cart.products.length > 0;
@@ -106,170 +149,122 @@ export default function CheckoutScreen() {
   const movie = cart.movie;
   const showtime = cart.showtime;
 
-  const displayTotal = serverTotals?.total_amount_base_currency ?? total;
-  const displaySubtotal = serverTotals?.subtotal_base_currency ?? subtotal;
-  const displayIva = serverTotals
-    ? serverTotals.total_amount_base_currency -
-      serverTotals.subtotal_base_currency
-    : iva;
-
-  // cinemaId final: parámetro de ruta > sala del showtime > null
   const effectiveCinemaId = paramCinemaId
     ? Number(paramCinemaId)
     : cart.showtime?.room?.cinema?.id || null;
 
-  // Cargar cines solo si no tenemos cinemaId todavía
-  useEffect(() => {
-    if (effectiveCinemaId) {
-      setSelectedCinema({ id: effectiveCinemaId });
-      setLoadingCinemas(false);
-      return;
-    }
-    if (selectedCinema) return;
-
-    let isMounted = true;
-    const fetchCinemas = async () => {
-      setLoadingCinemas(true);
-      try {
-        const data = await getCinemas();
-        if (isMounted && data && data.length > 0) {
-          setCinemas(data);
-          setModalVisible(true);
-        } else if (isMounted) {
-          Alert.alert('Sin sucursales', 'No hay sucursales disponibles.');
-        }
-      } catch (error) {
-        if (isMounted) {
-          Alert.alert(
-            'Error de conexión',
-            'No se pudo cargar la lista de sucursales.',
-            [{ text: 'Reintentar', onPress: fetchCinemas }]
-          );
-        }
-      } finally {
-        if (isMounted) setLoadingCinemas(false);
-      }
-    };
-    fetchCinemas();
-    return () => {
-      isMounted = false;
-    };
-  }, [effectiveCinemaId, selectedCinema]);
-
-  const handleSelectCinema = (cinema) => {
-    setSelectedCinema(cinema);
-    setModalVisible(false);
-  };
+  const displayTotal = serverTotals
+    ? fmtVes(serverTotals.total_amount_base_currency)
+    : fmtUsd(total);
+  const displaySubtotal = serverTotals
+    ? fmtVes(serverTotals.subtotal_base_currency)
+    : fmtUsd(subtotal);
+  const displayIva = serverTotals
+    ? fmtVes(
+        serverTotals.total_amount_base_currency -
+          serverTotals.subtotal_base_currency
+      )
+    : fmtUsd(iva);
 
   const handleGoToPayment = useCallback(async () => {
+    if (processing) return;
     if (!hasItems) {
-      Alert.alert(
-        'Carrito vacío',
-        'Agrega al menos un producto o boleto para continuar.'
-      );
+      Alert.alert('Carrito vacío', 'Agrega al menos un producto o boleto.');
+      return;
+    }
+    if (!effectiveCinemaId) {
+      Alert.alert('Sucursal requerida', 'Selecciona una sucursal.');
       return;
     }
 
-    const finalCinemaId = selectedCinema?.id;
-    if (!finalCinemaId) {
-      Alert.alert('Sucursal requerida', 'Por favor selecciona una sucursal.');
-      if (!modalVisible && !loadingCinemas) setModalVisible(true);
-      return;
-    }
-
-    // Verificar que el usuario tenga sesión activa (el back necesita el JWT para leer el customerId)
     const token = await storageHelper.getAccessToken();
     if (!token) {
-      Alert.alert(
-        'Sesión requerida',
-        'Necesitás iniciar sesión para completar la compra.',
-        [
-          {
-            text: 'Iniciar sesión',
-            onPress: () => router.replace('/(auth)/login'),
-          },
-        ]
-      );
+      Alert.alert('Sesión requerida', 'Inicia sesión para continuar.', [
+        {
+          text: 'Iniciar sesión',
+          onPress: () => router.replace('/(auth)/login'),
+        },
+      ]);
       return;
     }
 
     setProcessing(true);
-    try {
-      // Limpiar sesión anterior si existe en Redis
+
+    const executeCheckout = async (attempt = 0) => {
       try {
-        await cancelSession();
-      } catch (_) {}
+        // Cancelar sesión previa
+        await cancelSession().catch(() => {});
+        if (attempt > 0)
+          await new Promise((resolve) => setTimeout(resolve, 500));
 
-      await createQuote(finalCinemaId);
+        // Crear cotización
+        const quoteResult = await createQuote(effectiveCinemaId);
+        // Usar expires_at del backend si existe, si no calcular con expires_in
+        const expiresAt = quoteResult.expires_at
+          ? new Date(quoteResult.expires_at).getTime()
+          : Date.now() + (quoteResult.expires_in || 600) * 1000;
 
-      const ticketsPayload = cart.tickets.map((t) => ({
-        seatId: t.seatId,
-        booking: t.booking,
-        audienceCategoryId: t.audienceCategoryId || 1,
-      }));
-      const concessionsPayload = cart.products.map((p) => ({
-        line_type: p.line_type,
-        product: p.productId ?? null,
-        combo: p.comboId ?? null,
-        quantity: p.quantity,
-      }));
+        // Preparar payloads
+        const ticketsPayload = cart.tickets.map((t) => ({
+          seatId: t.seatId,
+          booking: t.booking,
+          audienceCategoryId: t.audienceCategoryId || 1,
+        }));
+        const concessionsPayload = cart.products.map((p) => ({
+          line_type: p.line_type,
+          product: p.productId ?? null,
+          combo: p.comboId ?? null,
+          quantity: p.quantity,
+        }));
 
-      if (hasTickets && ticketsPayload.some((t) => !t.booking)) {
-        throw new Error(
-          'Falta el ID de reserva en algunos boletos. Reintentá la selección de asientos.'
+        if (hasTickets && ticketsPayload.some((t) => !t.booking)) {
+          throw new Error('Falta el ID de reserva en algunos boletos.');
+        }
+
+        const checkoutResult = await processCheckout(
+          ticketsPayload,
+          concessionsPayload
         );
+        setServerTotals(checkoutResult);
+
+        // Navegar a Payment con el timestamp de expiración
+        router.push({
+          pathname: '/(buy)/payment',
+          params: {
+            total: checkoutResult.total_amount_base_currency,
+            subtotal: checkoutResult.subtotal_base_currency,
+            currency: checkoutResult.system_base_currency ?? 2,
+            exchange_rates: JSON.stringify(checkoutResult.exchange_rates ?? {}),
+            expiresAt: expiresAt.toString(),
+          },
+        });
+      } catch (err) {
+        if (err?.response?.status === 409 && attempt === 0) {
+          console.warn('⚠️ Conflicto (409), reintentando...');
+          await executeCheckout(attempt + 1);
+          return;
+        }
+        console.error('Error checkout:', err);
+        Alert.alert(
+          'Error al procesar la orden',
+          err.response?.data?.message || err.message || 'Ocurrió un problema.'
+        );
+        await cancelSession().catch(() => {});
+      } finally {
+        setProcessing(false);
       }
+    };
 
-      const result = await processCheckout(ticketsPayload, concessionsPayload);
-      setServerTotals(result);
-
-      router.push({
-        pathname: '/(buy)/payment',
-        params: {
-          total: result.total_amount_base_currency,
-          subtotal: result.subtotal_base_currency,
-        },
-      });
-    } catch (err) {
-      // TEMPORAL - borrar después de depurar
-      console.log('=== ERROR COMPLETO ===');
-      console.log('status:', err?.response?.status);
-      console.log('data:', JSON.stringify(err?.response?.data, null, 2));
-      console.log('message:', err?.message);
-      console.log('=== FIN ERROR ===');
-
-      Alert.alert(
-        'Error al procesar la orden',
-        err.response?.data?.message || err.message || 'Ocurrió un problema.'
-      );
-    } finally {
-      setProcessing(false);
-    }
-  }, [
-    cart,
-    hasItems,
-    hasTickets,
-    router,
-    selectedCinema,
-    modalVisible,
-    loadingCinemas,
-  ]);
+    await executeCheckout();
+  }, [cart, hasItems, hasTickets, router, effectiveCinemaId, processing]);
 
   const handleAddMovie = () => router.push('/(main)/home');
 
   const bottomBarHeight =
     56 + spacing.s12 + spacing.s16 + (insets.bottom || 16);
 
-  if (loadingCinemas && !selectedCinema && !effectiveCinemaId) {
-    return (
-      <View
-        style={[styles.centered, { backgroundColor: colors.midnight[950] }]}
-      >
-        <ActivityIndicator size="large" color={colors.primary} />
-        <AppText style={styles.loadingText}>Cargando sucursales...</AppText>
-      </View>
-    );
-  }
+  const showTimer = timeLeft > 0;
+  const timerExpired = timeLeft === 0;
 
   return (
     <View style={styles.screen}>
@@ -278,27 +273,16 @@ export default function CheckoutScreen() {
         style={StyleSheet.absoluteFill}
       />
 
-      {/* Modal selector de sucursal */}
-      <Modal visible={modalVisible} animationType="slide" transparent>
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <AppText style={styles.modalTitle}>Selecciona tu sucursal</AppText>
-            <FlatList
-              data={cinemas}
-              keyExtractor={(item) => String(item.id)}
-              renderItem={({ item }) => (
-                <TouchableOpacity
-                  style={styles.cinemaOption}
-                  onPress={() => handleSelectCinema(item)}
-                >
-                  <AppText style={styles.cinemaName}>{item.name}</AppText>
-                  <AppText style={styles.cinemaAddress}>{item.address}</AppText>
-                </TouchableOpacity>
-              )}
-            />
-          </View>
-        </View>
-      </Modal>
+      {/* Timer banner con estilo igual al de Payment */}
+      <View
+        style={[styles.timerBanner, timerExpired && styles.timerBannerExpired]}
+      >
+        <AppText style={styles.timerText}>
+          {timerExpired
+            ? '⛔ Sesión expirada'
+            : `⏱ Tiempo restante: ${Math.floor(timeLeft / 60)}:${(timeLeft % 60).toString().padStart(2, '0')}`}
+        </AppText>
+      </View>
 
       <ScrollView
         contentContainerStyle={[
@@ -310,7 +294,7 @@ export default function CheckoutScreen() {
         <SectionCard
           title="Película y función"
           action={
-            isConcessionsMode && !hasTickets ? (
+            !hasTickets ? (
               <TouchableOpacity
                 style={styles.addMovieBtn}
                 onPress={handleAddMovie}
@@ -341,7 +325,7 @@ export default function CheckoutScreen() {
                   <LineRow
                     key={t.seatId || i}
                     label={`Asiento ${t.row || ''}${t.column || t.seatId}`}
-                    value={fmt(t.price)}
+                    value={fmtUsd(t.price)}
                   />
                 ))}
               </View>
@@ -362,7 +346,7 @@ export default function CheckoutScreen() {
               <LineRow
                 key={p.productId || p.comboId || i}
                 label={`${p.name}  ×${p.quantity}`}
-                value={fmt(p.price * p.quantity)}
+                value={fmtUsd(p.price * p.quantity)}
               />
             ))}
           </SectionCard>
@@ -377,19 +361,19 @@ export default function CheckoutScreen() {
 
         {hasItems && (
           <SectionCard title="Resumen">
-            <LineRow label="Subtotal" value={fmt(displaySubtotal)} />
-            <LineRow label="I.V.A." value={fmt(displayIva)} />
+            <LineRow label="Subtotal" value={displaySubtotal} />
+            <LineRow label="I.V.A." value={displayIva} />
             <LineRow
               label="Total a pagar"
-              value={fmt(displayTotal)}
+              value={displayTotal}
               bold
               accent
               separator
             />
             {!serverTotals && (
               <AppText style={styles.estimateNote}>
-                * Precios estimados. El total definitivo se confirma al procesar
-                el pago.
+                * Precios estimados en USD. El total definitivo en Bs. se
+                confirma al procesar el pago.
               </AppText>
             )}
           </SectionCard>
@@ -405,19 +389,21 @@ export default function CheckoutScreen() {
         <TouchableOpacity
           style={[
             styles.payBtn,
-            (!hasItems || processing) && styles.payBtnDisabled,
+            (!hasItems || processing || timerExpired) && styles.payBtnDisabled,
           ]}
           onPress={handleGoToPayment}
-          disabled={!hasItems || processing}
+          disabled={!hasItems || processing || timerExpired}
           activeOpacity={0.8}
         >
           {processing ? (
             <ActivityIndicator color={colors.midnight[950]} />
           ) : (
             <AppText style={styles.payBtnText}>
-              {hasItems
-                ? `Ir al pago  ·  ${fmt(displayTotal)}`
-                : 'Agrega productos para continuar'}
+              {timerExpired
+                ? 'Sesión expirada'
+                : hasItems
+                  ? `Ir al pago  ·  ${displayTotal}`
+                  : 'Agrega productos para continuar'}
             </AppText>
           )}
         </TouchableOpacity>
@@ -430,8 +416,27 @@ const styles = StyleSheet.create({
   screen: { flex: 1 },
   scrollContent: {
     paddingHorizontal: spacing.s16,
-    paddingTop: spacing.s24,
+    paddingTop: spacing.s16,
     gap: spacing.s24,
+  },
+  // Timer con estilo tipo tarjeta (igual que en Payment)
+  timerBanner: {
+    backgroundColor: colors.midnight[800],
+    paddingVertical: spacing.s8,
+    paddingHorizontal: spacing.s16,
+    borderRadius: borderRadius.s8,
+    marginHorizontal: spacing.s16,
+    marginTop: spacing.s8,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.midnight[700],
+  },
+  timerBannerExpired: { backgroundColor: '#7B1A22' },
+  timerText: {
+    color: colors.primary,
+    fontFamily: theme.typography.family.primary.bold,
+    fontSize: 13,
+    letterSpacing: 0.5,
   },
   card: {
     backgroundColor: colors.midnight[800],
@@ -505,7 +510,9 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.s4,
   },
   lineLabel: { color: colors.textSecondary, flex: 1, fontSize: 13 },
+  lineValueGroup: { alignItems: 'flex-end' },
   lineValue: { color: colors.textSecondary, fontSize: 13 },
+  lineSubValue: { color: colors.textSecondary, fontSize: 11, opacity: 0.7 },
   bold: {
     color: colors.textPrimary,
     fontFamily: theme.typography.family.primary.bold,
@@ -553,37 +560,4 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontFamily: theme.typography.family.primary.bold,
   },
-  modalContainer: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.85)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalContent: {
-    width: '80%',
-    maxHeight: '70%',
-    backgroundColor: colors.midnight[900],
-    borderRadius: borderRadius.s16,
-    padding: spacing.s16,
-  },
-  modalTitle: {
-    color: colors.primary,
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: spacing.s12,
-    textAlign: 'center',
-  },
-  cinemaOption: {
-    paddingVertical: spacing.s12,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.midnight[700],
-  },
-  cinemaName: {
-    color: colors.textPrimary,
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  cinemaAddress: { color: colors.textSecondary, fontSize: 12, marginTop: 4 },
-  loadingText: { color: colors.textSecondary, marginTop: spacing.s12 },
-  centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
 });

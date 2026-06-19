@@ -44,6 +44,12 @@ export const getSessionState = async () => {
   return response.data.data;
 };
 
+// Consulta el detalle completo de la sesión activa (incluye orden y datos de moneda).
+export const getSessionDetails = async () => {
+  const response = await api.get('/orders/session/details');
+  return response.data.data;
+};
+
 // Cancela la sesión de compra activa y libera los asientos bloqueados.
 export const cancelSession = async () => {
   const response = await api.delete('/orders/session');

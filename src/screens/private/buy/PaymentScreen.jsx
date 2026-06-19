@@ -1,6 +1,6 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -16,31 +16,33 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppText } from '../../../components/AppText';
 import { useCart } from '../../../context/CartContext';
 import { registerPayment } from '../../../services/orders.service';
+import { usersService } from '../../../services/users.service';
 import { theme } from '../../../constants';
 
 const { colors, spacing, borderRadius } = theme;
 
-const fmt = (n) => `$${Number(n || 0).toFixed(2)}`;
+const USD_CURRENCY_ID = 1;
 
-// ─── Métodos disponibles ──────────────────────────────────────────────────────
+const fmtVes = (n) =>
+  `Bs. ${Number(n || 0).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+const fmtUsd = (n) => `$${Number(n || 0).toFixed(2)}`;
+
 const METHODS = [
   { key: 'mobile_payment', label: 'Pago Móvil', icon: '📱' },
   { key: 'transfer', label: 'Transferencia', icon: '🏦' },
-  { key: 'cine_points', label: 'Cine Puntos', icon: '🎟️' },
+  { key: 'points', label: 'Cine Puntos', icon: '🎟️' },
 ];
 
-// ─── Datos bancarios del negocio (fijos, solo para mostrar al usuario) ────────
 const BANK_INFO = {
   bank: 'Banco Mercantil',
   account: '0105-0000-00-0000000000',
   rif: 'J-12345678-9',
 };
 
-// ─── Formulario Pago Móvil ────────────────────────────────────────────────────
+// ─── Formularios (sin cambios) ──────────────────────────────────────────────
 function MobilePaymentForm({ data, onChange }) {
   return (
     <View style={styles.formSection}>
-      {/* Datos del negocio */}
       <View style={styles.bankCard}>
         <AppText variant="caption" style={styles.bankCardLabel}>
           DATOS DE PAGO
@@ -58,11 +60,9 @@ function MobilePaymentForm({ data, onChange }) {
           {BANK_INFO.rif}
         </AppText>
       </View>
-
       <AppText variant="caption" style={styles.formLabel}>
         DETALLES DE LA OPERACIÓN
       </AppText>
-
       <FormField
         label="Banco de origen"
         placeholder="Ej: Banco de Venezuela"
@@ -87,11 +87,9 @@ function MobilePaymentForm({ data, onChange }) {
   );
 }
 
-// ─── Formulario Transferencia ─────────────────────────────────────────────────
 function TransferForm({ data, onChange }) {
   return (
     <View style={styles.formSection}>
-      {/* Datos del negocio */}
       <View style={styles.bankCard}>
         <AppText variant="caption" style={styles.bankCardLabel}>
           DATOS DE PAGO
@@ -109,11 +107,9 @@ function TransferForm({ data, onChange }) {
           {BANK_INFO.rif}
         </AppText>
       </View>
-
       <AppText variant="caption" style={styles.formLabel}>
         DETALLES DE LA OPERACIÓN
       </AppText>
-
       <FormField
         label="Banco de origen"
         placeholder="Seleccionar banco..."
@@ -143,7 +139,6 @@ function TransferForm({ data, onChange }) {
   );
 }
 
-// ─── Campo reutilizable ────────────────────────────────────────────────────────
 function FormField({
   label,
   placeholder,
@@ -169,17 +164,156 @@ function FormField({
   );
 }
 
+function CinePuntosForm({
+  pointsBalance,
+  loadingPoints,
+  pointsToRedeem,
+  onChangePoints,
+  totalVes,
+  exchangeRates,
+}) {
+  const maxRedeemable = Math.min(pointsBalance, Math.round(totalVes));
+  const entered = Number(pointsToRedeem) || 0;
+  const remaining = Math.max(0, totalVes - entered);
+
+  const usdRate = exchangeRates?.[USD_CURRENCY_ID]?.rate;
+  const pointsInUsd =
+    usdRate && pointsBalance ? (pointsBalance / usdRate).toFixed(2) : null;
+
+  return (
+    <View style={styles.bankCard}>
+      <AppText variant="caption" style={styles.bankCardLabel}>
+        CANJEAR CINE PUNTOS
+      </AppText>
+      <View style={styles.pointsBalanceRow}>
+        {loadingPoints ? (
+          <ActivityIndicator size="small" color={colors.primary} />
+        ) : (
+          <View>
+            <AppText style={styles.pointsBalanceMain}>
+              {pointsBalance.toLocaleString('es-VE')} pts disponibles
+            </AppText>
+            {pointsInUsd && (
+              <AppText style={styles.pointsBalanceSub}>
+                ≈ {fmtUsd(pointsInUsd)}
+              </AppText>
+            )}
+          </View>
+        )}
+      </View>
+      <View style={styles.fieldWrapper}>
+        <AppText style={styles.fieldLabel}>Puntos a utilizar</AppText>
+        <TextInput
+          style={styles.redeemInput}
+          placeholder={`Máx. ${maxRedeemable.toLocaleString('es-VE')}`}
+          placeholderTextColor={colors.midnight[400]}
+          keyboardType="numeric"
+          value={pointsToRedeem}
+          onChangeText={(v) => {
+            const num = Number(v) || 0;
+            if (num > maxRedeemable) {
+              onChangePoints(String(maxRedeemable));
+            } else {
+              onChangePoints(v);
+            }
+          }}
+        />
+        {entered > 0 && (
+          <AppText style={styles.estimateNote}>
+            Cubre {fmtVes(entered)} · Restante: {fmtVes(remaining)}
+          </AppText>
+        )}
+      </View>
+    </View>
+  );
+}
+
 // ─── Pantalla principal ───────────────────────────────────────────────────────
 export default function PaymentScreen() {
   const router = useRouter();
-  const { total } = useLocalSearchParams();
+  const {
+    total,
+    currency: currencyParam,
+    exchange_rates: exchangeRatesParam,
+    expiresAt: expiresAtParam,
+  } = useLocalSearchParams();
   const { clearCart } = useCart();
   const insets = useSafeAreaInsets();
 
-  const totalAmount = Number(total || 0);
+  const totalVes = Number(total || 0);
+  const currency = Number(currencyParam || 2);
 
+  const exchangeRates = (() => {
+    try {
+      return exchangeRatesParam ? JSON.parse(exchangeRatesParam) : {};
+    } catch {
+      return {};
+    }
+  })();
+
+  const usdRate = exchangeRates?.[USD_CURRENCY_ID]?.rate;
+  const totalUsd = usdRate ? totalVes / usdRate : null;
+
+  // ─── Timer sincronizado ──────────────────────────────────────────────────────
+  const [timeLeft, setTimeLeft] = useState(null); // null = no inicializado
+  const intervalRef = useRef(null);
+  const alertShownRef = useRef(false);
+
+  useEffect(() => {
+    if (!expiresAtParam) return;
+
+    const expiresAt = Number(expiresAtParam);
+    const now = Date.now();
+    const initial = Math.floor((expiresAt - now) / 1000);
+
+    if (initial > 0) {
+      setTimeLeft(initial);
+      intervalRef.current = setInterval(() => {
+        setTimeLeft((prev) => {
+          if (prev === null || prev <= 1) {
+            clearInterval(intervalRef.current);
+            intervalRef.current = null;
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    } else {
+      // Ya expiró al montar
+      setTimeLeft(0);
+    }
+
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, [expiresAtParam]);
+
+  // Alerta de expiración: solo se ejecuta cuando timeLeft es 0 y no es null
+  useEffect(() => {
+    if (timeLeft === 0 && timeLeft !== null && !alertShownRef.current) {
+      alertShownRef.current = true;
+      Alert.alert(
+        'Sesión expirada',
+        'Tu tiempo para pagar ha terminado. Vuelve a intentarlo.',
+        [
+          {
+            text: 'Entendido',
+            onPress: () => {
+              alertShownRef.current = false;
+              clearCart();
+              router.back();
+            },
+          },
+        ]
+      );
+    }
+  }, [timeLeft, router, clearCart]);
+
+  // ─── Puntos y métodos ────────────────────────────────────────────────────────
+  const [pointsBalance, setPointsBalance] = useState(0);
+  const [loadingPoints, setLoadingPoints] = useState(false);
   const [selectedMethod, setSelectedMethod] = useState(null);
-  const [pointsToRedeem, setPointsToRedeem] = useState(''); // Estado añadido para Cine Puntos
+  const [pointsToRedeem, setPointsToRedeem] = useState('');
   const [formData, setFormData] = useState({
     bank: '',
     reference: '',
@@ -189,12 +323,32 @@ export default function PaymentScreen() {
   });
   const [submitting, setSubmitting] = useState(false);
 
+  useEffect(() => {
+    if (selectedMethod !== 'points') return;
+    let cancelled = false;
+    setLoadingPoints(true);
+    usersService
+      .getLoyaltyInfo()
+      .then((data) => {
+        if (!cancelled) setPointsBalance(data?.points_balance ?? 0);
+      })
+      .catch(() => {
+        if (!cancelled) setPointsBalance(0);
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingPoints(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedMethod]);
+
   const selectMethod = (key) => {
     setSelectedMethod(key);
+    setPointsToRedeem('');
     setFormData({ bank: '', reference: '', phone: '', date: '', holder: '' });
   };
 
-  // ─── Validación antes de pagar ────────────────────────────────────────────
   const validate = () => {
     if (!selectedMethod) {
       Alert.alert('Método requerido', 'Selecciona un método de pago.');
@@ -228,18 +382,35 @@ export default function PaymentScreen() {
         return false;
       }
     }
-    // Si es 'cine_points', puedes agregar aquí tu validación para el campo `pointsToRedeem`
+    if (selectedMethod === 'points') {
+      const pts = Number(pointsToRedeem) || 0;
+      if (pts <= 0) {
+        Alert.alert(
+          'Puntos requeridos',
+          'Ingresa la cantidad de puntos a canjear.'
+        );
+        return false;
+      }
+      if (pts > pointsBalance) {
+        Alert.alert(
+          'Saldo insuficiente',
+          `Solo tienes ${pointsBalance.toLocaleString('es-VE')} puntos disponibles.`
+        );
+        return false;
+      }
+    }
     return true;
   };
 
   const handlePay = async () => {
     if (!validate()) return;
-
     setSubmitting(true);
     try {
+      const pointsAmount = Number(pointsToRedeem) || 0;
       const payload = {
         payment_method: selectedMethod,
-        amount: totalAmount,
+        amount: selectedMethod === 'points' ? pointsAmount : totalVes,
+        currency,
         ...(formData.reference.trim()
           ? { reference_number: formData.reference.trim() }
           : {}),
@@ -251,23 +422,18 @@ export default function PaymentScreen() {
         ...(formData.holder.trim()
           ? { account_holder: formData.holder.trim() }
           : {}),
-        // Si quisieras enviar los puntos al backend, podrías agregarlo aquí:
-        ...(selectedMethod === 'cine_points'
-          ? { redeem_points: pointsToRedeem }
-          : {}),
       };
 
       const orderData = await registerPayment(payload);
       const qrCode = orderData?.qr_code ?? orderData?.data?.qr_code ?? '';
 
       await clearCart();
-
       const method = METHODS.find((m) => m.key === selectedMethod);
       router.replace({
         pathname: '/(buy)/order-success',
         params: {
           qrCode,
-          total: String(totalAmount),
+          total: String(totalVes),
           paymentMethod: method?.label ?? '',
         },
       });
@@ -283,8 +449,8 @@ export default function PaymentScreen() {
     }
   };
 
-  // Altura del botón inferior = altura fija + safe area bottom
   const bottomBarHeight = 56 + 16 + 16 + insets.bottom;
+  const timerExpired = timeLeft === 0 && timeLeft !== null;
 
   return (
     <KeyboardAvoidingView
@@ -304,15 +470,37 @@ export default function PaymentScreen() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
+        {/* ── Timer ── */}
+        {expiresAtParam && timeLeft !== null && (
+          <View
+            style={[
+              styles.timerBanner,
+              timerExpired && styles.timerBannerExpired,
+            ]}
+          >
+            <AppText style={styles.timerText}>
+              {timerExpired
+                ? '⛔ Sesión expirada'
+                : `⏱ Tiempo restante: ${Math.floor(timeLeft / 60)}:${(timeLeft % 60).toString().padStart(2, '0')}`}
+            </AppText>
+          </View>
+        )}
+
         {/* ── Total ── */}
         <View style={styles.totalCard}>
           <AppText variant="caption" style={styles.totalLabel}>
             Total a pagar
           </AppText>
-          <AppText style={styles.totalAmount}>{fmt(totalAmount)}</AppText>
+          <AppText style={styles.totalAmountVes}>{fmtVes(totalVes)}</AppText>
+          {totalUsd !== null && (
+            <AppText style={styles.totalAmountUsd}>{fmtUsd(totalUsd)}</AppText>
+          )}
+          <AppText style={styles.totalPoints}>
+            ≈ {Math.round(totalVes).toLocaleString('es-VE')} pts
+          </AppText>
         </View>
 
-        {/* ── Selección de método ── */}
+        {/* ── Métodos de pago ── */}
         <AppText variant="caption" style={styles.sectionLabel}>
           MÉTODO DE PAGO
         </AppText>
@@ -342,54 +530,44 @@ export default function PaymentScreen() {
           })}
         </View>
 
-        {/* ── Formulario dinámico ── */}
+        {/* ── Formularios dinámicos ── */}
         {selectedMethod === 'mobile_payment' && (
           <MobilePaymentForm data={formData} onChange={setFormData} />
         )}
         {selectedMethod === 'transfer' && (
           <TransferForm data={formData} onChange={setFormData} />
         )}
-
-        {/* ── Bloque condicional de Cine Puntos ── */}
-        {selectedMethod === 'cine_points' && (
-          <View style={styles.bankCard}>
-            <AppText variant="caption" style={styles.bankCardLabel}>
-              CANJEAR CINE PUNTOS
-            </AppText>
-            <View style={styles.fieldWrapper}>
-              <AppText style={styles.fieldLabel}>Puntos a utilizar</AppText>
-              <TextInput
-                style={styles.redeemInput}
-                placeholder="Ej: 1000"
-                placeholderTextColor={colors.midnight[400]}
-                keyboardType="numeric"
-                value={pointsToRedeem}
-                onChangeText={setPointsToRedeem}
-              />
-              <AppText style={styles.estimateNote}>
-                Tienes disponibles: 5,000 Cine Puntos
-              </AppText>
-            </View>
-          </View>
+        {selectedMethod === 'points' && (
+          <CinePuntosForm
+            pointsBalance={pointsBalance}
+            loadingPoints={loadingPoints}
+            pointsToRedeem={pointsToRedeem}
+            onChangePoints={setPointsToRedeem}
+            totalVes={totalVes}
+            exchangeRates={exchangeRates}
+          />
         )}
       </ScrollView>
 
-      {/* ── Botón fijo inferior — respeta safe area ── */}
+      {/* ── Botón inferior ── */}
       <View style={[styles.bottomBar, { paddingBottom: insets.bottom || 16 }]}>
         <TouchableOpacity
           style={[
             styles.payBtn,
-            (!selectedMethod || submitting) && styles.payBtnDisabled,
+            (!selectedMethod || submitting || timerExpired) &&
+              styles.payBtnDisabled,
           ]}
           onPress={handlePay}
-          disabled={!selectedMethod || submitting}
+          disabled={!selectedMethod || submitting || timerExpired}
           activeOpacity={0.8}
         >
           {submitting ? (
             <ActivityIndicator color={colors.midnight[950]} />
           ) : (
             <AppText variant="button" style={styles.payBtnText}>
-              Confirmar pago · {fmt(totalAmount)}
+              {timerExpired
+                ? 'Sesión expirada'
+                : `Confirmar pago · ${fmtVes(totalVes)}`}
             </AppText>
           )}
         </TouchableOpacity>
@@ -398,17 +576,33 @@ export default function PaymentScreen() {
   );
 }
 
-// ─── Estilos ─────────────────────────────────────────────────────────────────
+// ─── Estilos (sin cambios) ──────────────────────────────────────────────────
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-
   scroll: {
     paddingHorizontal: spacing.s16,
     paddingTop: spacing.s16,
     gap: spacing.s16,
   },
 
-  // ── Total ──
+  timerBanner: {
+    backgroundColor: colors.midnight[800],
+    paddingVertical: spacing.s8,
+    paddingHorizontal: spacing.s16,
+    borderRadius: borderRadius.s8,
+    marginBottom: spacing.s4,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.midnight[700],
+  },
+  timerBannerExpired: { backgroundColor: '#7B1A22' },
+  timerText: {
+    color: colors.primary,
+    fontFamily: theme.typography.family.primary.bold,
+    fontSize: 13,
+    letterSpacing: 0.5,
+  },
+
   totalCard: {
     backgroundColor: colors.midnight[800],
     borderRadius: borderRadius.s16,
@@ -420,13 +614,24 @@ const styles = StyleSheet.create({
     borderColor: colors.midnight[700],
   },
   totalLabel: { color: colors.textSecondary, letterSpacing: 0.5 },
-  totalAmount: {
+  totalAmountVes: {
     color: colors.primary,
     fontFamily: theme.typography.family.primary.bold,
-    fontSize: 34,
+    fontSize: 32,
+  },
+  totalAmountUsd: {
+    color: colors.textSecondary,
+    fontFamily: theme.typography.family.primary.regular,
+    fontSize: 14,
+    marginTop: 2,
+  },
+  totalPoints: {
+    color: colors.gold[400],
+    fontFamily: theme.typography.family.primary.regular,
+    fontSize: 14,
+    marginTop: 2,
   },
 
-  // ── Métodos ──
   sectionLabel: {
     color: colors.textSecondary,
     fontFamily: theme.typography.family.primary.bold,
@@ -459,7 +664,6 @@ const styles = StyleSheet.create({
     fontFamily: theme.typography.family.primary.bold,
   },
 
-  // ── Formulario ──
   formSection: { gap: spacing.s12 },
   bankCard: {
     backgroundColor: colors.midnight[900],
@@ -500,15 +704,34 @@ const styles = StyleSheet.create({
     fontSize: 15,
   },
 
-  // ── Estilo personalizado TextInput para Cine Puntos ──
+  pointsBalanceRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: spacing.s8,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.midnight[700],
+    marginBottom: spacing.s4,
+  },
+  pointsBalanceMain: {
+    color: colors.primary,
+    fontFamily: theme.typography.family.primary.bold,
+    fontSize: 15,
+  },
+  pointsBalanceSub: {
+    color: colors.textSecondary,
+    fontSize: 12,
+    marginTop: 2,
+  },
   redeemInput: {
-    backgroundColor: colors.midnight[900],
+    backgroundColor: colors.midnight[800],
     borderRadius: borderRadius.s8,
     padding: spacing.s12,
     color: colors.textPrimary,
     marginTop: spacing.s8,
     borderWidth: 1,
     borderColor: colors.midnight[600],
+    fontSize: 15,
+    fontFamily: theme.typography.family.primary.regular,
   },
   estimateNote: {
     color: colors.textSecondary,
@@ -517,7 +740,6 @@ const styles = StyleSheet.create({
     marginTop: spacing.s4,
   },
 
-  // ── Botón inferior ──
   bottomBar: {
     backgroundColor: 'rgba(35, 22, 64, 0.97)',
     paddingHorizontal: spacing.s16,

@@ -31,7 +31,9 @@ export const AuthProvider = ({ children }) => {
           if (refreshToken) {
             // 2. Verificar si el Refresh Token también expiró
             if (jwtHelper.isExpired(refreshToken)) {
-              console.warn('Sesión completamente expirada (Refresh Token vencido).');
+              console.warn(
+                'Sesión completamente expirada (Refresh Token vencido).'
+              );
               await logout();
               return;
             }
@@ -41,6 +43,17 @@ export const AuthProvider = ({ children }) => {
             if (!response.success) {
               throw new Error('No se pudo renovar la sesión');
             }
+            // Persistir y exponer el user fresco (trae loyaltyPoints actualizados)
+            const freshUser = response.data?.user ?? null;
+            if (freshUser) {
+              await storageHelper.saveSession(
+                response.data?.tokens?.accessToken,
+                response.data?.tokens?.refreshToken,
+                freshUser
+              );
+              setUser(freshUser);
+              return;
+            }
           } else {
             // No hay refresh token para rescatar la sesión
             await logout();
@@ -49,8 +62,7 @@ export const AuthProvider = ({ children }) => {
         }
 
         setUser(userData);
-      }
-      else {
+      } else {
         setUser(null);
         await storageHelper.clearSession();
       }
@@ -63,94 +75,104 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
- 
   const login = async (credentials) => {
-  try {
-    const response = await authService.login(credentials);
-    
-    if (!response?.success) {
-      return { 
-        success: false, 
-        code: response?.code,
-        message: getErrorMessage(response?.code) 
+    try {
+      const response = await authService.login(credentials);
+
+      if (!response?.success) {
+        return {
+          success: false,
+          code: response?.code,
+          message: getErrorMessage(response?.code),
+        };
+      }
+
+      const { user, tokens } = response.data;
+      const { accessToken, refreshToken } = tokens;
+
+      await storageHelper.saveSession(accessToken, refreshToken, user);
+      setUser(user);
+
+      return { success: true };
+    } catch (error) {
+      console.log(error);
+
+      // Extraemos el mensaje y el code directamente del payload de error de la API
+      const backendCode = error.response?.data?.code; // Ej: "UNVERIFIED_ACCOUNT"
+
+      return {
+        success: false,
+        message: getErrorMessage(backendCode),
+        code: backendCode || null,
+        status: error.response?.status ?? null,
       };
     }
-  
-    const { user, tokens } = response.data;
-    const { accessToken, refreshToken } = tokens;
-    
-    await storageHelper.saveSession(accessToken, refreshToken, user);
-    setUser(user);
-
-    return { success: true };
-
-  } catch (error) {
-    console.log(error);
-    
-    // Extraemos el mensaje y el code directamente del payload de error de la API
-    const backendCode = error.response?.data?.code; // Ej: "UNVERIFIED_ACCOUNT"
-
-    return {
-      success: false,
-      message: getErrorMessage(backendCode),
-      code: backendCode || null, 
-      status: error.response?.status ?? null,
-    };
-  }
-};
+  };
   /**
-   * Maneja el registro 
+   * Maneja el registro
    */
   const register = async (formData) => {
-  try {
-    const response = await authService.signUp(formData);
-    return { success: true, message: response?.message || 'Registro exitoso.' };
-  } catch (error) {
-    console.error(' [Backend Register Error Request]:', error.config?.url);
-    if (error.response) {
-      console.error(' [Backend Response Data]:', JSON.stringify(error.response.data, null, 2));
-      console.error(' [Backend Status Code]:', error.response.status);
-    } else if (error.request) {
-      console.error(' [No response received from Server]:', error.request);
-    } else {
-      console.error(' [Axios Setup Error]:', error.message);
-    }
+    try {
+      const response = await authService.signUp(formData);
+      return {
+        success: true,
+        message: response?.message || 'Registro exitoso.',
+      };
+    } catch (error) {
+      console.error(' [Backend Register Error Request]:', error.config?.url);
+      if (error.response) {
+        console.error(
+          ' [Backend Response Data]:',
+          JSON.stringify(error.response.data, null, 2)
+        );
+        console.error(' [Backend Status Code]:', error.response.status);
+      } else if (error.request) {
+        console.error(' [No response received from Server]:', error.request);
+      } else {
+        console.error(' [Axios Setup Error]:', error.message);
+      }
 
-    return {
-      success: false,
-      // Extrae el mensaje específico de tu API (ej. "El correo ya está registrado")
-      message: error.response?.data?.message || error.response?.data?.error || 'No se pudo completar el registro.'
-    };
-  }
-};
+      return {
+        success: false,
+        // Extrae el mensaje específico de tu API (ej. "El correo ya está registrado")
+        message:
+          error.response?.data?.message ||
+          error.response?.data?.error ||
+          'No se pudo completar el registro.',
+      };
+    }
+  };
 
   /**
    * Cierre de sesión
    */
   const logout = async () => {
-  try {
-    setIsLoading(true); 
-
     try {
-      const response=await authService.logout(); 
-      if (response?.message) {
-        console.log(response.message);
+      setIsLoading(true);
+
+      try {
+        const response = await authService.logout();
+        if (response?.message) {
+          console.log(response.message);
+        }
+      } catch (apiError) {
+        console.warn(
+          'El servidor no pudo procesar el logout o el token expiró:',
+          apiError
+        );
       }
-    } catch (apiError) { 
-      console.warn('El servidor no pudo procesar el logout o el token expiró:', apiError);
+
+      await storageHelper.clearSession();
+
+      setUser(null);
+
+      console.log('Sesión destruida localmente con éxito.');
+    } catch (error) {
+      console.error('Error crítico en el proceso de logout:', error);
+    } finally {
+      setIsLoading(false);
     }
-
-    await storageHelper.clearSession();
-
-    setUser(null);
-    
-    console.log('Sesión destruida localmente con éxito.');
-  } catch (error) {
-    console.error('Error crítico en el proceso de logout:', error);
-  } finally {
-    setIsLoading(false);
-  }
-};
+  };
 
   /**
    * Verificar correo (Paso obligatorio post-registro)
@@ -162,7 +184,8 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       return {
         success: false,
-        message: error.response?.data?.message || 'Cuenta no verificada exitosamente.'
+        message:
+          error.response?.data?.message || 'Cuenta no verificada exitosamente.',
       };
     }
   };
@@ -177,7 +200,8 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       return {
         success: false,
-        message: error.response?.data?.message || 'Error al procesar la solicitud.'
+        message:
+          error.response?.data?.message || 'Error al procesar la solicitud.',
       };
     }
   };
@@ -193,7 +217,7 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       return {
         success: false,
-        message: error.response?.data?.message || 'Código inválido o expirado.'
+        message: error.response?.data?.message || 'Código inválido o expirado.',
       };
     }
   };
@@ -203,29 +227,35 @@ export const AuthProvider = ({ children }) => {
    */
   const resetPassword = async ({ email, resetToken, newPassword }) => {
     try {
-      const response = await authService.resetPassword({ email, resetToken, newPassword });
+      const response = await authService.resetPassword({
+        email,
+        resetToken,
+        newPassword,
+      });
       return { success: true, message: response?.message };
     } catch (error) {
       return {
         success: false,
-        message: error.response?.data?.message || 'No se pudo restablecer la contraseña.'
+        message:
+          error.response?.data?.message ||
+          'No se pudo restablecer la contraseña.',
       };
     }
   };
 
   return (
-    <AuthContext.Provider 
-      value={{ 
-        user, 
-        isLoading, 
-        login, 
-        register, 
+    <AuthContext.Provider
+      value={{
+        user,
+        isLoading,
+        login,
+        register,
         logout,
         isAuthenticated: !!user,
         verifyAccount,
         sendRecoveryEmail,
         verifyRecoveryCode,
-        resetPassword
+        resetPassword,
       }}
     >
       {children}

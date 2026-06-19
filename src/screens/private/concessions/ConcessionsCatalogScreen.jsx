@@ -2,8 +2,10 @@ import { Search, ShoppingCart, X } from 'lucide-react-native';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   FlatList,
   Image,
+  Modal,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -18,10 +20,11 @@ import { ScreenWrapper } from '../../../components/ScreenWrapper';
 import { useAuth } from '../../../context/AuthContext';
 import { useCart } from '../../../context/CartContext';
 import {
-  getAllCombos,
-  getAllProducts,
+  getAvailableCombos,
+  getAvailableProducts,
 } from '../../../services/concessions.service';
-import { theme, DEFAULT_CINEMA_ID } from '../../../constants';
+import { getCinemas } from '../../../services/cinemas.service';
+import { theme } from '../../../constants';
 
 const { colors, spacing, borderRadius } = theme;
 
@@ -229,41 +232,78 @@ export default function ConcessionsCatalogScreen() {
   const insets = useSafeAreaInsets();
   const { isAuthenticated } = useAuth();
   const { cart, addProduct, updateProductQuantity, removeProduct } = useCart();
-  // cinemaId puede venir como param si se llega desde selección de sala;
-  // de lo contrario se usa el cine por defecto.
   const { cinemaId: cinemaIdParam } = useLocalSearchParams();
-  const cinemaId = cinemaIdParam ? Number(cinemaIdParam) : DEFAULT_CINEMA_ID;
+
+  // ─── Selección de sucursal ────────────────────────────────────────────────
+  const [selectedCinema, setSelectedCinema] = useState(
+    cinemaIdParam ? { id: Number(cinemaIdParam) } : null
+  );
+  const [cinemas, setCinemas] = useState([]);
+  const [cinemaModalVisible, setCinemaModalVisible] = useState(false);
+  const [loadingCinemas, setLoadingCinemas] = useState(!cinemaIdParam);
+
+  useEffect(() => {
+    if (cinemaIdParam) return;
+    let isMounted = true;
+    const fetchCinemas = async () => {
+      setLoadingCinemas(true);
+      try {
+        const data = await getCinemas();
+        if (isMounted && data && data.length > 0) {
+          setCinemas(data);
+          setCinemaModalVisible(true);
+        } else if (isMounted) {
+          Alert.alert('Sin sucursales', 'No hay sucursales disponibles.');
+        }
+      } catch {
+        if (isMounted) {
+          Alert.alert('Error de conexión', 'No se pudo cargar las sucursales.');
+        }
+      } finally {
+        if (isMounted) setLoadingCinemas(false);
+      }
+    };
+    fetchCinemas();
+    return () => {
+      isMounted = false;
+    };
+  }, [cinemaIdParam]);
 
   const [products, setProducts] = useState([]);
   const [combos, setCombos] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [search, setSearch] = useState('');
   const [activeTab, setActiveTab] = useState('all');
   const searchRef = useRef(null);
 
-  // ─── Carga ───────────────────────────────────────────────────────────────
-  const fetchAll = useCallback(async (isRefresh = false) => {
-    if (isRefresh) setRefreshing(true);
-    else setLoading(true);
-    try {
-      const [pRes, cRes] = await Promise.all([
-        getAllProducts(),
-        getAllCombos(),
-      ]);
-      setProducts(Array.isArray(pRes) ? pRes : pRes?.rows || []);
-      setCombos(Array.isArray(cRes) ? cRes : cRes?.rows || []);
-    } catch (err) {
-      console.error('Error cargando catálogo:', err);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, []);
+  // ─── Carga catálogo filtrado por sucursal ─────────────────────────────────
+  const fetchAll = useCallback(
+    async (isRefresh = false, cinema = selectedCinema) => {
+      if (!cinema) return;
+      if (isRefresh) setRefreshing(true);
+      else setLoading(true);
+      try {
+        const [pRes, cRes] = await Promise.all([
+          getAvailableProducts(cinema.id),
+          getAvailableCombos(cinema.id),
+        ]);
+        setProducts(Array.isArray(pRes) ? pRes : pRes?.rows || []);
+        setCombos(Array.isArray(cRes) ? cRes : cRes?.rows || []);
+      } catch (err) {
+        console.error('Error cargando catálogo:', err);
+        Alert.alert('Error', 'No se pudo cargar el catálogo de esta sucursal.');
+      } finally {
+        setLoading(false);
+        setRefreshing(false);
+      }
+    },
+    [selectedCinema]
+  );
 
   useEffect(() => {
-    fetchAll();
-  }, [fetchAll]);
+    if (selectedCinema) fetchAll(false, selectedCinema);
+  }, [selectedCinema]);
 
   // ─── Tabs dinámicas ──────────────────────────────────────────────────────
   const categoryTabs = useMemo(
@@ -371,8 +411,44 @@ export default function ConcessionsCatalogScreen() {
 
   const bottomPad = (insets.bottom || 16) + 56 + spacing.s12 + spacing.s16;
 
+  if (loadingCinemas) {
+    return (
+      <ScreenWrapper>
+        <View style={styles.centered}>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <AppText style={styles.emptyText}>Cargando sucursales...</AppText>
+        </View>
+      </ScreenWrapper>
+    );
+  }
+
   return (
     <ScreenWrapper>
+      {/* Modal selector de sucursal */}
+      <Modal visible={cinemaModalVisible} animationType="slide" transparent>
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <AppText style={styles.modalTitle}>Selecciona tu sucursal</AppText>
+            <FlatList
+              data={cinemas}
+              keyExtractor={(item) => String(item.id)}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={styles.cinemaOption}
+                  onPress={() => {
+                    setSelectedCinema(item);
+                    setCinemaModalVisible(false);
+                  }}
+                >
+                  <AppText style={styles.cinemaName}>{item.name}</AppText>
+                  <AppText style={styles.cinemaAddress}>{item.address}</AppText>
+                </TouchableOpacity>
+              )}
+            />
+          </View>
+        </View>
+      </Modal>
+
       {/* Header */}
       <View style={styles.header}>
         <AppText variant="h2" style={styles.headerTitle}>
@@ -382,6 +458,29 @@ export default function ConcessionsCatalogScreen() {
           Dulces, combos y bebidas para tu función
         </AppText>
       </View>
+
+      {/* Selector de sucursal */}
+      <TouchableOpacity
+        style={styles.cinemaBar}
+        onPress={() => {
+          if (cinemas.length === 0) {
+            getCinemas().then((data) => {
+              if (data?.length) {
+                setCinemas(data);
+                setCinemaModalVisible(true);
+              }
+            });
+          } else {
+            setCinemaModalVisible(true);
+          }
+        }}
+        activeOpacity={0.8}
+      >
+        <AppText style={styles.cinemaBarText}>
+          📍 {selectedCinema?.name || 'Selecciona una sucursal'}
+        </AppText>
+        <AppText style={styles.cinemaBarChange}>Cambiar</AppText>
+      </TouchableOpacity>
 
       {/* Búsqueda */}
       <View style={styles.searchBar}>
@@ -483,20 +582,30 @@ export default function ConcessionsCatalogScreen() {
           <TouchableOpacity
             style={styles.continueBtn}
             onPress={() => {
+              if (!selectedCinema) {
+                Alert.alert(
+                  'Sucursal requerida',
+                  'Por favor selecciona una sucursal primero.'
+                );
+                setCinemaModalVisible(true);
+                return;
+              }
               if (!isAuthenticated) {
-                // Usuario no registrado: ir al login y volver al checkout después
                 router.push({
                   pathname: '/(auth)/login',
                   params: {
                     redirectTo: '/(buy)/checkout',
                     mode: 'concessions',
-                    cinemaId: String(cinemaId),
+                    cinemaId: String(selectedCinema.id),
                   },
                 });
               } else {
                 router.push({
                   pathname: '/(buy)/checkout',
-                  params: { mode: 'concessions', cinemaId: String(cinemaId) },
+                  params: {
+                    mode: 'concessions',
+                    cinemaId: String(selectedCinema.id),
+                  },
                 });
               }
             }}
@@ -633,5 +742,64 @@ const styles = StyleSheet.create({
     color: colors.midnight[950],
     fontSize: 15,
     fontFamily: theme.typography.family.primary.bold,
+  },
+
+  // ── Modal sucursal ──
+  modalContainer: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.85)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    width: '85%',
+    maxHeight: '70%',
+    backgroundColor: colors.midnight[900],
+    borderRadius: borderRadius.s16,
+    padding: spacing.s16,
+  },
+  modalTitle: {
+    color: colors.primary,
+    fontSize: 18,
+    fontFamily: theme.typography.family.primary.bold,
+    marginBottom: spacing.s12,
+    textAlign: 'center',
+  },
+  cinemaOption: {
+    paddingVertical: spacing.s12,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.midnight[700],
+  },
+  cinemaName: {
+    color: colors.textPrimary,
+    fontSize: 15,
+    fontFamily: theme.typography.family.primary.bold,
+  },
+  cinemaAddress: { color: colors.textSecondary, fontSize: 12, marginTop: 3 },
+
+  // ── Barra de sucursal seleccionada ──
+  cinemaBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginHorizontal: spacing.s16,
+    marginBottom: spacing.s8,
+    backgroundColor: colors.midnight[800],
+    borderRadius: borderRadius.s8,
+    paddingHorizontal: spacing.s12,
+    paddingVertical: spacing.s8,
+    borderWidth: 1,
+    borderColor: colors.midnight[600],
+  },
+  cinemaBarText: {
+    color: colors.textPrimary,
+    fontSize: 13,
+    flex: 1,
+  },
+  cinemaBarChange: {
+    color: colors.primary,
+    fontSize: 12,
+    fontFamily: theme.typography.family.primary.bold,
+    marginLeft: spacing.s8,
   },
 });

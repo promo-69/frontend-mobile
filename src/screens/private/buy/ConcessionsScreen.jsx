@@ -4,7 +4,9 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  FlatList,
   Image,
+  Modal,
   SectionList,
   StyleSheet,
   TouchableOpacity,
@@ -17,6 +19,7 @@ import {
   getAvailableCombos,
   getAvailableProducts,
 } from '../../../services/concessions.service';
+import { getCinemas } from '../../../services/cinemas.service';
 import { theme } from '../../../constants';
 
 const { colors, spacing, borderRadius } = theme;
@@ -247,20 +250,69 @@ function buildSections(combos, products) {
 export default function ConcessionsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { showtimeId, movieId, cinemaId } = useLocalSearchParams();
+  const {
+    showtimeId,
+    movieId,
+    cinemaId: paramCinemaId,
+  } = useLocalSearchParams();
   const { cart, addProduct, updateProductQuantity, removeProduct } = useCart();
 
-  const [loading, setLoading] = useState(true);
+  // Si viene cinemaId por params (flujo con película), lo usamos directo.
+  // Si no, dejamos que el usuario elija la sucursal aquí.
+  const [selectedCinema, setSelectedCinema] = useState(
+    paramCinemaId ? { id: Number(paramCinemaId) } : null
+  );
+  const [cinemas, setCinemas] = useState([]);
+  const [cinemaModalVisible, setCinemaModalVisible] = useState(false);
+  const [loadingCinemas, setLoadingCinemas] = useState(!paramCinemaId);
+
+  const [loading, setLoading] = useState(false);
   const [combos, setCombos] = useState([]);
   const [products, setProducts] = useState([]);
 
+  // Paso 1: Si no hay cinemaId de params, cargar sucursales y mostrar modal.
   useEffect(() => {
+    if (paramCinemaId) return; // ya tenemos sucursal del flujo con película
+
+    let isMounted = true;
+    const fetchCinemas = async () => {
+      setLoadingCinemas(true);
+      try {
+        const data = await getCinemas();
+        if (isMounted && data && data.length > 0) {
+          setCinemas(data);
+          setCinemaModalVisible(true);
+        } else if (isMounted) {
+          Alert.alert('Sin sucursales', 'No hay sucursales disponibles.');
+        }
+      } catch {
+        if (isMounted) {
+          Alert.alert(
+            'Error de conexión',
+            'No se pudo cargar la lista de sucursales.',
+            [{ text: 'Reintentar', onPress: fetchCinemas }]
+          );
+        }
+      } finally {
+        if (isMounted) setLoadingCinemas(false);
+      }
+    };
+    fetchCinemas();
+    return () => {
+      isMounted = false;
+    };
+  }, [paramCinemaId]);
+
+  // Paso 2: Cuando ya hay sucursal (por params o por selección), cargar catálogo.
+  useEffect(() => {
+    if (!selectedCinema) return;
     let cancelled = false;
+    setLoading(true);
     async function load() {
       try {
         const [cRes, pRes] = await Promise.all([
-          getAvailableCombos(cinemaId),
-          getAvailableProducts(cinemaId),
+          getAvailableCombos(selectedCinema.id),
+          getAvailableProducts(selectedCinema.id),
         ]);
         if (!cancelled) {
           setCombos(cRes || []);
@@ -281,7 +333,7 @@ export default function ConcessionsScreen() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [selectedCinema]);
 
   const sections = useMemo(
     () => buildSections(combos, products),
@@ -342,6 +394,8 @@ export default function ConcessionsScreen() {
     [cart.products]
   );
 
+  const cinemaId = selectedCinema?.id ?? paramCinemaId;
+
   const goToCheckout = () =>
     router.push({
       pathname: '/(buy)/checkout',
@@ -349,6 +403,19 @@ export default function ConcessionsScreen() {
     });
 
   const bottomPad = (insets.bottom || 16) + 56 + spacing.s12 + spacing.s16;
+
+  // Esperando la lista de sucursales
+  if (loadingCinemas) {
+    return (
+      <LinearGradient
+        {...theme.colors.gradients.bgColor}
+        style={styles.centered}
+      >
+        <ActivityIndicator size="large" color={colors.primary} />
+        <AppText style={styles.loadingText}>Cargando sucursales...</AppText>
+      </LinearGradient>
+    );
+  }
 
   if (loading) {
     return (
@@ -368,6 +435,44 @@ export default function ConcessionsScreen() {
         {...theme.colors.gradients.bgColor}
         style={StyleSheet.absoluteFill}
       />
+
+      {/* Modal selector de sucursal */}
+      <Modal visible={cinemaModalVisible} animationType="slide" transparent>
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <AppText style={styles.modalTitle}>Selecciona tu sucursal</AppText>
+            <FlatList
+              data={cinemas}
+              keyExtractor={(item) => String(item.id)}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={styles.cinemaOption}
+                  onPress={() => {
+                    setSelectedCinema(item);
+                    setCinemaModalVisible(false);
+                  }}
+                >
+                  <AppText style={styles.cinemaName}>{item.name}</AppText>
+                  <AppText style={styles.cinemaAddress}>{item.address}</AppText>
+                </TouchableOpacity>
+              )}
+            />
+          </View>
+        </View>
+      </Modal>
+
+      {selectedCinema && (
+        <TouchableOpacity
+          style={styles.selectedCinemaBar}
+          onPress={() => setCinemaModalVisible(true)}
+          activeOpacity={0.8}
+        >
+          <AppText style={styles.selectedCinemaText}>
+            📍 {selectedCinema.name || `Sucursal #${selectedCinema.id}`}
+          </AppText>
+          <AppText style={styles.changeCinemaText}>Cambiar</AppText>
+        </TouchableOpacity>
+      )}
 
       <AppText style={styles.subtitle}>
         ¡Selecciona tus productos de confitería para hoy!
@@ -508,4 +613,59 @@ const styles = StyleSheet.create({
     fontFamily: theme.typography.family.primary.bold,
   },
   continueBtnTextOutline: { color: colors.textSecondary },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.85)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    width: '80%',
+    maxHeight: '70%',
+    backgroundColor: colors.midnight[900],
+    borderRadius: borderRadius.s16,
+    padding: spacing.s16,
+  },
+  modalTitle: {
+    color: colors.primary,
+    fontSize: 18,
+    fontFamily: theme.typography.family.primary.bold,
+    marginBottom: spacing.s12,
+    textAlign: 'center',
+  },
+  cinemaOption: {
+    paddingVertical: spacing.s12,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.midnight[700],
+  },
+  cinemaName: {
+    color: colors.textPrimary,
+    fontSize: 16,
+    fontFamily: theme.typography.family.primary.bold,
+  },
+  cinemaAddress: { color: colors.textSecondary, fontSize: 12, marginTop: 4 },
+  selectedCinemaBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginHorizontal: spacing.s16,
+    marginTop: spacing.s12,
+    backgroundColor: colors.midnight[800],
+    borderRadius: borderRadius.s8,
+    paddingHorizontal: spacing.s12,
+    paddingVertical: spacing.s8,
+    borderWidth: 1,
+    borderColor: colors.midnight[600],
+  },
+  selectedCinemaText: {
+    color: colors.textPrimary,
+    fontSize: 13,
+    flex: 1,
+  },
+  changeCinemaText: {
+    color: colors.primary,
+    fontSize: 12,
+    fontFamily: theme.typography.family.primary.bold,
+    marginLeft: spacing.s8,
+  },
 });

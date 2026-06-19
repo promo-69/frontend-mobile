@@ -37,4 +37,12 @@ export const usersService = {
     const response = await api.get(`/users/me/orders/${orderId}/ticket`);
     return response.data.data;
   },
+  /**
+   * Obtiene info de lealtad del usuario: nivel, puntos y balance.
+   * @returns {{ loyalty_level, loyalty_level_name, level_progress_points, points_balance }}
+   */
+  getLoyaltyInfo: async () => {
+    const response = await api.get('/users/me/loyalty');
+    return response.data.data;
+  },
 };
