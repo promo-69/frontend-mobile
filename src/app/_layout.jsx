@@ -22,22 +22,19 @@ function NavigationGuard() {
   useEffect(() => {
     if (isLoading) return;
 
-    // Grupos de rutas
     const inAuthGroup = segments[0] === '(auth)';
     const inMainGroup = segments[0] === '(main)';
     const inBuyGroup = segments[0] === '(buy)';
 
-    // Definir qué rutas dentro de (main) requieren autenticación
+    // Tabs de (main) que requieren sesión
     const protectedTabs = ['profile', 'purchases'];
     const isAccessingProtectedTab =
       inMainGroup && protectedTabs.includes(segments[1]);
 
-    // Si el usuario se loguea y está en Login/Register, mandarlo a Home
     if (isAuthenticated && inAuthGroup) {
       router.replace('/(main)/home');
     }
 
-    // Si el usuario no está logueado e intenta entrar a una zona privada
     if (!isAuthenticated && (isAccessingProtectedTab || inBuyGroup)) {
       router.replace('/(auth)/login');
     }

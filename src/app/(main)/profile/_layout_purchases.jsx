@@ -1,7 +1,7 @@
 import { Stack } from 'expo-router';
 import { theme } from '../../../constants';
 
-export default function ConcessionsLayout() {
+export default function PurchasesLayout() {
   return (
     <Stack
       screenOptions={{
@@ -12,9 +12,9 @@ export default function ConcessionsLayout() {
         animation: 'slide_from_bottom',
       }}
     >
-      <Stack.Screen name="index" options={{ title: 'Confitería' }} />
+      <Stack.Screen name="index" options={{ title: 'Mis Compras' }} />
 
-      <Stack.Screen name="checkout" options={{ title: 'Resumen del Pedido' }} />
+      <Stack.Screen name="[orderId]" options={{ title: 'Detalle de Orden' }} />
     </Stack>
   );
 }

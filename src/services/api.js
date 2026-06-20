@@ -59,13 +59,10 @@ api.interceptors.response.use(
 
         // Intentar renovar el token usando el endpoint
         // Nota: Usamos axios directamente para evitar bucles infinitos con la instancia 'api'
-        const response = await axios.post(
-          `${ENV.API_URL}/auth/refresh`,
-          {},
-          {
-            headers: { Authorization: `Bearer ${refreshToken}` },
-          }
-        );
+        const response = await axios.post(`${ENV.API_URL}/auth/refresh`, {}, {
+          headers:
+          { Authorization: `Bearer ${refreshToken}` }
+        });
 
         // Extraer tokens de forma defensiva (varios formatos posibles)
         const res = response.data?.data ?? response.data ?? {};
@@ -77,8 +74,10 @@ api.interceptors.response.use(
           throw new Error('Refresh response did not include an access token');
         }
 
-        // Guardar solo los tokens definidos
-        await storageHelper.saveTokens(accessToken, newRefreshToken);
+        // Persistir tokens y datos frescos del usuario (loyaltyPoints, etc.)
+        // respPayload = response.data.data → { user, tokens: { accessToken, refreshToken } }
+        const freshUser = respPayload.user ?? null;
+        await storageHelper.saveSession(accessToken, newRefreshToken ?? null, freshUser);
 
         // Actualizar el header de la petición original y reintentar
         originalRequest.headers = originalRequest.headers || {};
