@@ -7,7 +7,6 @@ import BottomSheet from '../components/ui/BottomSheet';
 import { AuthProvider, useAuth } from '../context/AuthContext';
 import { CartProvider } from '../context/CartContext';
 import { BottomSheetProvider } from '../context/BottomSheetContext';
-import { CartProvider } from '../context/CartContext';
 
 SplashScreen.preventAutoHideAsync();
 
