@@ -18,14 +18,34 @@ export const getMovieById = async (id) => {
   return response.data.data;
 };
 
-export const getMoviesReleases = async () => {
-  console.log('INICIANDO PETICIÓN SHOWTIMES');
-  const response = await api.get('/movies/showtimes');
-  console.log('RESPUESTA SHOWTIMES:', response);
-  return response.data.data;
+export const getMoviesReleases = async (page = 1, limit = 10) => {
+  try{
+  
+  const response = await api.get(`/movies/showtimes?page=${page}&limit=${limit}`);
+
+  if (response?.data?.success && Array.isArray(response.data.data)) {
+      return response.data.data;
+    }
+    return [];
+  }
+  catch (error) {
+    console.error('Error en getMoviesReleases:', error.message);
+    return [];
+  }
+
+ 
 };
 
-export const getUpcomingMovies = async () => {
-  const response = await api.get('/movies/upcoming');
-  return response.data.data;
+export const getUpcomingMovies = async (page = 1, limit = 10) => {
+  try{
+  const response = await api.get(`/movies/upcoming?page=${page}&limit=${limit}`);
+  if (response?.data?.success) {
+      return response.data.data;
+    }
+    return [];
+  }
+  catch (error){
+    console.error('Error en getUpcomingMovies:', error.message);
+    return [];
+  }
 };

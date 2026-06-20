@@ -16,6 +16,8 @@ export default function BuyLayout() {
           headerBackTitleVisible: false,
           animation: 'slide_from_right',
         }}
+
+        
       >
         <Stack.Screen
           name="selectSeats"

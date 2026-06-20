@@ -56,10 +56,17 @@ export default function SelectSeats() {
             getShowtimeSeats(showtimeId),
           ]);
 
-        setMovie(movieResponse);
-        setShowtime(showtimeResponse);
-        setSeatsData(seatsResponse?.seats || []);
-        updateCartDetails(movieResponse, showtimeResponse); // Actualiza el carrito con los detalles de la película y la función
+        // Normalizamos la data: el backend devuelve arrays incluso para consultas por ID
+        const cleanMovie = Array.isArray(movieResponse) ? movieResponse[0] : movieResponse;
+        const cleanShowtime = Array.isArray(showtimeResponse) ? showtimeResponse[0] : showtimeResponse;
+        
+        // Para los asientos, manejamos si la respuesta es el objeto directo o un array
+        const cleanSeatsObj = Array.isArray(seatsResponse) ? seatsResponse : seatsResponse;
+
+        setMovie(cleanMovie);
+        setShowtime(cleanShowtime);
+        setSeatsData(cleanSeatsObj?.seats || []);
+        updateCartDetails(cleanMovie, cleanShowtime); // Actualiza el carrito con los detalles de la película y la función
       } catch (err) {
         console.error('Error loading seat selection data:', err);
         setError('Failed to load movie or showtime details. Please try again.');
@@ -145,7 +152,10 @@ export default function SelectSeats() {
         style={StyleSheet.absoluteFill}
       />
 
-      <ShowtimeHeader movie={movie} showtime={showtime} />
+      <ShowtimeHeader 
+      movie={movie} 
+      showtime={showtime} 
+      />
       <SeatLegend />
       <SeatMap
         seatsData={seatsData}
@@ -164,7 +174,7 @@ export default function SelectSeats() {
           >
             <Text style={styles.continueButtonText}>
               Continuar al pago ({showtime.currency?.symbol || '$'}
-              {totalAmount.toFixed(2)}) →
+              {totalAmount.toFixed(2)})
             </Text>
           </TouchableOpacity>
         </View>

@@ -1,8 +1,8 @@
-import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { ChevronLeft, Film, Play } from 'lucide-react-native';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Dimensions,
   Linking,
@@ -12,10 +12,12 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import MovieSkeleton from '../../components/showtimes/MovieSkeleton';
+import DateSelector from '../../components/showtimes/DateSelector';
 import ShowtimesList from '../../components/showtimes/ShowtimesList';
+import MovieSkeleton from '../../components/showtimes/MovieSkeleton';
 import { getMovieById } from '../../services/movies.service';
 import { getShowtimesByMovie } from '../../services/showtimes.service';
+import { formatHumanDate, generateNextDays } from '../../utils/dateUtils';
 
 const { width } = Dimensions.get('window');
 const COLORS = {
@@ -28,8 +30,13 @@ const COLORS = {
   border: 'rgba(255, 255, 255, 0.1)',
 };
 
-const formatGenres = (genres) =>
-  genres?.map((g) => g.description).join(', ') || 'N/A';
+const formatGenres = (genres) => {
+  if (!Array.isArray(genres) || genres.length === 0) return 'Desconocido';
+  const cleanGenres = genres
+    .map((g) => g?._Genres?.description)
+    .filter(Boolean);
+  return cleanGenres.length > 0 ? cleanGenres.join(', ') : 'Desconocido';
+};
 
 export default function MovieDetails() {
   const { movieId } = useLocalSearchParams();
@@ -39,15 +46,32 @@ export default function MovieDetails() {
   const [showtimes, setShowtimes] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  const [imageError, setImageError] = useState(false);
+
+  const todayShortString = useMemo(() => {
+  const localDate = new Date();
+  const year = localDate.getFullYear();
+  const month = (localDate.getMonth() + 1).toString().padStart(2, '0');
+  const day = localDate.getDate().toString().padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}, []);
+
+  const [selectedDate, setSelectedDate] = useState(todayShortString);
+
   useEffect(() => {
     async function loadData() {
+      // Cláusula que evita peticiones si movieId aún no está definido por el router
+      if (!movieId) return;
+
       try {
         const [movieData, showtimesData] = await Promise.all([
           getMovieById(movieId),
           getShowtimesByMovie(movieId),
         ]);
+
+        // Los servicios ya retornan response.data.data, por lo que usamos la data directa
         setMovie(movieData);
-        setShowtimes(showtimesData || []);
+        setShowtimes(Array.isArray(showtimesData) ? showtimesData : []);
       } catch (error) {
         console.error('Error loading movie details:', error);
       } finally {
@@ -56,6 +80,30 @@ export default function MovieDetails() {
     }
     loadData();
   }, [movieId]);
+
+  //Filtrar carrusel para mostrar solo los días con funciones
+  const availableDatesCarousel = useMemo(() => {
+    const next7Days = generateNextDays(7);
+    if (showtimes.length === 0) return [];
+
+    // Crear un Set con los strings "YYYY-MM-DD" de las funciones que vienen del backend
+    const activeDatesSet = new Set(
+    showtimes
+      .map(st => st.start_time ? st.start_time.substring(0, 10) : null)
+      .filter(Boolean)
+  );
+    // Retornar únicamente los días del calendario que tengan funciones asociadas
+    return next7Days.filter(day => activeDatesSet.has(day.fullDate));
+  }, [showtimes]);
+
+  useEffect(() => {
+    if (availableDatesCarousel.length > 0) {
+      const isCurrentDateAvailable = availableDatesCarousel.some(d => d.fullDate === selectedDate);
+      if (!isCurrentDateAvailable) {
+        setSelectedDate(availableDatesCarousel[0].fullDate);
+      }
+    }
+  }, [availableDatesCarousel, selectedDate]);
 
   const handleWatchTrailer = () => {
     if (movie?.trailer_url) {
@@ -69,6 +117,8 @@ export default function MovieDetails() {
 
   if (!movie) return null;
 
+  const showPlaceholder = !movie.poster_url || imageError;
+
   return (
     <View style={styles.container}>
       <LinearGradient
@@ -78,12 +128,20 @@ export default function MovieDetails() {
 
       <ScrollView bounces={false} showsVerticalScrollIndicator={false}>
         <View style={styles.heroContainer}>
-          <Image
-            source={{ uri: movie.poster_url }}
-            style={styles.mainPoster}
-            contentFit="cover"
-            transition={500}
-          />
+          {showPlaceholder ? (
+            <View style={styles.placeholderHero}>
+              <Film size={64} color={COLORS.accent} />
+              <Text style={styles.placeholderText}>Cineflix</Text>
+            </View>
+          ) : (
+            <Image
+              source={{ uri: movie.poster_url }}
+              style={styles.mainPoster}
+              contentFit="cover"
+              transition={500}
+              onError={() => setImageError(true)}
+            />
+          )}
           <LinearGradient
             colors={['transparent', 'rgba(35, 22, 64, 0.5)', COLORS.bgDeep]}
             style={styles.gradient}
@@ -93,7 +151,7 @@ export default function MovieDetails() {
             style={styles.backButton}
             onPress={() => router.back()}
           >
-            <Ionicons name="chevron-back" color="white" size={28} />
+            <ChevronLeft color="white" size={28} />
           </TouchableOpacity>
 
           {movie.trailer_url && (
@@ -101,7 +159,7 @@ export default function MovieDetails() {
               style={styles.trailerButton}
               onPress={handleWatchTrailer}
             >
-              <Ionicons name="play" size={20} color="black" />
+              <Play size={20} color="black" />
               <Text style={styles.trailerText}>VER TRAILER</Text>
             </TouchableOpacity>
           )}
@@ -121,19 +179,22 @@ export default function MovieDetails() {
               <View style={[styles.techItem, styles.techBorderLeft]}>
                 <Text style={styles.techLabel}>CLASIFICACIÓN</Text>
                 <Text style={styles.techValue}>
-                  {movie.age_classification?.description}
+                  {movie.age_classification?.description ||
+                    'Apto para todo público'}
                 </Text>
               </View>
             </View>
             <View style={[styles.techRow, styles.techBorderTop]}>
               <View style={styles.techItem}>
                 <Text style={styles.techLabel}>ESTRENO</Text>
-                <Text style={styles.techValue}>{movie.release_date}</Text>
+                <Text style={styles.techValue}>
+                  {formatHumanDate(movie.release_date) || 'No definida'}
+                </Text>
               </View>
               <View style={[styles.techItem, styles.techBorderLeft]}>
                 <Text style={styles.techLabel}>ESTADO</Text>
                 <Text style={[styles.techValue, { color: COLORS.accent }]}>
-                  {movie.lifecycle_state?.description}
+                  {movie.lifecycle_state?.description || 'Desconocido'}
                 </Text>
               </View>
             </View>
@@ -150,7 +211,17 @@ export default function MovieDetails() {
           <Text style={styles.sectionTitle}>Sinopsis</Text>
           <Text style={styles.synopsis}>{movie.synopsis}</Text>
 
-          <ShowtimesList movieId={movieId} showtimes={showtimes} />
+          <DateSelector
+            selectedDate={selectedDate}
+            onSelectDate={setSelectedDate}
+            weekdays={availableDatesCarousel}
+          />
+
+          <ShowtimesList 
+            showtimes={showtimes}
+            movieId={movieId}
+            selectedDate={selectedDate}
+          />
         </View>
       </ScrollView>
     </View>
@@ -159,16 +230,40 @@ export default function MovieDetails() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.bgDeep },
-  heroContainer: { width: '100%', height: width * 1.1 },
+  heroContainer: { 
+    width: '100%', 
+    height: width * 1.35 },
   mainPoster: { width: '100%', height: '100%', resizeMode: 'cover' },
+
+  placeholderHero: {
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#2E1E4E',
+  },
+  placeholderText: {
+    color: COLORS.textGray,
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginTop: 10,
+    letterSpacing: 2,
+    textTransform: 'uppercase',
+  },
+
   gradient: { ...StyleSheet.absoluteFillObject },
   backButton: {
     position: 'absolute',
     top: 50,
     left: 20,
-    backgroundColor: 'rgba(0,0,0,0.3)',
+    width: 44,                
+    height: 44,
+    marginRight: 2,
+    justifyContent: 'center',   // Centrado vertical de los hijos (icono)
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.4)',
     borderRadius: 25,
-    padding: 8,
+    zIndex: 10,
   },
   trailerButton: {
     position: 'absolute',
@@ -188,7 +283,10 @@ const styles = StyleSheet.create({
     fontSize: 13,
     marginLeft: 8,
   },
-  infoContent: { paddingHorizontal: 20, marginTop: -30 },
+  infoContent: { 
+    paddingHorizontal: 20, 
+    marginTop: 0 
+  },
   title: {
     fontSize: 32,
     fontWeight: 'bold',
