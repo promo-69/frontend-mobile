@@ -13,8 +13,6 @@ export default function ConcessionsLayout() {
       }}
     >
       <Stack.Screen name="index" options={{ title: 'Confitería' }} />
-
-      <Stack.Screen name="checkout" options={{ title: 'Resumen del Pedido' }} />
     </Stack>
   );
 }
