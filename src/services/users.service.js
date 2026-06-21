@@ -14,9 +14,28 @@ export const usersService = {
   },
 
   // Petición de actualizar contraseña del usuario logueado
-  changePassword: async (data) => {
-    const response = await api.patch('/users/me/security', data);
+  // (Nuevo) Verifica la contraseña actual y devuelve un token de seguridad
+  verifySecurity: async (password) => {
+    const response = await api.post('/users/me/security/verify', { password });
     return response.data;
+  },
+
+  // (Nuevo) Cambia la seguridad (password/email) usando el token obtenido
+  changeSecurity: async ({
+    securityChangeToken,
+    newPassword,
+    newEmail,
+  } = {}) => {
+    const payload = { securityChangeToken };
+    if (newPassword !== undefined) payload.newPassword = newPassword;
+    if (newEmail !== undefined) payload.newEmail = newEmail;
+    const response = await api.post('/users/me/security/change', payload);
+    return response.data;
+  },
+
+  // Compatibilidad: alias al nuevo método
+  changePassword: async (data) => {
+    return await usersService.changeSecurity(data);
   },
 
   /**
