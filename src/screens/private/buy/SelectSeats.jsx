@@ -30,7 +30,11 @@ const COLORS = {
 };
 
 export default function SelectSeats() {
-  const { movieId, showtimeId } = useLocalSearchParams();
+  const {
+    movieId,
+    showtimeId,
+    cinemaId: paramCinemaId,
+  } = useLocalSearchParams();
   const router = useRouter();
   const { cart, toggleSeat, updateCartDetails, totalAmount } = useCart();
 
@@ -57,11 +61,17 @@ export default function SelectSeats() {
           ]);
 
         // Normalizamos la data: el backend devuelve arrays incluso para consultas por ID
-        const cleanMovie = Array.isArray(movieResponse) ? movieResponse[0] : movieResponse;
-        const cleanShowtime = Array.isArray(showtimeResponse) ? showtimeResponse[0] : showtimeResponse;
-        
+        const cleanMovie = Array.isArray(movieResponse)
+          ? movieResponse[0]
+          : movieResponse;
+        const cleanShowtime = Array.isArray(showtimeResponse)
+          ? showtimeResponse[0]
+          : showtimeResponse;
+
         // Para los asientos, manejamos si la respuesta es el objeto directo o un array
-        const cleanSeatsObj = Array.isArray(seatsResponse) ? seatsResponse : seatsResponse;
+        const cleanSeatsObj = Array.isArray(seatsResponse)
+          ? seatsResponse
+          : seatsResponse;
 
         setMovie(cleanMovie);
         setShowtime(cleanShowtime);
@@ -90,7 +100,17 @@ export default function SelectSeats() {
       return;
     }
     // Navegar a la pantalla de pago, pasando los detalles del carrito si es necesario
-    router.push('/checkout'); // Ejemplo de ruta
+    // Derivar cinemaId: desde params o desde el showtime cargado
+    const cinemaId =
+      paramCinemaId ?? showtime?.booking?.room?.cinema?.id ?? null;
+    router.push({
+      pathname: '/(buy)/concessions',
+      params: {
+        showtimeId,
+        movieId,
+        ...(cinemaId != null && { cinemaId: String(cinemaId) }),
+      },
+    });
   };
 
   if (loading) {
@@ -152,10 +172,7 @@ export default function SelectSeats() {
         style={StyleSheet.absoluteFill}
       />
 
-      <ShowtimeHeader 
-      movie={movie} 
-      showtime={showtime} 
-      />
+      <ShowtimeHeader movie={movie} showtime={showtime} />
       <SeatLegend />
       <SeatMap
         seatsData={seatsData}

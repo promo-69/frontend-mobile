@@ -1,27 +1,48 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { Dimensions, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import {
+  Dimensions,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { useAuth } from '../../context/AuthContext';
-import { formatTime12hrs } from '../../utils/TimeUtils'
+import { formatTime12hrs } from '../../utils/TimeUtils';
 import { useBottomSheet } from '../../context/BottomSheetContext';
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = (width - 56) / 2;
 
-export default function ShowtimeCard({ showtime, movieId }) {
+export default function ShowtimeCard({
+  showtime,
+  movieId,
+  cinemaId: cinemaIdProp,
+}) {
   const router = useRouter();
   const { isAuthenticated } = useAuth();
   const { showBottomSheet } = useBottomSheet();
 
   //Extraer las descripciones
-  const projectionType = showtime.projection_type?.description ||  'Proyección Desconocida';
+  const projectionType =
+    showtime.projection_type?.description || 'Proyección Desconocida';
   const language = showtime.language?.description || 'Idioma Desconocido';
-  
+
   // Acceso directo a room según el JSON recibido
-  const roomName = showtime.room?.name || 'Sala General';
-  const isSoldOut = showtime.room?.available_seats === 0; 
-  
-  const { time, ampm } = formatTime12hrs(showtime.start_time);
+  const roomName =
+    showtime.booking?.room?.name || showtime.room?.name || 'Sala General';
+  const isSoldOut = showtime.room?.available_seats === 0;
+
+  // cinemaId: preferimos prop explícita, luego lo derivamos del showtime
+  const cinemaId =
+    cinemaIdProp ??
+    showtime.booking?.room?.cinema?.id ??
+    showtime.room?.cinema?.id ??
+    null;
+
+  const { time, ampm } = formatTime12hrs(
+    showtime.start_time ?? showtime.booking?.start_time
+  );
 
   const formatBadgeText = (text) => {
     const upper = text.toUpperCase();
@@ -33,7 +54,14 @@ export default function ShowtimeCard({ showtime, movieId }) {
 
   const handleSelectShowtime = () => {
     if (isAuthenticated) {
-      router.push(`/selectSeats?movieId=${movieId}&showtimeId=${showtime.id}`);
+      router.push({
+        pathname: '/selectSeats',
+        params: {
+          movieId,
+          showtimeId: showtime.id,
+          ...(cinemaId != null && { cinemaId: String(cinemaId) }),
+        },
+      });
     } else {
       showBottomSheet({
         title: '¡Casi listo!',
@@ -51,15 +79,12 @@ export default function ShowtimeCard({ showtime, movieId }) {
     }
   };
 
-return (
+  return (
     <TouchableOpacity
       activeOpacity={isSoldOut ? 1 : 0.7}
       disabled={isSoldOut}
       onPress={handleSelectShowtime}
-      style={[
-        styles.cardContainer,
-        isSoldOut && styles.cardDisabled
-      ]}
+      style={[styles.cardContainer, isSoldOut && styles.cardDisabled]}
     >
       {/* Bloque de Hora */}
       <View style={styles.timeContainer}>
@@ -119,15 +144,15 @@ const styles = StyleSheet.create({
     alignItems: 'baseline',
     marginBottom: 10,
   },
-  hourText: { 
-    color: '#f4b400', 
-    fontSize: 26, 
-    fontWeight: 'bold' 
+  hourText: {
+    color: '#f4b400',
+    fontSize: 26,
+    fontWeight: 'bold',
   },
-  ampmText: { 
-    color: '#B0A8C5', 
-    fontSize: 14, 
-    marginTop: 2 
+  ampmText: {
+    color: '#B0A8C5',
+    fontSize: 14,
+    marginTop: 2,
   },
   textDisabled: {
     color: 'rgba(255, 255, 255, 0.3)',
@@ -164,14 +189,14 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     letterSpacing: 0.5,
   },
-  roomText: { 
-    color: '#FFFFFF', 
-    fontSize: 12, 
-    fontWeight: '500'
+  roomText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '500',
   },
   soldOutText: {
     color: '#ef4444',
     fontWeight: 'bold',
     letterSpacing: 0.5,
-  }
+  },
 });
