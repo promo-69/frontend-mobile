@@ -9,33 +9,39 @@ export default function ProfileLayout() {
         // Estilo global para el header nativo si decides usarlo (opcional)
         headerShown: false, // Lo ponemos en false porque ya diseñaste tus propios headers con ChevronLeft
         contentStyle: {
-          backgroundColor: theme.colors.background// Asegura el fondo oscuro de Cineflix en la transición
+          backgroundColor: theme.colors.background, // Asegura el fondo oscuro de Cineflix en la transición
         },
         animation: 'slide_from_bottom', // Animación nativa fluida de derecha a izquierda
       }}
     >
       {/* Index es el menú principal con las tarjetas de opciones */}
-      <Stack.Screen 
-        name="index" 
-        options={{ title: 'Mi Perfil' }} 
-      />
-      
+      <Stack.Screen name="index" options={{ title: 'Mi Perfil' }} />
+
       {/* Pantalla de formulario de datos personales */}
-      <Stack.Screen 
-        name="personal-data" 
-        options={{ 
+      <Stack.Screen
+        name="personal-data"
+        options={{
           title: 'Datos Personales',
           gestureEnabled: true, // Permite regresar arrastrando el dedo en iOS
-        }} 
+        }}
       />
-      
+
       {/* Pantalla de cambio de credenciales / seguridad */}
-      <Stack.Screen 
-        name="security" 
-        options={{ 
+      <Stack.Screen
+        name="security"
+        options={{
           title: 'Seguridad',
           gestureEnabled: true,
-        }} 
+        }}
+      />
+
+      {/* Módulo de Programa de Lealtad CinePuntos (tiene su propio Stack interno) */}
+      <Stack.Screen
+        name="loyalty-program"
+        options={{
+          title: 'CinePuntos',
+          gestureEnabled: true,
+        }}
       />
     </Stack>
   );

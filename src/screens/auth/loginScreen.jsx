@@ -63,46 +63,49 @@ export default function LoginScreen() {
     }
   };
 
- const onSubmit = async (data) => {
-  setError(null);
-  setIsLoading(true);
+  const onSubmit = async (data) => {
+    setError(null);
+    setIsLoading(true);
 
-  // 1. Limpieza rigurosa de datos (Evita el espacio invisible del teclado)
-  const cleanedData = {
-    email: data.email?.trim().toLowerCase(), // Pasamos a minúsculas para estandarizar
-    password: data.password // La contraseña NO se limpia con trim si acepta espacios válidos
-  };
+    // 1. Limpieza rigurosa de datos (Evita el espacio invisible del teclado)
+    const cleanedData = {
+      email: data.email?.trim().toLowerCase(), // Pasamos a minúsculas para estandarizar
+      password: data.password, // La contraseña NO se limpia con trim si acepta espacios válidos
+    };
 
-  try {
-    const result = await login(cleanedData);
+    try {
+      const result = await login(cleanedData);
 
+      if (result?.success) {
+        router.replace('/(main)/home');
+      } else {
+        // Validamos si la cuenta está bloqueada por falta de verificación
+        if (result?.code === 'UNVERIFIED_ACCOUNT') {
+          console.log(
+            '⚠️ Redirigiendo a verificación para:',
+            cleanedData.email
+          );
 
-    if (result?.success) {
-      router.replace('/(main)/home');
-    } else {
-      // Validamos si la cuenta está bloqueada por falta de verificación
-      if (result?.code === 'UNVERIFIED_ACCOUNT') {
-        console.log('⚠️ Redirigiendo a verificación para:', cleanedData.email);
+          await storageHelper.saveValue(
+            'user_email_to_verify',
+            cleanedData.email
+          );
 
-        await storageHelper.saveValue(
-          'user_email_to_verify',
-          cleanedData.email
-        );
+          router.replace('/(auth)/register-verify');
+          return;
+        }
 
-        router.replace('/(auth)/register-verify');
-        return;
+        // Usamos el mensaje ya resuelto por AuthContext (incluye fallback del backend,
+        // por ejemplo los minutos restantes reales en un bloqueo de cuenta - código 423/ACCOUNT_LOCKED)
+        setError(result?.message || getErrorMessage(result?.code));
       }
-
-      // Usamos el mapeador de errores basado en el código devuelto
-      setError(getErrorMessage(result?.code));
+    } catch (error) {
+      console.error('Login error en el componente:', error);
+      setError(AUTH_ERRORS.NETWORK_ERROR);
+    } finally {
+      setIsLoading(false);
     }
-  } catch (error) {
-    console.error('Login error en el componente:', error);
-    setError(AUTH_ERRORS.NETWORK_ERROR);
-  } finally {
-    setIsLoading(false);
-  }
-};
+  };
 
   const handleRegister = () => {
     router.push('/register');
@@ -224,8 +227,8 @@ export default function LoginScreen() {
             </View>
 
             {Error && (
-              <Animated.View 
-                entering={FadeInUp} 
+              <Animated.View
+                entering={FadeInUp}
                 exiting={FadeOutDown}
                 style={styles.authErrorContainer}
               >

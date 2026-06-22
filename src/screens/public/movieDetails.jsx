@@ -15,9 +15,11 @@ import {
 import DateSelector from '../../components/showtimes/DateSelector';
 import ShowtimesList from '../../components/showtimes/ShowtimesList';
 import MovieSkeleton from '../../components/showtimes/MovieSkeleton';
+import { MovieSubscribeButton } from '../../components/movies/MovieSubscribeButton';
 import { getMovieById } from '../../services/movies.service';
 import { getShowtimesByMovie } from '../../services/showtimes.service';
 import { formatHumanDate, generateNextDays } from '../../utils/dateUtils';
+import { useAuth } from '../../context/AuthContext';
 
 const { width } = Dimensions.get('window');
 const COLORS = {
@@ -41,6 +43,7 @@ const formatGenres = (genres) => {
 export default function MovieDetails() {
   const { movieId } = useLocalSearchParams();
   const router = useRouter();
+  const { isAuthenticated } = useAuth();
 
   const [movie, setMovie] = useState(null);
   const [showtimes, setShowtimes] = useState([]);
@@ -49,12 +52,12 @@ export default function MovieDetails() {
   const [imageError, setImageError] = useState(false);
 
   const todayShortString = useMemo(() => {
-  const localDate = new Date();
-  const year = localDate.getFullYear();
-  const month = (localDate.getMonth() + 1).toString().padStart(2, '0');
-  const day = localDate.getDate().toString().padStart(2, '0');
-  return `${year}-${month}-${day}`;
-}, []);
+    const localDate = new Date();
+    const year = localDate.getFullYear();
+    const month = (localDate.getMonth() + 1).toString().padStart(2, '0');
+    const day = localDate.getDate().toString().padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }, []);
 
   const [selectedDate, setSelectedDate] = useState(todayShortString);
 
@@ -88,17 +91,19 @@ export default function MovieDetails() {
 
     // Crear un Set con los strings "YYYY-MM-DD" de las funciones que vienen del backend
     const activeDatesSet = new Set(
-    showtimes
-      .map(st => st.start_time ? st.start_time.substring(0, 10) : null)
-      .filter(Boolean)
-  );
+      showtimes
+        .map((st) => (st.start_time ? st.start_time.substring(0, 10) : null))
+        .filter(Boolean)
+    );
     // Retornar únicamente los días del calendario que tengan funciones asociadas
-    return next7Days.filter(day => activeDatesSet.has(day.fullDate));
+    return next7Days.filter((day) => activeDatesSet.has(day.fullDate));
   }, [showtimes]);
 
   useEffect(() => {
     if (availableDatesCarousel.length > 0) {
-      const isCurrentDateAvailable = availableDatesCarousel.some(d => d.fullDate === selectedDate);
+      const isCurrentDateAvailable = availableDatesCarousel.some(
+        (d) => d.fullDate === selectedDate
+      );
       if (!isCurrentDateAvailable) {
         setSelectedDate(availableDatesCarousel[0].fullDate);
       }
@@ -211,13 +216,20 @@ export default function MovieDetails() {
           <Text style={styles.sectionTitle}>Sinopsis</Text>
           <Text style={styles.synopsis}>{movie.synopsis}</Text>
 
+          {movie.lifecycle_state?.description === 'Próximamente' &&
+            isAuthenticated && (
+              <View style={styles.subscribeWrapper}>
+                <MovieSubscribeButton movieId={movieId} />
+              </View>
+            )}
+
           <DateSelector
             selectedDate={selectedDate}
             onSelectDate={setSelectedDate}
             weekdays={availableDatesCarousel}
           />
 
-          <ShowtimesList 
+          <ShowtimesList
             showtimes={showtimes}
             movieId={movieId}
             selectedDate={selectedDate}
@@ -230,9 +242,10 @@ export default function MovieDetails() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.bgDeep },
-  heroContainer: { 
-    width: '100%', 
-    height: width * 1.35 },
+  heroContainer: {
+    width: '100%',
+    height: width * 1.35,
+  },
   mainPoster: { width: '100%', height: '100%', resizeMode: 'cover' },
 
   placeholderHero: {
@@ -256,10 +269,10 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 50,
     left: 20,
-    width: 44,                
+    width: 44,
     height: 44,
     marginRight: 2,
-    justifyContent: 'center',   // Centrado vertical de los hijos (icono)
+    justifyContent: 'center', // Centrado vertical de los hijos (icono)
     alignItems: 'center',
     backgroundColor: 'rgba(0,0,0,0.4)',
     borderRadius: 25,
@@ -283,9 +296,9 @@ const styles = StyleSheet.create({
     fontSize: 13,
     marginLeft: 8,
   },
-  infoContent: { 
-    paddingHorizontal: 20, 
-    marginTop: 0 
+  infoContent: {
+    paddingHorizontal: 20,
+    marginTop: 0,
   },
   title: {
     fontSize: 32,
@@ -322,4 +335,5 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   synopsis: { color: COLORS.textGray, fontSize: 15, lineHeight: 22 },
+  subscribeWrapper: { marginTop: 16 },
 });

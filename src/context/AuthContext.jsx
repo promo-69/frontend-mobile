@@ -83,7 +83,7 @@ export const AuthProvider = ({ children }) => {
         return {
           success: false,
           code: response?.code,
-          message: getErrorMessage(response?.code),
+          message: getErrorMessage(response?.code, response?.message),
         };
       }
 
@@ -98,11 +98,12 @@ export const AuthProvider = ({ children }) => {
       console.log(error);
 
       // Extraemos el mensaje y el code directamente del payload de error de la API
-      const backendCode = error.response?.data?.code; // Ej: "UNVERIFIED_ACCOUNT"
+      const backendCode = error.response?.data?.code; // Ej: "UNVERIFIED_ACCOUNT", "ACCOUNT_LOCKED"
+      const backendMessage = error.response?.data?.message; // Mensaje específico del backend (ej. minutos restantes de bloqueo)
 
       return {
         success: false,
-        message: getErrorMessage(backendCode),
+        message: getErrorMessage(backendCode, backendMessage),
         code: backendCode || null,
         status: error.response?.status ?? null,
       };

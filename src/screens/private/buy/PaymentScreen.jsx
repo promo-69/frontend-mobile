@@ -16,12 +16,21 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppText } from '../../../components/AppText';
 import { useCart } from '../../../context/CartContext';
 import { registerPayment } from '../../../services/orders.service';
-import { usersService } from '../../../services/users.service';
+import { useLoyalty } from '../../../hooks/loyalty/useLoyalty';
 import { theme } from '../../../constants';
 
 const { colors, spacing, borderRadius } = theme;
 
 const USD_CURRENCY_ID = 1;
+
+// IDs reales de payment_methods (ver migrate/seeders/20260619000000-refactor-payment-methods.js).
+// El backend ignora/sobreescribe `currency` cuando payment_method es LOYALTY_POINTS,
+// así que solo este id importa para distinguir el método de canje de puntos.
+const PAYMENT_METHOD_ID = {
+  mobile_payment: 3, // Pago Móvil
+  transfer: 4, // Transferencia Bancaria
+  points: 5, // Puntos de Fidelidad
+};
 
 const fmtVes = (n) =>
   `Bs. ${Number(n || 0).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -310,8 +319,7 @@ export default function PaymentScreen() {
   }, [timeLeft, router, clearCart]);
 
   // ─── Puntos y métodos ────────────────────────────────────────────────────────
-  const [pointsBalance, setPointsBalance] = useState(0);
-  const [loadingPoints, setLoadingPoints] = useState(false);
+  const { pointsBalance, loading: loadingPoints } = useLoyalty();
   const [selectedMethod, setSelectedMethod] = useState(null);
   const [pointsToRedeem, setPointsToRedeem] = useState('');
   const [formData, setFormData] = useState({
@@ -322,26 +330,6 @@ export default function PaymentScreen() {
     holder: '',
   });
   const [submitting, setSubmitting] = useState(false);
-
-  useEffect(() => {
-    if (selectedMethod !== 'points') return;
-    let cancelled = false;
-    setLoadingPoints(true);
-    usersService
-      .getLoyaltyInfo()
-      .then((data) => {
-        if (!cancelled) setPointsBalance(data?.points_balance ?? 0);
-      })
-      .catch(() => {
-        if (!cancelled) setPointsBalance(0);
-      })
-      .finally(() => {
-        if (!cancelled) setLoadingPoints(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [selectedMethod]);
 
   const selectMethod = (key) => {
     setSelectedMethod(key);
@@ -407,10 +395,15 @@ export default function PaymentScreen() {
     setSubmitting(true);
     try {
       const pointsAmount = Number(pointsToRedeem) || 0;
+      const isPointsPayment = selectedMethod === 'points';
       const payload = {
-        payment_method: selectedMethod,
-        amount: selectedMethod === 'points' ? pointsAmount : totalVes,
-        currency,
+        payment_method: PAYMENT_METHOD_ID[selectedMethod],
+        // El backend espera la CANTIDAD DE PUNTOS a canjear cuando el método es 'points',
+        // no el monto en VES. Para los demás métodos, sigue siendo el monto a pagar.
+        amount: isPointsPayment ? pointsAmount : totalVes,
+        // `currency` es requerido por el backend incluso para puntos (lo sobreescribe
+        // internamente con el id de la moneda PTS), así que igual mandamos un valor válido.
+        currency: isPointsPayment ? USD_CURRENCY_ID : currency,
         ...(formData.reference.trim()
           ? { reference_number: formData.reference.trim() }
           : {}),
@@ -554,11 +547,20 @@ export default function PaymentScreen() {
         <TouchableOpacity
           style={[
             styles.payBtn,
-            (!selectedMethod || submitting || timerExpired) &&
+            (!selectedMethod ||
+              submitting ||
+              timerExpired ||
+              (selectedMethod === 'points' &&
+                (Number(pointsToRedeem) || 0) <= 0)) &&
               styles.payBtnDisabled,
           ]}
           onPress={handlePay}
-          disabled={!selectedMethod || submitting || timerExpired}
+          disabled={
+            !selectedMethod ||
+            submitting ||
+            timerExpired ||
+            (selectedMethod === 'points' && (Number(pointsToRedeem) || 0) <= 0)
+          }
           activeOpacity={0.8}
         >
           {submitting ? (
