@@ -1,4 +1,6 @@
 import { ActivityIndicator, FlatList, StyleSheet, View, Text } from 'react-native';
+import { AppText } from '../../components/AppText'
+import { theme } from '../../constants';
 import CinemaCard from './CinemaCard';
 
 export default function CinemaGrid({ cinemas = [], onPress, onLoadMore, loadingMore }) {
@@ -15,10 +17,26 @@ export default function CinemaGrid({ cinemas = [], onPress, onLoadMore, loadingM
     if (!loadingMore) return null;
     return (
       <View style={styles.footerLoader}>
-        <ActivityIndicator size="small" color="#FFC864" />
+        <ActivityIndicator size="small" color="theme.colors.primary"/>
       </View>
     );
   };
+
+  const renderHeader = () => (
+    <View style={styles.headerContainer}>
+      <View style={styles.borderIndicator}>
+        {/* TÍTULO PRINCIPAL */}
+        <AppText style={styles.mainTitle}>
+          Nuestros <AppText style={styles.highlightedText}>Cines</AppText>
+        </AppText>
+        
+        {/* TEXTO DESCRIPTIVO */}
+        <AppText style={styles.subtitle}>
+          Encuentra el complejo Cineflix más cercano a ti y vive la magia.
+        </AppText>
+      </View>
+    </View>
+  );
 
   return (
     <FlatList
@@ -33,6 +51,7 @@ export default function CinemaGrid({ cinemas = [], onPress, onLoadMore, loadingM
       ) }
       contentContainerStyle={styles.container}
       showsVerticalScrollIndicator={false}
+      ListHeaderComponent={renderHeader} 
       onEndReached={onLoadMore}
       onEndReachedThreshold={0.3}
       ListFooterComponent={renderFooter}
@@ -44,6 +63,37 @@ const styles = StyleSheet.create({
   container: {
     padding: 16,
     paddingBottom: 32,
+  },
+  headerContainer: {
+    paddingTop: 16,
+    paddingBottom: 20,
+  },
+  borderIndicator: {
+    borderLeftWidth: 4,
+    borderLeftColor: '#F6AD38',
+    paddingLeft: 16,
+    alignItems: 'flex-start',
+  },
+  mainTitle: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    textTransform: 'uppercase',
+    lineHeight: 24,
+    color: '#FFFFFF',
+   
+  },
+  highlightedText: {
+    fontSize: 28,
+    color: '#F6AD38',
+  },
+  subtitle: {
+    fontSize: 14,
+    color: '#B0A8C5', 
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    fontWeight: 'semibold',
+    lineHeight: 20,
+    marginTop: 8,
   },
   emptyContainer: {
     padding: 40,

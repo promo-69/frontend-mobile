@@ -1,11 +1,11 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { useMemo } from 'react';
 import {
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 
 const SEAT_SIZE = 35;
@@ -67,18 +67,22 @@ export default function SeatMap({ seatsData, selectedSeats, onToggleSeat }) {
             <View key={row.rowName} style={styles.row}>
               <Text style={styles.rowLabel}>{row.rowName}</Text>
               {row.seats.map((seat) => {
-                const isSelected = selectedSeats.some(
-                  (s) => s.seatId === seat.id
-                );
-                
+                const seatId = seat.id ?? seat.seatId ?? seat._id;
+                const seatColumn = seat.column ?? seat.number ?? '';
+
+                const isSelected =
+                  Array.isArray(selectedSeats) &&
+                  selectedSeats.some((s) => s.seatId === seatId);
+
                 // Basado en el nuevo API, los estados pueden ser: 'available', 'sold', 'maintenance', 'locked'
-                // Cualquier estado distinto de 'available' se considera no seleccionable por el usuario.
-                const isOccupied = seat.status !== 'available';
+                // Si no viene el estado, asumimos 'available'
+                const status = seat.status ?? 'available';
+                const isOccupied = status !== 'available';
                 const isDisabled = isOccupied;
 
                 return (
                   <TouchableOpacity
-                    key={seat.id}
+                    key={seatId ?? `${row.rowName}-${seatColumn}`}
                     style={[
                       styles.seat,
                       isOccupied && styles.seatOccupied,
@@ -86,13 +90,19 @@ export default function SeatMap({ seatsData, selectedSeats, onToggleSeat }) {
                       !isOccupied && !isSelected && styles.seatAvailable,
                     ]}
                     onPress={() =>
-                      onToggleSeat(seat.id, {
+                      !isDisabled &&
+                      onToggleSeat(seatId, {
                         row: seat.row,
-                        column: seat.column,
-                        price: seat.price,
+                        column: seatColumn,
+                        price: seat.price ?? 0,
                       })
                     }
                     disabled={isDisabled}
+                    accessibilityLabel={`Asiento ${seat.row}${seatColumn} ${isOccupied ? 'ocupado' : 'disponible'}`}
+                    accessibilityState={{
+                      disabled: isDisabled,
+                      selected: isSelected,
+                    }}
                   >
                     <Text
                       style={[
@@ -100,7 +110,7 @@ export default function SeatMap({ seatsData, selectedSeats, onToggleSeat }) {
                         isOccupied && styles.seatTextOccupied,
                       ]}
                     >
-                      {seat.column}
+                      {seatColumn}
                     </Text>
                   </TouchableOpacity>
                 );

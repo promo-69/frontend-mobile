@@ -3,7 +3,7 @@ import { Animated, Dimensions, StyleSheet, View } from 'react-native';
 
 const { width } = Dimensions.get('window');
 
-export default function MovieSkeleton({ variant = 'details' }) {
+export default function ContentSkeleton({ variant = 'details' }) {
   const opacity = useRef(new Animated.Value(0.3)).current;
 
   useEffect(() => {
@@ -84,6 +84,17 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     backgroundColor: 'rgba(255,255,255,0.05)',
   },
-  cardTitle: { height: 14, width: '80%', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 4, marginBottom: 4 },
-  cardSubtitle: { height: 10, width: '50%', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 4 },
+  cardTitle: {
+    height: 14,
+    width: '80%',
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: 4,
+    marginBottom: 4,
+  },
+  cardSubtitle: {
+    height: 10,
+    width: '50%',
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: 4,
+  },
 });

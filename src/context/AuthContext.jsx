@@ -39,8 +39,8 @@ export const AuthProvider = ({ children }) => {
             }
 
             // 3. Intentar renovar la sesión proactivamente
-            const response = await authService.refreshToken();
-            if (!response.success) {
+            const response = await authService.refreshToken(refreshToken);
+            if (!response?.success) {
               throw new Error('No se pudo renovar la sesión');
             }
             // Persistir y exponer el user fresco (trae loyaltyPoints actualizados)
@@ -251,7 +251,7 @@ export const AuthProvider = ({ children }) => {
         login,
         register,
         logout,
-        isAuthenticated: !!user,
+        isAuthenticated: !!user && Object.keys(user).length > 0,
         verifyAccount,
         sendRecoveryEmail,
         verifyRecoveryCode,

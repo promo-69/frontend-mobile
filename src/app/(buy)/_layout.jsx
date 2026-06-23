@@ -20,6 +20,12 @@ export default function BuyLayout() {
         
       >
         <Stack.Screen
+          name='tickets'
+          options={{ title: ' Boletos '}}
+        />
+          
+       
+        <Stack.Screen
           name="selectSeats"
           options={{ title: 'Selecciona tus Asientos' }}
         />
@@ -31,7 +37,10 @@ export default function BuyLayout() {
           name="checkout"
           options={{ title: 'Resumen de tu Orden' }}
         />
-        <Stack.Screen name="payment" options={{ title: 'Proceder al Pago' }} />
+        <Stack.Screen 
+        name="payment" 
+        options={{ title: 'Proceder al Pago' }} 
+        />
         <Stack.Screen
           name="order-success"
           options={{

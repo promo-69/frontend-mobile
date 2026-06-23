@@ -82,7 +82,7 @@ const styles = StyleSheet.create({
   text: {
     ...theme.typography.variants.button,
     color: theme.colors.textPrimary,
-    tectAlign: 'center',         
+    textAlign: 'center',         
     textAlignVertical: 'center',
   },
 });

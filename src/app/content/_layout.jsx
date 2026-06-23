@@ -1,7 +1,7 @@
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 
-export default function MovieLayout() {
+export default function ContentLayout() {
   return (
     <>
       {/* Forzamos que la barra de estado del teléfono sea blanca/clara para el fondo oscuro */}

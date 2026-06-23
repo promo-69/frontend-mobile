@@ -1,14 +1,16 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import {
-    Animated,
-    Dimensions,
-    Modal,
-    Pressable,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Animated,
+  Dimensions,
+  Modal,
+  PanResponder,
+  Pressable,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
+import { theme } from '../../constants';
 import { useBottomSheet } from '../../context/BottomSheetContext';
 
 const { height } = Dimensions.get('window');
@@ -34,18 +36,52 @@ export default function BottomSheet() {
 
   const translateY = useRef(new Animated.Value(height)).current;
 
+  // Configuración del gesto de arrastre
+  const panResponder = useMemo(
+    () =>
+      PanResponder.create({
+        onStartShouldSetPanResponder: () => true,
+        onMoveShouldSetPanResponder: (_, gestureState) => {
+          // Solo capturar si el movimiento es principalmente vertical y hacia abajo
+          return Math.abs(gestureState.dy) > 5;
+        },
+        onPanResponderMove: (_, gestureState) => {
+          // Solo permitir arrastrar hacia abajo (dy > 0)
+          if (gestureState.dy > 0) {
+            translateY.setValue(gestureState.dy);
+          }
+        },
+        onPanResponderRelease: (_, gestureState) => {
+          // Si se arrastró más de 150px o se soltó con rapidez hacia abajo
+          if (gestureState.dy > 150 || gestureState.vy > 0.5) {
+            closeSheet();
+          } else {
+            // Si no fue suficiente, regresar a la posición abierta
+            Animated.spring(translateY, {
+              toValue: 0,
+              useNativeDriver: true,
+              bounciness: 5,
+            }).start();
+          }
+        },
+      }),
+    [translateY]
+  );
+
+  const closeSheet = () => {
+    Animated.timing(translateY, {
+      toValue: height,
+      duration: 250,
+      useNativeDriver: true,
+    }).start(() => hideBottomSheet());
+  };
+
   useEffect(() => {
     if (visible) {
       Animated.spring(translateY, {
         toValue: 0,
         useNativeDriver: true,
         bounciness: 5,
-      }).start();
-    } else {
-      Animated.timing(translateY, {
-        toValue: height,
-        duration: 250,
-        useNativeDriver: true,
       }).start();
     }
   }, [visible]);
@@ -55,10 +91,11 @@ export default function BottomSheet() {
   return (
     <Modal transparent visible={visible} animationType="none">
       <View style={styles.overlay}>
-        <Pressable style={styles.backdrop} onPress={hideBottomSheet} />
+        <Pressable style={styles.backdrop} onPress={closeSheet} />
 
         <Animated.View
           style={[styles.sheetContainer, { transform: [{ translateY }] }]}
+          {...panResponder.panHandlers}
         >
           <View style={styles.handle} />
 
@@ -67,30 +104,30 @@ export default function BottomSheet() {
             {message ? <Text style={styles.message}>{message}</Text> : null}
 
             <View style={styles.buttonContainer}>
-              {secondaryButton && (
-                <TouchableOpacity
-                  style={[styles.button, styles.secondaryButton]}
-                  onPress={() => {
-                    secondaryButton.onPress?.();
-                    hideBottomSheet();
-                  }}
-                >
-                  <Text style={styles.secondaryButtonText}>
-                    {secondaryButton.text}
-                  </Text>
-                </TouchableOpacity>
-              )}
-
               {primaryButton && (
                 <TouchableOpacity
                   style={[styles.button, styles.primaryButton]}
                   onPress={() => {
                     primaryButton.onPress?.();
-                    hideBottomSheet();
+                    closeSheet();
                   }}
                 >
                   <Text style={styles.primaryButtonText}>
                     {primaryButton.text}
+                  </Text>
+                </TouchableOpacity>
+              )}
+
+              {secondaryButton && (
+                <TouchableOpacity
+                  style={[styles.button, styles.secondaryButton]}
+                  onPress={() => {
+                    secondaryButton.onPress?.();
+                    closeSheet();
+                  }}
+                >
+                  <Text style={styles.secondaryButtonText}>
+                    {secondaryButton.text}
                   </Text>
                 </TouchableOpacity>
               )}
@@ -112,14 +149,14 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
   },
   sheetContainer: {
-    backgroundColor: COLORS.bgDeep,
+    backgroundColor: theme.colors.background.accent,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingTop: 12,
     paddingBottom: 40,
     paddingHorizontal: 24,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderTopColor: theme.colors.borders.accent,
   },
   handle: {
     width: 40,
@@ -157,10 +194,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   primaryButton: {
-    backgroundColor: COLORS.accent,
+    backgroundColor: theme.colors.accent,
   },
   primaryButtonText: {
-    color: '#000',
+    color: theme.colors.textAccent,
     fontWeight: 'bold',
     fontSize: 16,
   },

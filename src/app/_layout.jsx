@@ -1,15 +1,19 @@
 import { useFonts } from 'expo-font';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
+import * as NavigationBar from 'expo-navigation-bar';
 import { useEffect } from 'react';
+import { Platform } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import BottomSheet from '../components/ui/BottomSheet';
 import { AuthProvider, useAuth } from '../context/AuthContext';
 import { CartProvider } from '../context/CartContext';
 import { BottomSheetProvider } from '../context/BottomSheetContext';
+import { GestureHandlerRootView } from 'react-native-gesture-handler'
+import { theme } from '../constants';
 
 SplashScreen.preventAutoHideAsync();
-
+ 
 function NavigationGuard() {
   const { isAuthenticated, isLoading } = useAuth();
   const segments = useSegments();
@@ -43,7 +47,8 @@ function NavigationGuard() {
         name="(auth)"
         options={{ animation: 'slide_from_bottom' }}
       />
-      <Stack.Screen name="movie" />
+      {/* Registramos el grupo de películas y el flujo de compra */}
+      <Stack.Screen name="content" />
       <Stack.Screen name="(buy)" />
       <Stack.Screen name="index" options={{ href: null }} />
     </Stack>
@@ -60,21 +65,35 @@ export default function RootLayout() {
   });
 
   useEffect(() => {
-    if (fontsLoaded) SplashScreen.hideAsync();
+    if (Platform.OS === 'android') {
+      // Sincroniza la barra de botones de Android con el color del Tab Bar
+      NavigationBar.setBackgroundColorAsync(theme.colors.background.accent);
+      NavigationBar.setButtonStyleAsync('light'); // Iconos claros para fondo oscuro
+    }
+  }, []);
+
+  useEffect(() => {
+    if (fontsLoaded) {
+      SplashScreen.hideAsync();
+    }
   }, [fontsLoaded]);
 
   if (!fontsLoaded) return null;
 
   return (
+    <GestureHandlerRootView style={{flex: 1}}>
+      <SafeAreaProvider>
     <AuthProvider>
       <CartProvider>
         <BottomSheetProvider>
-          <SafeAreaProvider>
+          
             <NavigationGuard />
             <BottomSheet />
-          </SafeAreaProvider>
+          
         </BottomSheetProvider>
       </CartProvider>
     </AuthProvider>
+    </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }

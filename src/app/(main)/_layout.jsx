@@ -13,11 +13,11 @@ export default function MainLayout() {
         tabBarActiveTintColor: theme.colors.itemActive,
         tabBarInactiveTintColor: theme.colors.itemInactive,
         tabBarStyle: {
-          backgroundColor: theme.colors.bgHeader,
+          backgroundColor: theme.colors.background.accent,
           borderTopWidth: 0,
-          height: 60 + insets.bottom,
+          height: 65 + insets.bottom, 
           paddingBottom: Math.max(insets.bottom, 8),
-          paddingTop: 8,
+          paddingTop: 10,
         },
         tabBarLabelStyle: {
           fontFamily: theme.typography.variants.label,

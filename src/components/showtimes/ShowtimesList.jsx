@@ -1,58 +1,69 @@
-import { useMemo } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
-import ShowtimeCard from './ShowtimeCard';
+import { View, StyleSheet, Text } from 'react-native';
+import { MapPin, CalendarX } from 'lucide-react-native';
+import ShowtimeCard from './ShowtimeCard'; 
 
-export default function ShowtimesList({ showtimes, movieId, selectedDate }) {
- 
-  //Filtrar las funciones en tiempo real por la fecha seleccionada
-  const filteredShowtimes = useMemo(() => {
-    if (!Array.isArray(showtimes)) return [];
-    
-    return showtimes.filter((item) => {
-      if (!item.start_time) return false;
-      // Extrae la parte "YYYY-MM-DD" de forma más robusta (primeros 10 caracteres)
-      const itemDate = item.start_time.substring(0, 10);
-      return itemDate === selectedDate;
-    });
-  }, [showtimes, selectedDate]);
+const COLORS = {
+  textMain: '#FFFFFF',
+  textGray: '#B0A8C5',
+  accent: '#f4b400',
+  cardBg: 'rgba(255, 255, 255, 0.04)',
+  border: 'rgba(255, 255, 255, 0.08)',
+};
+
+export default function ShowtimesList({ cinemasData, showtimesData, contentId, type }) {
+  
+  // Estado vacío: Si ninguna sucursal tiene funciones asignadas para este día
+  if (!cinemasData || cinemasData.length === 0) {
+    return (
+      <View style={styles.emptyContainer}>
+        <CalendarX size={44} color={COLORS.textGray} strokeWidth={1.5} />
+        <Text style={styles.emptyText}>
+          No hay funciones programadas para este día.
+        </Text>
+      </View>
+    );
+  }
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.sectionTitle}>Funciones Disponibles</Text>
-      
-      {filteredShowtimes.length > 0 ? (
-        <View style={styles.gridContainer}>
-        {filteredShowtimes.map((item) => (
-          <ShowtimeCard key={item.id} showtime={item} movieId={movieId} />
-        ))}
-      </View>
-      ) : (
-        <Text style={styles.emptyText}>
-          No hay funciones programadas para hoy.
-        </Text>
-      )}
+    <View style={styles.listContainer}>
+      {cinemasData.map((cinemaGroup) => (
+        <View key={cinemaGroup.cinema.id} style={styles.cinemaCard}>
+          
+          {/* Renderizado de la información del Cinema */}
+          <View style={styles.cinemaHeader}>
+            <MapPin size={18} color={COLORS.accent} />
+            <Text style={styles.cinemaName}>{cinemaGroup.cinema.name}</Text>
+          </View>
+
+          {/* Grid envolvente con la inyección dinámica del tipo de contenido */}
+          <View style={styles.hoursGrid}>
+            {cinemaGroup.showtimes?.map((showtime) => (
+              <ShowtimeCard 
+                key={showtime.id} 
+                showtime={showtime} 
+                contentId={contentId} 
+                type={type}
+              />
+            ))}
+          </View>
+
+        </View>
+      ))}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { marginTop: 30, marginBottom: 40 },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#f4b400',
-    marginBottom: 15,
-    textTransform: 'uppercase',
+  listContainer: { width: '100%', marginBottom: 30 },
+  cinemaCard: { backgroundColor: COLORS.cardBg, borderRadius: 16, borderWidth: 1, borderColor: COLORS.border, padding: 16, marginBottom: 16 },
+  cinemaHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 16, borderBottomWidth: 1, borderBottomColor: COLORS.border, paddingBottom: 8 },
+  cinemaName: { color: COLORS.textMain, fontSize: 15, fontWeight: '700' },
+  hoursGrid: { 
+    flexDirection: 'row', 
+    flexWrap: 'wrap', 
+    gap: 12,
+    justifyContent: 'flex-start'
   },
-  gridContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 16, 
-  },
-  emptyText: {
-    color: '#B0A8C5',
-    fontStyle: 'italic',
-    textAlign: 'center',
-    marginTop: 10,
-  },
+  emptyContainer: { width: '100%', paddingVertical: 40, alignItems: 'center', justifyContent: 'center', backgroundColor: COLORS.cardBg, borderRadius: 16, borderWidth: 1, borderColor: COLORS.border, borderStyle: 'dashed', marginBottom: 30, gap: 12 },
+  emptyText: { color: COLORS.textGray, fontSize: 14, fontWeight: '500', textAlign: 'center', paddingHorizontal: 20 },
 });

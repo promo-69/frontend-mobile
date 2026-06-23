@@ -24,7 +24,7 @@ export default function HomeUpcoming({ movies = [] }) {
         <Text style={styles.sectionTitle}>Próximos Estrenos</Text>
         <TouchableOpacity
           style={styles.seeMoreBtn}
-          onPress={() => router.push('/movies/upcoming')}
+          onPress={() => router.push('/content/upcoming')}
         >
           <Text style={styles.seeMoreText}>Ver Todo</Text>
           <ChevronRight size={14} color="#f4b400" />
@@ -39,7 +39,10 @@ export default function HomeUpcoming({ movies = [] }) {
             subtitle={`Estreno: ${formatReleaseDate(movie.release_date)}`}
             subtitleColor="#FFC864"
             badgeText="Próximamente"
-            onPress={() => router.push(`/movie/${movie.id}`)}
+            onPress={() => router.push({
+              pathname: `/content/${movie.id}`,
+              params: { movieId: movie.id, type: movie.type || 'movie' }
+            })}
           />
         ))}
       </ScrollView>

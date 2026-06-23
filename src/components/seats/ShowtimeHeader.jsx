@@ -10,18 +10,23 @@ const COLORS = {
 export default function ShowtimeHeader({ movie, showtime }) {
   if (!movie || !showtime) return null;
 
-  console.log('→ ShowtimeHeader recibe:', showtime);
-  const formattedTime = formatTime12hrs(showtime.booking?.start_time);
+  if (__DEV__) console.log('→ ShowtimeHeader recibe:', showtime);
+  const roomName =
+    showtime.booking?.room?.name ??
+    showtime.booking?.room ??
+    'Sala Desconocida';
+  const formattedTime = formatTime12hrs(showtime.booking?.start_time) || {
+    time: '',
+    ampm: '',
+  };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.movieTitle} numberOfLines={1}>
-        {movie.title}
+      <Text style={styles.movieTitle}>
+        {showtime.event?.title || showtime.movie?.title}
       </Text>
       <View style={styles.detailsRow}>
-        <Text style={styles.detailText}>
-          {showtime.booking?.room || 'Sala Desconocida'}
-        </Text>
+        <Text style={styles.detailText}>{roomName}</Text>
         <Text style={styles.detailSeparator}>•</Text>
         <Text style={styles.detailText}>
           {showtime.projection_type?.description || 'Tipo Desconocido'}
@@ -32,7 +37,7 @@ export default function ShowtimeHeader({ movie, showtime }) {
         </Text>
       </View>
       <Text style={styles.timeText}>
-        {formattedTime?.time} {formattedTime?.ampm}
+        {formattedTime.time} {formattedTime.ampm}
       </Text>
     </View>
   );
@@ -50,6 +55,9 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: COLORS.textMain,
     marginBottom: 5,
+    textAlign: 'center',
+    alignSelf: 'center',
+    flexShrink: 1,
   },
   detailsRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 5 },
   detailText: { fontSize: 13, color: COLORS.textGray },
