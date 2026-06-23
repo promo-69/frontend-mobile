@@ -25,17 +25,13 @@ export default function ProfileLayout() {
         name="personal-data" 
         options={{ 
           title: 'Datos Personales',
-          gestureEnabled: true, // Permite regresar arrastrando el dedo en iOS
+          gestureEnabled: true, 
         }} 
       />
       
       {/* Pantalla de cambio de credenciales / seguridad */}
       <Stack.Screen 
-        name="security" 
-        options={{ 
-          title: 'Seguridad',
-          gestureEnabled: true,
-        }} 
+        name="security/index" 
       />
     </Stack>
   );
