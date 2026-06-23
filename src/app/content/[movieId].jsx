@@ -1,5 +1,5 @@
-import ContentDetails from '../../screens/public/ContentDetails';
+import ViewDetails from '../../screens/public/ViewDetails';
 
 export default function ContentDetailsScreen() {
-  return <ContentDetails/>;
+  return <ViewDetails />;
 }

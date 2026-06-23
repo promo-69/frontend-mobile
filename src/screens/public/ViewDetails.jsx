@@ -31,7 +31,7 @@ const COLORS = {
   textGray: '#B0A8C5',
 };
 
-export default function ContentDetails() {
+export default function ViewDetails() {
   const { movieId, id, type = 'movie' } = useLocalSearchParams();
   // En Expo Router, si el archivo es [movieId].jsx, el valor está en movieId
   const effectiveId = movieId || id;
