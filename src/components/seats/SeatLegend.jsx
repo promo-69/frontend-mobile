@@ -37,8 +37,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     backgroundColor: 'rgba(0,0,0,0.2)', // Fondo sutil para la leyenda
     borderRadius: 10,
-    marginHorizontal: 20,
-    marginTop: 10,
+    marginTop: 4,
   },
   legendItem: { flexDirection: 'row', alignItems: 'center' },
   colorBox: { width: 16, height: 16, borderRadius: 4, marginRight: 8 },

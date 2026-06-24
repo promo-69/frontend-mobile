@@ -13,7 +13,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import SeatLegend from '../../../components/seats/SeatLegend';
 import SeatMap from '../../../components/seats/SeatMap';
 import ShowtimeHeader from '../../../components/seats/ShowtimeHeader';
-import ZoomableContainer from '../../../components/seats/ZoomableContainer';
 import { useCart } from '../../../context/CartContext';
 import { useSeatLock } from '../../../hooks/buy/useSeatLock';
 import { getMovieById } from '../../../services/movies.service';
@@ -43,7 +42,6 @@ export default function SelectSeats() {
     updateCartDetails,
     clearCart,
     clearProducts,
-    totalAmount,
   } = useCart();
 
   // Marca si estamos avanzando en el flujo (no debemos liberar locks al avanzar)
@@ -62,7 +60,14 @@ export default function SelectSeats() {
 
   // Marca asientos como ocupados cuando otros usuarios los toman o compran
   const handleSeatsTakenByOthers = useCallback(
-    (seatIds) => {
+    (payload) => {
+      // El backend puede emitir un array directo, o un objeto { seatIds }/{ seats }
+      const seatIds = Array.isArray(payload)
+        ? payload
+        : (payload?.seatIds ??
+          payload?.seats ??
+          (payload?.seatId != null ? [payload.seatId] : []));
+      if (!seatIds.length) return;
       setLiveSeatStatus((prev) => {
         const next = { ...prev };
         for (const id of seatIds) next[id] = 'occupied';
@@ -80,7 +85,13 @@ export default function SelectSeats() {
 
   // Libera asientos (vuelven a disponibles) cuando otros los sueltan
   const handleSeatsReleased = useCallback(
-    (seatIds) => {
+    (payload) => {
+      const seatIds = Array.isArray(payload)
+        ? payload
+        : (payload?.seatIds ??
+          payload?.seats ??
+          (payload?.seatId != null ? [payload.seatId] : []));
+      if (!seatIds.length) return;
       setLiveSeatStatus((prev) => {
         const next = { ...prev };
         for (const id of seatIds) {
@@ -385,7 +396,6 @@ export default function SelectSeats() {
       />
 
       <ShowtimeHeader movie={movie} showtime={showtime} />
-      <SeatLegend />
 
       {/* Indicador de conexión en tiempo real (solo mientras se prepara) */}
       {!realtimeReady && (
@@ -396,13 +406,14 @@ export default function SelectSeats() {
       )}
 
       <View style={styles.mapViewport}>
-        <ZoomableContainer>
+        <View style={styles.gridCard}>
           <SeatMap
             seatsData={displaySeats}
             selectedSeats={cart.tickets}
             onToggleSeat={handleToggleSeat}
           />
-        </ZoomableContainer>
+        </View>
+        <SeatLegend />
       </View>
 
       {/** Accion flotante */}
@@ -417,8 +428,8 @@ export default function SelectSeats() {
             disabled={lockingSeatId !== null}
           >
             <Text style={styles.continueButtonText}>
-              Continuar al pago ({showtime.currency?.symbol || '$'}
-              {totalAmount.toFixed(2)})
+              Continuar · {cart.tickets.length}{' '}
+              {cart.tickets.length === 1 ? 'asiento' : 'asientos'}
             </Text>
           </TouchableOpacity>
         </View>
@@ -464,9 +475,19 @@ const styles = StyleSheet.create({
   mapViewport: {
     flex: 1,
     overflow: 'hidden',
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingBottom: 100, //Espacio libre para que la ultima fila no se oculte detrás del footer
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 100, // Espacio libre para que la última fila no se oculte detrás del footer
+  },
+  gridCard: {
+    flex: 1,
+    backgroundColor: 'rgba(60, 36, 90, 0.35)',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(157, 91, 181, 0.25)',
+    paddingVertical: 8,
+    marginBottom: 12,
+    overflow: 'hidden',
   },
   bottomActionBar: {
     position: 'absolute',
