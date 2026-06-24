@@ -4,12 +4,14 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import MovieGridCard from '../../components/movies/MovieGridCard';
 import { getMoviesBillboard } from '../../services/movies.service';
 import { getProjectionTypes } from '../../services/info.service';
+import { useRouter } from 'expo-router';
 import { theme } from '../../constants';
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = (width - 48) / 2;
 
 export default function MoviesReleases() {
+  const router = useRouter();
   const [billboardMovies, setBillboardMovies] = useState([]);
   const [projectionTypes, setProjectionTypes] = useState([]);
   const [loading, setLoading] = useState(true);

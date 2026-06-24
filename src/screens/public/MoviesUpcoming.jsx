@@ -3,14 +3,18 @@ import { StyleSheet, Text, View, ScrollView, ActivityIndicator, Dimensions } fro
 import { SafeAreaView } from 'react-native-safe-area-context';
 import MovieGridCard from '../../components/movies/MovieGridCard'; 
 import { getUpcomingMovies } from '../../services/movies.service';
+import { useRouter } from 'expo-router';
 import { theme } from '../../constants';
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = (width - 48) / 2;
 
 export default function MoviesUpcoming() {
+  const router = useRouter();
   const [billboardMovies, setBillboardMovies] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  
 
   useEffect(() => {
     const fetchMovies = async () => {

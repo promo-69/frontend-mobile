@@ -3,12 +3,14 @@ import { StyleSheet, Text, View, ScrollView, ActivityIndicator, Dimensions } fro
 import { SafeAreaView } from 'react-native-safe-area-context';
 import MovieGridCard from '../../components/movies/MovieGridCard'; 
 import { getEvents } from '../../services/events.service'; 
+import { useRouter } from 'expo-router';
 import { theme } from '../../constants';
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = (width - 48) / 2; // Grid de 2 columnas con espaciado
 
 export default function Events() {
+  const router = useRouter();
   const [upcomingEvents, setUpcomingEvents] = useState([]);
   const [loading, setLoading] = useState(true);
 
