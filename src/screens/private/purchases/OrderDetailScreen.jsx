@@ -19,24 +19,31 @@ const { colors, spacing, borderRadius } = theme;
 const fmt = (n) => `$${Number(n || 0).toFixed(2)}`;
 
 const ORDER_STATUS = {
-  1: { label: 'Pendiente',  color: colors.yellow[400] },
-  2: { label: 'Pagado',     color: colors.indigo[300] },
-  3: { label: 'Cancelado',  color: colors.red[500]    },
-  4: { label: 'Completado', color: colors.green[500]  },
+  1: { label: 'Pendiente', color: colors.yellow[400] },
+  2: { label: 'Pagado', color: colors.indigo[300] },
+  3: { label: 'Cancelado', color: colors.red[500] },
+  4: { label: 'Completado', color: colors.green[500] },
 };
 
 const formatDateTime = (iso) => {
   if (!iso) return '—';
   return new Date(iso).toLocaleDateString('es-VE', {
-    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
-    hour: '2-digit', minute: '2-digit', hour12: true,
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true,
   });
 };
 
 const formatDate = (iso) => {
   if (!iso) return '—';
   return new Date(iso).toLocaleDateString('es-VE', {
-    day: 'numeric', month: 'long', year: 'numeric',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
   });
 };
 
@@ -44,7 +51,9 @@ const formatDate = (iso) => {
 function Section({ title, children }) {
   return (
     <View style={styles.section}>
-      <AppText variant="caption" style={styles.sectionTitle}>{title}</AppText>
+      <AppText variant="caption" style={styles.sectionTitle}>
+        {title}
+      </AppText>
       <View style={styles.sectionCard}>{children}</View>
     </View>
   );
@@ -53,8 +62,12 @@ function Section({ title, children }) {
 function DetailRow({ label, value }) {
   return (
     <View style={styles.detailRow}>
-      <AppText variant="caption" style={styles.detailLabel}>{label}</AppText>
-      <AppText variant="smallText" style={styles.detailValue}>{value}</AppText>
+      <AppText variant="caption" style={styles.detailLabel}>
+        {label}
+      </AppText>
+      <AppText variant="smallText" style={styles.detailValue}>
+        {value}
+      </AppText>
     </View>
   );
 }
@@ -104,7 +117,13 @@ function QrSection({ qrCode, ticketsValidated, concessionsValidated }) {
 function ValidationPill({ label, used, date }) {
   return (
     <View style={[styles.pill, used ? styles.pillUsed : styles.pillPending]}>
-      <AppText variant="caption" style={[styles.pillText, used ? styles.pillTextUsed : styles.pillTextPending]}>
+      <AppText
+        variant="caption"
+        style={[
+          styles.pillText,
+          used ? styles.pillTextUsed : styles.pillTextPending,
+        ]}
+      >
         {used ? `✓ ${label} canjeado` : `○ ${label} sin canjear`}
       </AppText>
     </View>
@@ -152,7 +171,9 @@ export default function OrderDetailScreen() {
           <ChevronLeft size={26} color={colors.primary} />
         </TouchableOpacity>
         <View style={styles.centered}>
-          <AppText variant="body" style={styles.errorText}>{error || 'Orden no encontrada'}</AppText>
+          <AppText variant="body" style={styles.errorText}>
+            {error || 'Orden no encontrada'}
+          </AppText>
         </View>
       </ScreenWrapper>
     );
@@ -166,12 +187,15 @@ export default function OrderDetailScreen() {
 
   const firstBooking = tickets[0]?._RoomBookings;
   const showtime = firstBooking?._Showtimes;
-  const movieTitle = showtime?._Movies?.title || firstBooking?._RoomEvents?.title || null;
+  const movieTitle =
+    showtime?._Movies?.title || firstBooking?._RoomEvents?.title || null;
   const roomName = firstBooking?._Rooms?.name || showtime?.room?.name || null;
   const cinemaName = order._Cinemas?.name || '—';
 
   const seatList = tickets
-    .map((t) => `${t._Seats?.row_identifier || ''}${t._Seats?.column_number || ''}`)
+    .map(
+      (t) => `${t._Seats?.row_identifier || ''}${t._Seats?.column_number || ''}`
+    )
     .filter(Boolean);
 
   return (
@@ -191,7 +215,10 @@ export default function OrderDetailScreen() {
         </View>
         {/* Badge de estado */}
         <View style={[styles.statusBadge, { borderColor: statusInfo.color }]}>
-          <AppText variant="caption" style={[styles.statusText, { color: statusInfo.color }]}>
+          <AppText
+            variant="caption"
+            style={[styles.statusText, { color: statusInfo.color }]}
+          >
             {statusInfo.label}
           </AppText>
         </View>
@@ -215,7 +242,10 @@ export default function OrderDetailScreen() {
             {showtime?.start_time && (
               <>
                 <Divider />
-                <DetailRow label="Fecha y hora" value={formatDateTime(showtime.start_time)} />
+                <DetailRow
+                  label="Fecha y hora"
+                  value={formatDateTime(showtime.start_time)}
+                />
               </>
             )}
             {roomName && (
@@ -237,17 +267,22 @@ export default function OrderDetailScreen() {
               const seatLabel = seat
                 ? `${seat.row_identifier || ''}${seat.column_number || ''}`
                 : `Boleto ${i + 1}`;
-              const category = ticket._AudienceCategories?.name || ticket.audience_category;
+              const category =
+                ticket._AudienceCategories?.name || ticket.audience_category;
               return (
                 <View key={ticket.id || i}>
                   {i > 0 && <Divider />}
                   <View style={styles.ticketRow}>
                     <View style={styles.seatBadge}>
-                      <AppText variant="caption" style={styles.seatBadgeText}>{seatLabel}</AppText>
+                      <AppText variant="caption" style={styles.seatBadgeText}>
+                        {seatLabel}
+                      </AppText>
                     </View>
                     <View style={{ flex: 1 }}>
                       {category && (
-                        <AppText variant="caption" style={styles.categoryText}>{category}</AppText>
+                        <AppText variant="caption" style={styles.categoryText}>
+                          {category}
+                        </AppText>
                       )}
                       <AppText variant="smallText" style={styles.ticketPrice}>
                         {fmt(ticket.price)}
@@ -270,9 +305,13 @@ export default function OrderDetailScreen() {
                   {i > 0 && <Divider />}
                   <View style={styles.lineRow}>
                     <View style={styles.lineQtyBadge}>
-                      <AppText variant="caption" style={styles.lineQtyText}>×{line.quantity}</AppText>
+                      <AppText variant="caption" style={styles.lineQtyText}>
+                        ×{line.quantity}
+                      </AppText>
                     </View>
-                    <AppText variant="smallText" style={styles.lineName}>{name}</AppText>
+                    <AppText variant="smallText" style={styles.lineName}>
+                      {name}
+                    </AppText>
                     <AppText variant="smallText" style={styles.linePrice}>
                       {fmt(line.unit_price * line.quantity)}
                     </AppText>
@@ -285,7 +324,10 @@ export default function OrderDetailScreen() {
 
         {/* ── Resumen de pago ── */}
         <Section title="RESUMEN DE PAGO">
-          <DetailRow label="Subtotal" value={fmt(order.subtotal_base_currency)} />
+          <DetailRow
+            label="Subtotal"
+            value={fmt(order.subtotal_base_currency)}
+          />
           <Divider />
           <DetailRow
             label="Impuestos"
@@ -293,7 +335,9 @@ export default function OrderDetailScreen() {
           />
           <Divider />
           <View style={styles.totalRow}>
-            <AppText variant="smallText" style={styles.totalLabel}>Total pagado</AppText>
+            <AppText variant="smallText" style={styles.totalLabel}>
+              Total pagado
+            </AppText>
             <AppText variant="smallText" style={styles.totalValue}>
               {fmt(order.total_amount_base_currency)}
             </AppText>
@@ -313,7 +357,10 @@ export default function OrderDetailScreen() {
           )}
 
           <Divider />
-          <DetailRow label="Fecha de compra" value={formatDate(order.created_at)} />
+          <DetailRow
+            label="Fecha de compra"
+            value={formatDate(order.created_at)}
+          />
 
           {order.generated_points > 0 && (
             <>

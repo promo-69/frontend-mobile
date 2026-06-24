@@ -5916,6 +5916,19 @@ __metadata:
   languageName: node
   linkType: hard
 
+"expo-navigation-bar@npm:^56.0.3":
+  version: 56.0.3
+  resolution: "expo-navigation-bar@npm:56.0.3"
+  dependencies:
+    debug: "npm:^4.3.2"
+  peerDependencies:
+    expo: "*"
+    react: "*"
+    react-native: "*"
+  checksum: 10c0/70271a07ab4177e4cd36ed0b12eb626cf59b9d705ec72d9bc213d7f5cc22e4d6e389aec3b5d2e6a1c81f3d25f67bb42155e2bd6370ab6c38237c74a8dc642f05
+  languageName: node
+  linkType: hard
+
 "expo-router@npm:~6.0.23":
   version: 6.0.23
   resolution: "expo-router@npm:6.0.23"
@@ -6398,6 +6411,7 @@ __metadata:
     expo-image: "npm:~3.0.11"
     expo-linear-gradient: "npm:~15.0.8"
     expo-linking: "npm:~8.0.12"
+    expo-navigation-bar: "npm:^56.0.3"
     expo-router: "npm:~6.0.23"
     expo-secure-store: "npm:~15.0.8"
     expo-splash-screen: "npm:~31.0.13"

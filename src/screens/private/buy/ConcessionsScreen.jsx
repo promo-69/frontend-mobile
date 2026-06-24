@@ -258,18 +258,10 @@ export default function ConcessionsScreen() {
   const { cart, addProduct, updateProductQuantity, removeProduct } = useCart();
 
   // Si viene cinemaId por params (flujo con película), lo usamos directo.
-  // Intentamos hidratar el name desde el showtime en el cart si está disponible.
-  const cartCinema = cart.showtime?.booking?.room?.cinema ?? null;
-  const initialCinema = paramCinemaId
-    ? {
-        id: Number(paramCinemaId),
-        name:
-          cartCinema?.id === Number(paramCinemaId)
-            ? cartCinema.name
-            : undefined,
-      }
-    : null;
-  const [selectedCinema, setSelectedCinema] = useState(initialCinema);
+  // Si no, dejamos que el usuario elija la sucursal aquí.
+  const [selectedCinema, setSelectedCinema] = useState(
+    paramCinemaId ? { id: Number(paramCinemaId) } : null
+  );
   const [cinemas, setCinemas] = useState([]);
   const [cinemaModalVisible, setCinemaModalVisible] = useState(false);
   const [loadingCinemas, setLoadingCinemas] = useState(!paramCinemaId);

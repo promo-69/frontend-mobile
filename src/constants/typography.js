@@ -50,7 +50,7 @@ export const TEXT_VARIANTS = {
     fontSize: SIZE.s14,
   },
   label: {
-    fontFamily: FONTS.primary.semiBold,
+    fontFamily: FONTS.primary.bold,
     fontSize: SIZE.s12,
   },
   caption: {

@@ -16,9 +16,9 @@ export default function BuyLayout() {
           headerBackTitleVisible: false,
           animation: 'slide_from_right',
         }}
-
-        
       >
+        <Stack.Screen name="tickets" options={{ title: ' Boletos ' }} />
+
         <Stack.Screen
           name="selectSeats"
           options={{ title: 'Selecciona tus Asientos' }}

@@ -39,8 +39,8 @@ export const AuthProvider = ({ children }) => {
             }
 
             // 3. Intentar renovar la sesión proactivamente
-            const response = await authService.refreshToken();
-            if (!response.success) {
+            const response = await authService.refreshToken(refreshToken);
+            if (!response?.success) {
               throw new Error('No se pudo renovar la sesión');
             }
             // Persistir y exponer el user fresco (trae loyaltyPoints actualizados)
@@ -83,7 +83,7 @@ export const AuthProvider = ({ children }) => {
         return {
           success: false,
           code: response?.code,
-          message: getErrorMessage(response?.code, response?.message),
+          message: getErrorMessage(response?.code),
         };
       }
 
@@ -98,12 +98,11 @@ export const AuthProvider = ({ children }) => {
       console.log(error);
 
       // Extraemos el mensaje y el code directamente del payload de error de la API
-      const backendCode = error.response?.data?.code; // Ej: "UNVERIFIED_ACCOUNT", "ACCOUNT_LOCKED"
-      const backendMessage = error.response?.data?.message; // Mensaje específico del backend (ej. minutos restantes de bloqueo)
+      const backendCode = error.response?.data?.code; // Ej: "UNVERIFIED_ACCOUNT"
 
       return {
         success: false,
-        message: getErrorMessage(backendCode, backendMessage),
+        message: getErrorMessage(backendCode),
         code: backendCode || null,
         status: error.response?.status ?? null,
       };
@@ -252,7 +251,7 @@ export const AuthProvider = ({ children }) => {
         login,
         register,
         logout,
-        isAuthenticated: !!user,
+        isAuthenticated: !!user && Object.keys(user).length > 0,
         verifyAccount,
         sendRecoveryEmail,
         verifyRecoveryCode,

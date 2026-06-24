@@ -17,7 +17,7 @@ export default function SeatLegend() {
   ];
 
   return (
-    <View style={styles.container}>
+    <View style={styles.container} accessibilityLabel="Leyenda de asientos">
       {legendItems.map((item, index) => (
         <View key={index} style={styles.legendItem}>
           <View style={[styles.colorBox, { backgroundColor: item.color }]} />

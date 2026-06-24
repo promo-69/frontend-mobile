@@ -28,7 +28,9 @@ export const SelectorInput = ({
           onPress={toggle}
           activeOpacity={0.7}
         >
-          <AppText variant='body'style={styles.triggerText}>{selectedValue}</AppText>
+          <AppText variant="body" style={styles.triggerText}>
+            {selectedValue}
+          </AppText>
           {/* Icono de Lucide con rotación si está abierto */}
           <ChevronDown
             size={theme.spacing.s16}
@@ -45,7 +47,9 @@ export const SelectorInput = ({
                 style={styles.option}
                 onPress={() => handleSelect(opt)}
               >
-                <AppText variant='body'style={styles.optionText}>{opt}</AppText>
+                <AppText variant="body" style={styles.optionText}>
+                  {opt}
+                </AppText>
               </TouchableOpacity>
             ))}
           </View>

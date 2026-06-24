@@ -1,4 +1,3 @@
-// src/app/(main)/profile/_layout.jsx
 import { Stack } from 'expo-router';
 import { theme } from '../../../constants';
 
@@ -6,10 +5,9 @@ export default function ProfileLayout() {
   return (
     <Stack
       screenOptions={{
-        // Estilo global para el header nativo si decides usarlo (opcional)
-        headerShown: false, // Lo ponemos en false porque ya diseñaste tus propios headers con ChevronLeft
+        headerShown: false,
         contentStyle: {
-          backgroundColor: theme.colors.background, // Asegura el fondo oscuro de Cineflix en la transición
+          backgroundColor: theme.colors.background,
         },
         animation: 'slide_from_bottom', // Animación nativa fluida de derecha a izquierda
       }}
@@ -22,27 +20,12 @@ export default function ProfileLayout() {
         name="personal-data"
         options={{
           title: 'Datos Personales',
-          gestureEnabled: true, // Permite regresar arrastrando el dedo en iOS
+          gestureEnabled: true,
         }}
       />
 
       {/* Pantalla de cambio de credenciales / seguridad */}
-      <Stack.Screen
-        name="security"
-        options={{
-          title: 'Seguridad',
-          gestureEnabled: true,
-        }}
-      />
-
-      {/* Módulo de Programa de Lealtad CinePuntos (tiene su propio Stack interno) */}
-      <Stack.Screen
-        name="loyalty-program"
-        options={{
-          title: 'CinePuntos',
-          gestureEnabled: true,
-        }}
-      />
+      <Stack.Screen name="security/index" />
     </Stack>
   );
 }

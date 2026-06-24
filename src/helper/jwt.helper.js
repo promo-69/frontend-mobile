@@ -14,7 +14,7 @@ export const jwtHelper = {
 
   /**
    * Verifica si un token ha expirado
-   * @param {string} token 
+   * @param {string} token
    * @param {number} bufferSeconds - Margen de tiempo para considerar expirado antes (ej. 10s)
    */
   isExpired(token, bufferSeconds = 0) {
@@ -24,5 +24,5 @@ export const jwtHelper = {
     const currentTime = Date.now() / 1000;
     // Si el tiempo de expiración menos el buffer es menor al tiempo actual, expiró
     return decoded.exp - bufferSeconds < currentTime;
-  }
+  },
 };

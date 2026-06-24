@@ -5,7 +5,6 @@ import { STORAGE_KEYS } from '../constants/config';
  * Centraliza la persistencia de tokens y datos de usuario
  */
 export const storageHelper = {
-  
   /**
    * Guarda los tokens de acceso y refresco de forma simultánea
    */
@@ -73,7 +72,10 @@ export const storageHelper = {
    */
   updateUserData: async (newUserData) => {
     try {
-      await AsyncStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(newUserData));
+      await AsyncStorage.setItem(
+        STORAGE_KEYS.USER,
+        JSON.stringify(newUserData)
+      );
     } catch (error) {
       console.error('Error al actualizar datos de usuario en storage:', error);
       throw error;
@@ -108,18 +110,21 @@ export const storageHelper = {
   getUserData: async () => {
     try {
       const user = await AsyncStorage.getItem(STORAGE_KEYS.USER);
-      
+
       if (!user) return null;
 
       // Anti-Bug: Si por error se guardó un string vacío o corrupto que burla el if anterior
-      if (user.trim() === "" || user === "{}" || user === "[object Object]") {
+      if (user.trim() === '' || user === '{}' || user === '[object Object]') {
         await AsyncStorage.removeItem(STORAGE_KEYS.USER);
         return null;
       }
 
       return JSON.parse(user);
     } catch (error) {
-      console.error('Error al parsear USER de AsyncStorage. Limpiando llave corrupta...', error);
+      console.error(
+        'Error al parsear USER de AsyncStorage. Limpiando llave corrupta...',
+        error
+      );
       // Si el JSON está roto, lo borramos inmediatamente para evitar bucles de error en la UI
       await AsyncStorage.removeItem(STORAGE_KEYS.USER);
       return null;
@@ -132,9 +137,9 @@ export const storageHelper = {
   clearSession: async () => {
     try {
       const keys = [
-        STORAGE_KEYS.ACCESS_TOKEN, 
-        STORAGE_KEYS.REFRESH_TOKEN, 
-        STORAGE_KEYS.USER
+        STORAGE_KEYS.ACCESS_TOKEN,
+        STORAGE_KEYS.REFRESH_TOKEN,
+        STORAGE_KEYS.USER,
       ];
       await AsyncStorage.multiRemove(keys);
     } catch (error) {
@@ -181,5 +186,5 @@ export const storageHelper = {
       console.error(`Error al eliminar la llave ${key} de storage:`, error);
       throw error;
     }
-  }
+  },
 };

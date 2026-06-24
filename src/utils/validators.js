@@ -125,17 +125,31 @@ export const validateDate = (date) => {
     // Si ya viene formateada como YYYY-MM-DD por mutaciones del estado
     if (date.includes('-')) {
       const parts = date.split('-');
-      if (parts[0].length === 4) { // YYYY-MM-DD
-        dateObj = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
-      } else { // DD-MM-YYYY
-        dateObj = new Date(Number(parts[2]), Number(parts[1]) - 1, Number(parts[0]));
+      if (parts[0].length === 4) {
+        // YYYY-MM-DD
+        dateObj = new Date(
+          Number(parts[0]),
+          Number(parts[1]) - 1,
+          Number(parts[2])
+        );
+      } else {
+        // DD-MM-YYYY
+        dateObj = new Date(
+          Number(parts[2]),
+          Number(parts[1]) - 1,
+          Number(parts[0])
+        );
       }
-    } 
+    }
     // Si viene en formato visual DD/MM/AAAA
     else if (date.includes('/')) {
       const parts = date.split('/');
-      dateObj = new Date(Number(parts[2]), Number(parts[1]) - 1, Number(parts[0]));
-    } 
+      dateObj = new Date(
+        Number(parts[2]),
+        Number(parts[1]) - 1,
+        Number(parts[0])
+      );
+    }
     // Intento de fallback estándar
     else {
       dateObj = new Date(date);
@@ -157,7 +171,10 @@ export const validateDate = (date) => {
   let age = today.getFullYear() - dateObj.getFullYear();
   const monthDiff = today.getMonth() - dateObj.getMonth();
 
-  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dateObj.getDate())) {
+  if (
+    monthDiff < 0 ||
+    (monthDiff === 0 && today.getDate() < dateObj.getDate())
+  ) {
     age--;
   }
 

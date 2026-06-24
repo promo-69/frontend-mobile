@@ -1,4 +1,5 @@
-export const INVALID_CREDENTIALS_MESSAGE = 'Credenciales inválidas, intentelo de nuevo';
+export const INVALID_CREDENTIALS_MESSAGE =
+  'Credenciales inválidas, intentelo de nuevo';
 export const LOGIN_SERVER_ERROR_MESSAGE =
   'No pudimos iniciar sesión en este momento. Inténtelo nuevamente más tarde.';
 

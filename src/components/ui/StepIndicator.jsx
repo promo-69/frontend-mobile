@@ -12,13 +12,13 @@ export const StepIndicator = ({ currentStep, totalSteps = 3 }) => {
       {Array.from({ length: totalSteps }).map((_, index) => {
         const isActive = index <= currentStep;
         return (
-          <View 
-            key={index} 
+          <View
+            key={index}
             style={[
               styles.dot,
               isActive ? styles.dotActive : styles.dotInactive,
-              index === totalSteps - 1 && { marginRight: 0 }
-            ]} 
+              index === totalSteps - 1 && { marginRight: 0 },
+            ]}
           />
         );
       })}
@@ -31,21 +31,21 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: theme.spacing.s16, 
+    paddingVertical: theme.spacing.s16,
   },
   dot: {
     height: 8,
     width: 8,
     borderRadius: theme.borderRadius.s4,
-    marginRight: theme.spacing.s8, 
+    marginRight: theme.spacing.s8,
   },
   dotActive: {
-    width: 8, 
-    backgroundColor: theme.colors.primary, 
+    width: 8,
+    backgroundColor: theme.colors.primary,
   },
   dotInactive: {
     width: 8,
-    backgroundColor: theme.colors.textDisabled, 
+    backgroundColor: theme.colors.textDisabled,
     opacity: 0.3,
   },
 });

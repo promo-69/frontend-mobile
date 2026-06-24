@@ -10,9 +10,10 @@ export const BottomSheetProvider = ({ children }) => {
     type: 'info', // info, warning, error, auth
     primaryButton: null, // { text, onPress, style }
     secondaryButton: null,
+    onClose: null, // Callback opcional al cerrar
   });
 
-  const showBottomSheet = useCallback((options) => {
+  const showBottomSheet = useCallback((options = {}) => {
     setConfig({
       visible: true,
       title: options.title || '',
@@ -20,11 +21,15 @@ export const BottomSheetProvider = ({ children }) => {
       type: options.type || 'info',
       primaryButton: options.primaryButton || null,
       secondaryButton: options.secondaryButton || null,
+      onClose: options.onClose || null,
     });
   }, []);
 
   const hideBottomSheet = useCallback(() => {
-    setConfig((prev) => ({ ...prev, visible: false }));
+    setConfig((prev) => {
+      if (prev.onClose) prev.onClose();
+      return { ...prev, visible: false };
+    });
   }, []);
 
   return (

@@ -13,12 +13,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import SeatLegend from '../../../components/seats/SeatLegend';
 import SeatMap from '../../../components/seats/SeatMap';
 import ShowtimeHeader from '../../../components/seats/ShowtimeHeader';
+import ZoomableContainer from '../../../components/seats/ZoomableContainer';
+import { useCart } from '../../../context/CartContext'; // Asumiendo que CartContext existe
 import { getMovieById } from '../../../services/movies.service';
 import {
   getShowtimeById,
   getShowtimeSeats,
 } from '../../../services/showtimes.service';
-import { useCart } from '../../../context/CartContext'; // Asumiendo que CartContext existe
 
 const COLORS = {
   bgDeep: '#231640', // Morado profundo
@@ -30,11 +31,10 @@ const COLORS = {
 };
 
 export default function SelectSeats() {
-  const {
-    movieId,
-    showtimeId,
-    cinemaId: paramCinemaId,
-  } = useLocalSearchParams();
+  const params = useLocalSearchParams();
+  console.log('SelectSeats params raw:', params);
+
+  const { movieId, showtimeId } = useLocalSearchParams();
   const router = useRouter();
   const { cart, toggleSeat, updateCartDetails, totalAmount } = useCart();
 
@@ -89,7 +89,7 @@ export default function SelectSeats() {
       }
     }
     loadData();
-  }, [movieId, showtimeId, updateCartDetails]);
+  }, [movieId, showtimeId]); //evaluemos si updateCartDetails causa re-renders infinitos
 
   const handleContinueToPayment = () => {
     if (cart.tickets.length === 0) {
@@ -99,18 +99,8 @@ export default function SelectSeats() {
       );
       return;
     }
-    // Navegar a la pantalla de pago, pasando los detalles del carrito si es necesario
-    // Derivar cinemaId: desde params o desde el showtime cargado
-    const cinemaId =
-      paramCinemaId ?? showtime?.booking?.room?.cinema?.id ?? null;
-    router.push({
-      pathname: '/(buy)/concessions',
-      params: {
-        showtimeId,
-        movieId,
-        ...(cinemaId != null && { cinemaId: String(cinemaId) }),
-      },
-    });
+    // Navegar al paso de selección de categoría de boleto
+    router.push({ pathname: '/(buy)/tickets', params: { showtimeId } });
   };
 
   if (loading) {
@@ -142,14 +132,14 @@ export default function SelectSeats() {
     );
   }
 
-  if (!movie || !showtime || seatsData.length === 0) {
+  if (error || !movie || !showtime || seatsData.length === 0) {
     return (
       <LinearGradient
         colors={[COLORS.bgDeep, COLORS.bgDarker]}
         style={styles.loadingContainer}
       >
         <Text style={styles.errorText}>
-          No hay asientos disponibles o la función no existe.
+          {error || 'No hay asientos disponibles o la función no existe'}
         </Text>
         <TouchableOpacity
           style={styles.backButton}
@@ -174,12 +164,18 @@ export default function SelectSeats() {
 
       <ShowtimeHeader movie={movie} showtime={showtime} />
       <SeatLegend />
-      <SeatMap
-        seatsData={seatsData}
-        selectedSeats={cart.tickets}
-        onToggleSeat={toggleSeat}
-      />
 
+      <View style={styles.mapViewport}>
+        <ZoomableContainer>
+          <SeatMap
+            seatsData={seatsData}
+            selectedSeats={cart.tickets}
+            onToggleSeat={toggleSeat}
+          />
+        </ZoomableContainer>
+      </View>
+
+      {/** Accion flotante */}
       {cart.tickets.length > 0 && (
         <View style={styles.bottomActionBar}>
           <Text style={styles.summaryText}>
@@ -221,13 +217,23 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.accent,
     borderRadius: 8,
   },
-  backButtonText: { color: COLORS.buttonText, fontWeight: 'bold' },
+  backButtonText: {
+    color: COLORS.buttonText,
+    fontWeight: 'bold',
+  },
+  mapViewport: {
+    flex: 1,
+    overflow: 'hidden',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingBottom: 100, //Espacio libre para que la ultima fila no se oculte detrás del footer
+  },
   bottomActionBar: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: 'rgba(0,0,0,0.8)',
+    backgroundColor: 'rgba(23, 14, 43, 0.95)',
     paddingHorizontal: 20,
     paddingTop: 15,
     paddingBottom: 30, // Espacio para el safe area inferior

@@ -22,15 +22,16 @@ export const DateInput = ({ label, value, onChange, placeholder, error }) => {
     }
   };
 
-  // Transformamos el valor YYYY-MM-DD del estado al formato visual DD/MM/AAAA
+  // Formato visual DD/MM/AAAA
   const displayValue =
-    value && value.includes('-') ? value.split('-').reverse().join('/') : value || '';
+    value && value.includes('-')
+      ? value.split('-').reverse().join('/')
+      : value || '';
 
   // Lógica para que el calendario se abra en la fecha que el usuario ya eligió, o en su defecto HOY
   const getPickerDate = () => {
     if (value && value.includes('-')) {
       const [year, month, day] = value.split('-');
-      // Creamos la fecha usando enteros locales para evitar desfases de huso horario
       return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
     }
     return new Date();
@@ -53,11 +54,11 @@ export const DateInput = ({ label, value, onChange, placeholder, error }) => {
 
       {show && (
         <DateTimePicker
-          value={getPickerDate()} // ◄ AHORA SÍ: Mantiene la fecha seleccionada de forma estable
+          value={getPickerDate()}
           mode="date"
           display={Platform.OS === 'android' ? 'calendar' : 'spinner'}
           onChange={handleChange}
-          maximumDate={new Date()} // Evita que elijan fechas del futuro
+          maximumDate={new Date()}
         />
       )}
     </>

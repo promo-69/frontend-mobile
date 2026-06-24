@@ -7,8 +7,8 @@ const api = axios.create({
   timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
-    'Accept': 'application/json',
-  }
+    Accept: 'application/json',
+  },
 });
 
 //  Interceptor de Peticiones: Inyectar el Bearer Token
@@ -37,17 +37,13 @@ api.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    /*
     if (error.response) {
-      console.error('Error de respuesta:', {
+      console.error('[Axios Error Response]:', {
+        url: error.config?.url,
         status: error.response.status,
         data: error.response.data,
       });
-    } else if (error.request) {
-      console.error('Error de conexión:', error.request);
-    } else {
-      console.error('Error desconocido:', error.message);
-    }*/
+    }
 
     // Si el error es 401 (No autorizado) y no hemos reintentado ya esta petición
     if (error.response?.status === 401 && !originalRequest._retry) {
@@ -62,31 +58,37 @@ api.interceptors.response.use(
 
         // Intentar renovar el token usando el endpoint
         // Nota: Usamos axios directamente para evitar bucles infinitos con la instancia 'api'
-        const response = await axios.post(`${ENV.API_URL}/auth/refresh`, {}, {
-          headers:
-          { Authorization: `Bearer ${refreshToken}` }
-        });
+        const response = await axios.post(
+          `${ENV.API_URL}/auth/refresh`,
+          {},
+          {
+            headers: { Authorization: `Bearer ${refreshToken}` },
+          }
+        );
 
         // Extraer tokens de forma defensiva (varios formatos posibles)
-        const respPayload = response.data?.data ?? response.data ?? {};
+        const res = response.data?.data ?? response.data ?? {};
 
-        const accessToken = respPayload.accessToken || respPayload.access_token || respPayload.token || respPayload?.tokens?.accessToken || respPayload?.tokens?.access_token;
-        const newRefreshToken = respPayload.refreshToken || respPayload.refresh_token || respPayload?.tokens?.refreshToken || respPayload?.tokens?.refresh_token;
+        const accessToken = res?.tokens?.accessToken || null;
+        const newRefreshToken = res?.tokens?.refreshToken || null;
 
         if (!accessToken) {
           throw new Error('Refresh response did not include an access token');
         }
 
         // Persistir tokens y datos frescos del usuario (loyaltyPoints, etc.)
-        // respPayload = response.data.data → { user, tokens: { accessToken, refreshToken } }
-        const freshUser = respPayload.user ?? null;
-        await storageHelper.saveSession(accessToken, newRefreshToken ?? null, freshUser);
+        // `res` = response.data.data → { user, tokens: { accessToken, refreshToken } }
+        const freshUser = res?.user ?? null;
+        await storageHelper.saveSession(
+          accessToken,
+          newRefreshToken ?? null,
+          freshUser
+        );
 
         // Actualizar el header de la petición original y reintentar
         originalRequest.headers = originalRequest.headers || {};
         originalRequest.headers.Authorization = `Bearer ${accessToken}`;
         return api(originalRequest);
-
       } catch (refreshError) {
         // Si el refresh también falla, limpiar sesión y forzar logout
         console.error('Error al intentar refrescar el token:', refreshError);

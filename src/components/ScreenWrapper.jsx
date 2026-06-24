@@ -4,7 +4,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { theme } from '../constants/index';
 
 export const ScreenWrapper = ({ children, style, disableSafeArea = false }) => {
-  
   const Container = disableSafeArea ? View : SafeAreaView;
 
   return (
@@ -12,10 +11,12 @@ export const ScreenWrapper = ({ children, style, disableSafeArea = false }) => {
       {...theme.colors.gradients.bgColor}
       style={styles.container}
     >
-      <StatusBar translucent={true} backgroundColor="transparent" barStyle="light-content" />
-      <Container style={[styles.safeArea, style]}>
-        {children}
-      </Container>
+      <StatusBar
+        translucent={true}
+        backgroundColor="transparent"
+        barStyle="light-content"
+      />
+      <Container style={[styles.safeArea, style]}>{children}</Container>
     </LinearGradient>
   );
 };

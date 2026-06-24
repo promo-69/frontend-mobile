@@ -79,15 +79,20 @@ describe('EmailCheck Integration Tests', () => {
         email: 'alexis@ucla.edu.ve',
         code: '1234',
       });
-      expect(storageHelper.removeValue).toHaveBeenCalledWith('user_email_to_verify');
+      expect(storageHelper.removeValue).toHaveBeenCalledWith(
+        'user_email_to_verify'
+      );
       expect(getByText('¡Cuenta Verificada!')).toBeTruthy();
     });
 
     // Omitimos el avance manual de los timers falsos para evitar fugas de memoria,
     // y simplemente esperamos de forma asíncrona limpia a que el router sea invocado.
-    await waitFor(() => {
-      expect(mockReplace).toHaveBeenCalledWith('/login');
-    }, { timeout: 3500 }); // Le damos el margen de los 3 segundos que tarda tu pantalla
+    await waitFor(
+      () => {
+        expect(mockReplace).toHaveBeenCalledWith('/login');
+      },
+      { timeout: 3500 }
+    ); // Le damos el margen de los 3 segundos que tarda tu pantalla
   });
 
   it('debe mostrar alerta de error y limpiar los inputs si la verificación falla', async () => {

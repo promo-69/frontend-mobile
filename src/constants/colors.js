@@ -111,6 +111,9 @@ const palette = {
     900: '#01221e',
     950: '#001714',
   },
+  purple: {
+    50: '#7B1A82',
+  },
 };
 
 export const COLORS = {
@@ -119,18 +122,34 @@ export const COLORS = {
 
   primary: palette.gold[400],
   secondary: palette.lila[200],
-  background: palette.midnight[900],
-  bgHeader: palette.midnight[950],
   surface: palette.gold[500],
+  accent: palette.gold[300],
 
-  itemInactive: palette.midnight[700],
-  itemActive: palette.gold[400],
+  background: {
+    main: 'rgba(42, 21, 75, 1)',
+    secondary: palette.midnight[900],
+    accent: 'rgba(35, 22, 64, 1)',
+  },
+
+  itemInactive: '#B0A8C5',
+  itemActive: palette.gold[300],
 
   textPrimary: palette.grey[50],
   textSecondary: palette.grey[100],
   textDisabled: palette.grey[400],
+  textAccent: {
+    gold: palette.gold[300],
+  },
 
-  border: palette.lila[300],
+  borders: {
+    light: palette.grey[100],
+    medium: palette.grey[300],
+    dark: palette.grey[700],
+    primary: palette.gold[400],
+    accent: '#7B1A82',
+    secondary: palette.lila[300],
+    error: palette.red[400],
+  },
 
   // Estados de acciones de usuario
   error: palette.red[500],

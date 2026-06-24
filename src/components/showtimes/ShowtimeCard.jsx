@@ -8,41 +8,25 @@ import {
   View,
 } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
-import { formatTime12hrs } from '../../utils/TimeUtils';
 import { useBottomSheet } from '../../context/BottomSheetContext';
+import { formatTime12hrs } from '../../utils/TimeUtils';
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = (width - 56) / 2;
 
-export default function ShowtimeCard({
-  showtime,
-  movieId,
-  cinemaId: cinemaIdProp,
-}) {
+export default function ShowtimeCard({ showtime, contentId, type }) {
   const router = useRouter();
   const { isAuthenticated } = useAuth();
   const { showBottomSheet } = useBottomSheet();
 
-  //Extraer las descripciones
   const projectionType =
     showtime.projection_type?.description || 'Proyección Desconocida';
   const language = showtime.language?.description || 'Idioma Desconocido';
 
-  // Acceso directo a room según el JSON recibido
-  const roomName =
-    showtime.booking?.room?.name || showtime.room?.name || 'Sala General';
-  const isSoldOut = showtime.room?.available_seats === 0;
+  const roomName = showtime.booking.room?.name || 'Sala General';
+  const isSoldOut = showtime.booking.room?.available_seats === 0;
 
-  // cinemaId: preferimos prop explícita, luego lo derivamos del showtime
-  const cinemaId =
-    cinemaIdProp ??
-    showtime.booking?.room?.cinema?.id ??
-    showtime.room?.cinema?.id ??
-    null;
-
-  const { time, ampm } = formatTime12hrs(
-    showtime.start_time ?? showtime.booking?.start_time
-  );
+  const { time, ampm } = formatTime12hrs(showtime.booking?.start_time);
 
   const formatBadgeText = (text) => {
     const upper = text.toUpperCase();
@@ -52,88 +36,95 @@ export default function ShowtimeCard({
     return '2D';
   };
 
-  const handleSelectShowtime = () => {
-    if (isAuthenticated) {
-      router.push({
-        pathname: '/selectSeats',
-        params: {
-          movieId,
-          showtimeId: showtime.id,
-          ...(cinemaId != null && { cinemaId: String(cinemaId) }),
-        },
-      });
-    } else {
+  const handleBookingPress = () => {
+    if (isSoldOut) return;
+
+    if (!isAuthenticated) {
       showBottomSheet({
-        title: '¡Casi listo!',
+        title: 'Sesión Requerida',
         message:
-          'Para seleccionar tus asientos y continuar con la compra, necesitas iniciar sesión en tu cuenta de Cineflix.',
-        type: 'auth',
+          'Inicia sesión en tu cuenta de Cineflix para agendar tus boletos.',
         primaryButton: {
           text: 'Iniciar Sesión',
           onPress: () => router.push('/login'),
         },
-        secondaryButton: {
-          text: 'Tal vez luego',
-        },
       });
+      return;
     }
+
+    console.log('ShowtimeCard -> navigate params', {
+      pathname: '/(buy)/selectSeats',
+      showtimeId: showtime.id,
+      movieId: contentId,
+      contentType: type,
+    });
+
+    router.push({
+      pathname: '/(buy)/selectSeats',
+      params: {
+        showtimeId: showtime.id,
+        movieId: contentId,
+        contentType: type,
+      },
+    });
   };
 
   return (
     <TouchableOpacity
       activeOpacity={isSoldOut ? 1 : 0.7}
-      disabled={isSoldOut}
-      onPress={handleSelectShowtime}
+      onPress={handleBookingPress}
       style={[styles.cardContainer, isSoldOut && styles.cardDisabled]}
     >
-      {/* Bloque de Hora */}
+      {/* Reloj y Bloque Horario */}
       <View style={styles.timeContainer}>
         <Text style={[styles.hourText, isSoldOut && styles.textDisabled]}>
           {time}
         </Text>
         <Text style={[styles.ampmText, isSoldOut && styles.textDisabled]}>
+          {' '}
           {ampm}
         </Text>
       </View>
 
-      {/* Bloque de Especificaciones */}
-      <View style={[styles.specsContainer, isSoldOut && { opacity: 0.3 }]}>
-        {/* Contenedor con borde para el formato */}
-        <View style={styles.formatBadge}>
-          <Text style={styles.formatText}>
+      {/* Características Técnicas (Formato e Idioma) */}
+      <View style={styles.specsContainer}>
+        <View style={[styles.formatBadge, isSoldOut && styles.badgeDisabled]}>
+          <Text style={[styles.formatText, isSoldOut && styles.textDisabled]}>
             {formatBadgeText(projectionType)}
           </Text>
         </View>
-
-        {/* Divisor vertical delgado */}
-        <View style={styles.verticalDivider} />
-
-        {/* Texto del idioma */}
-        <Text style={styles.langText}>
-          {language.toUpperCase().substring(0, 3)}
+        <Text
+          style={[styles.langText, isSoldOut && styles.textDisabled]}
+          numberOfLines={1}
+        >
+          {language}
         </Text>
       </View>
 
-      {/* Nombre de la Sala */}
-      <Text style={[styles.roomText, isSoldOut && styles.soldOutText]}>
-        {isSoldOut ? 'AGOTADO' : roomName}
-      </Text>
+      {/* Identificador de Sala / Badge de Agotado */}
+      <View style={styles.roomContainer}>
+        <Ionicons
+          name={isSoldOut ? 'close-circle-outline' : 'film-outline'}
+          size={14}
+          color={isSoldOut ? '#EF4444' : '#B0A8C5'}
+        />
+        <Text style={[styles.roomText, isSoldOut && styles.roomSoldOutText]}>
+          {isSoldOut ? 'AGOTADO' : roomName}
+        </Text>
+      </View>
     </TouchableOpacity>
   );
 }
 
 const styles = StyleSheet.create({
   cardContainer: {
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    paddingVertical: 20,
-    borderRadius: 15,
-    paddingHorizontal: 12,
     width: CARD_WIDTH,
-    height: CARD_WIDTH * 0.85, // Mantiene una proporción rectangular-cuadrada perfecta
+    backgroundColor: 'rgba(255, 255, 255, 0.03)',
+    borderRadius: 14,
+    padding: 14,
     alignItems: 'center',
-    justifyContent: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderColor: 'rgba(255, 255, 255, 0.08)',
   },
   cardDisabled: {
     backgroundColor: 'rgba(255, 255, 255, 0.01)',
@@ -155,48 +146,52 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   textDisabled: {
-    color: 'rgba(255, 255, 255, 0.3)',
-    textDecorationLine: 'line-through', // Raya la hora para indicar que no está disponible
+    color: 'rgba(255, 255, 255, 0.25)',
+    textDecorationLine: 'line-through',
   },
   specsContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 12,
+    gap: 6,
+    width: '100%',
   },
   formatBadge: {
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.6)',
-    borderRadius: 4,
+    borderColor: 'rgba(123, 26, 130, 0.5)',
+    backgroundColor: 'rgba(123, 26, 130, 0.1)',
     paddingHorizontal: 6,
-    paddingVertical: 1,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  badgeDisabled: {
+    borderColor: 'transparent',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
   },
   formatText: {
     color: '#FFFFFF',
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: 'bold',
-    letterSpacing: 0.5,
-  },
-  verticalDivider: {
-    width: 1,
-    height: 14,
-    backgroundColor: 'rgba(255, 255, 255, 0.4)',
-    marginHorizontal: 10,
   },
   langText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: 'bold',
-    letterSpacing: 0.5,
+    color: '#B0A8C5',
+    fontSize: 11,
+    fontWeight: '500',
+    flex: 1,
+  },
+  roomContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
   roomText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: '500',
+    color: '#B0A8C5',
+    fontSize: 11,
+    fontWeight: '600',
   },
-  soldOutText: {
-    color: '#ef4444',
+  roomSoldOutText: {
+    color: '#EF4444',
     fontWeight: 'bold',
-    letterSpacing: 0.5,
   },
 });

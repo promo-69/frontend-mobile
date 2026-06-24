@@ -2,7 +2,6 @@ import { useRouter } from 'expo-router';
 import {
   ChevronLeft,
   ChevronRight,
-  Gift,
   LogOut,
   ShieldCheck,
   User,
@@ -74,10 +73,8 @@ export default function ProfileScreen() {
   );
 
   const handleLogout = async () => {
-    setIsLogoutModalVisible(true);
-
+    setIsLogoutModalVisible(false);
     await logout();
-
     router.replace('/(main)/home');
   };
 
@@ -131,11 +128,6 @@ export default function ProfileScreen() {
             icon: ShieldCheck,
             title: 'Seguridad',
             onPress: () => router.push({ pathname: '/profile/security' }),
-          })}
-          {renderMenuItem({
-            icon: Gift,
-            title: 'CinePuntos',
-            onPress: () => router.push('/profile/loyalty-program'),
           })}
           {renderMenuItem({
             icon: LogOut,

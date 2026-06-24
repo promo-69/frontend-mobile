@@ -10,19 +10,24 @@ import { theme } from '../../constants';
  */
 
 const AVAILABLE_GENRES = [
-  "Musical", "Animada", "Comedia", "Acción", 
-  "Aníme", "Aventura", "Terror", "Drama", 
-  "Historias", "Suspenso", "Adulto", "Biografía", 
-  "Deportes", "Ficción"
+  'Musical',
+  'Animada',
+  'Comedia',
+  'Acción',
+  'Aníme',
+  'Aventura',
+  'Terror',
+  'Drama',
+  'Historias',
+  'Suspenso',
+  'Adulto',
+  'Biografía',
+  'Deportes',
+  'Ficción',
 ];
 
-export default function FavoriteGenreMovies({ 
-  value = [], 
-  onChange, 
-  error 
-}) {
-
-   const handleSubmit = () => {
+export default function FavoriteGenreMovies({ value = [], onChange, error }) {
+  const handleSubmit = () => {
     // Aquí puedes enviar los géneros seleccionados al backend
     console.log('Géneros seleccionados:', value);
     router.replace('/(main)/home'); // Redirige al home
@@ -32,10 +37,10 @@ export default function FavoriteGenreMovies({
     router.replace('/(main)/home'); // Redirige al home sin enviar datos
   };
 
- const handleToggle = (genre) => {
+  const handleToggle = (genre) => {
     const isSelected = value.includes(genre);
     const nextGenres = isSelected
-      ? value.filter(g => g !== genre)
+      ? value.filter((g) => g !== genre)
       : [...value, genre];
     onChange(nextGenres);
   };
@@ -46,12 +51,12 @@ export default function FavoriteGenreMovies({
         <AppText variant="h2" style={styles.title}>
           ¿Qué géneros te gustan?
         </AppText>
-        
+
         {error ? (
           <AppText style={styles.errorText}>{error}</AppText>
         ) : (
           <AppText variant="body" style={styles.subtitle}>
-            Selecciona al menos 3 categorías 
+            Selecciona al menos 3 categorías
           </AppText>
         )}
       </View>
@@ -68,7 +73,7 @@ export default function FavoriteGenreMovies({
         ))}
       </View>
 
-       <View style={styles.buttonContainer}>
+      <View style={styles.buttonContainer}>
         <CustomButton
           title="Enviar"
           onPress={handleSubmit}
@@ -77,13 +82,19 @@ export default function FavoriteGenreMovies({
         <CustomButton
           title="Saltar"
           onPress={handleSkip}
-          style={[styles.skipButton, { backgroundColor: 'transparent', borderWidth: 1, borderColor: theme.colors.primary }]}
+          style={[
+            styles.skipButton,
+            {
+              backgroundColor: 'transparent',
+              borderWidth: 1,
+              borderColor: theme.colors.primary,
+            },
+          ]}
         />
       </View>
-
     </View>
   );
-};
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -91,7 +102,7 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: 'center',
-    marginBottom: theme.spacing.s24, 
+    marginBottom: theme.spacing.s24,
   },
   title: {
     textAlign: 'center',
@@ -107,10 +118,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
-    gap: theme.spacing.s12, 
+    gap: theme.spacing.s12,
   },
   chipItem: {
-    width: '48%', 
+    width: '48%',
   },
   errorText: {
     color: theme.colors.error,

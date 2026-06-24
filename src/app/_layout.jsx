@@ -2,11 +2,14 @@ import { useFonts } from 'expo-font';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
+import { Platform, StatusBar } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import BottomSheet from '../components/ui/BottomSheet';
 import { AuthProvider, useAuth } from '../context/AuthContext';
 import { CartProvider } from '../context/CartContext';
 import { BottomSheetProvider } from '../context/BottomSheetContext';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { theme } from '../constants';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -43,7 +46,8 @@ function NavigationGuard() {
         name="(auth)"
         options={{ animation: 'slide_from_bottom' }}
       />
-      <Stack.Screen name="movie" />
+      {/* Registramos el grupo de películas y el flujo de compra */}
+      <Stack.Screen name="content" />
       <Stack.Screen name="(buy)" />
       <Stack.Screen name="index" options={{ href: null }} />
     </Stack>
@@ -60,21 +64,33 @@ export default function RootLayout() {
   });
 
   useEffect(() => {
-    if (fontsLoaded) SplashScreen.hideAsync();
+    if (Platform.OS !== 'android') return;
+    // Usamos StatusBar de React Native (estable en todas las arquitecturas)
+    // para sincronizar el color de la barra de sistema con el Tab Bar
+    StatusBar.setBackgroundColor(theme.colors.background.accent);
+    StatusBar.setBarStyle('light-content');
+  }, []);
+
+  useEffect(() => {
+    if (fontsLoaded) {
+      SplashScreen.hideAsync();
+    }
   }, [fontsLoaded]);
 
   if (!fontsLoaded) return null;
 
   return (
-    <AuthProvider>
-      <CartProvider>
-        <BottomSheetProvider>
-          <SafeAreaProvider>
-            <NavigationGuard />
-            <BottomSheet />
-          </SafeAreaProvider>
-        </BottomSheetProvider>
-      </CartProvider>
-    </AuthProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider>
+        <AuthProvider>
+          <CartProvider>
+            <BottomSheetProvider>
+              <NavigationGuard />
+              <BottomSheet />
+            </BottomSheetProvider>
+          </CartProvider>
+        </AuthProvider>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }

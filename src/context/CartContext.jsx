@@ -73,6 +73,13 @@ export function CartProvider({ children }) {
     }));
   }, []);
 
+  /**
+   * Reemplaza la lista de tickets completa (útil para enriquecer con audienceCategoryId y precio final).
+   */
+  const updateTickets = useCallback((enrichedTickets) => {
+    setCart((prev) => ({ ...prev, tickets: enrichedTickets }));
+  }, []);
+
   const addProduct = useCallback((product) => {
     setCart((prev) => {
       const isCombo = !!product.comboId;
@@ -188,6 +195,7 @@ export function CartProvider({ children }) {
         addTicket,
         toggleSeat,
         removeTicket,
+        updateTickets,
         addProduct,
         updateProductQuantity,
         removeProduct,
@@ -198,7 +206,7 @@ export function CartProvider({ children }) {
         ...totalsCalculated,
         totalAmount: totalsCalculated.total,
         clearCart,
-        getTotals: () => totalsCalculated, 
+        getTotals: () => totalsCalculated,
       }}
     >
       {children}

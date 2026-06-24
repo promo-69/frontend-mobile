@@ -1,4 +1,12 @@
-import { Home, PopcornIcon, Ticket, MapPin, Store, User, ShoppingCart } from 'lucide-react-native'
+import {
+  Home,
+  PopcornIcon,
+  Ticket,
+  MapPin,
+  Store,
+  User,
+  ShoppingCart,
+} from 'lucide-react-native';
 import { Tabs } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme } from '../../constants';
@@ -13,11 +21,11 @@ export default function MainLayout() {
         tabBarActiveTintColor: theme.colors.itemActive,
         tabBarInactiveTintColor: theme.colors.itemInactive,
         tabBarStyle: {
-          backgroundColor: theme.colors.bgHeader,
+          backgroundColor: theme.colors.background.accent,
           borderTopWidth: 0,
-          height: 60 + insets.bottom,
+          height: 65 + insets.bottom,
           paddingBottom: Math.max(insets.bottom, 8),
-          paddingTop: 8,
+          paddingTop: 10,
         },
         tabBarLabelStyle: {
           fontFamily: theme.typography.variants.label,
@@ -42,7 +50,7 @@ export default function MainLayout() {
         name="purchases"
         options={{
           title: 'Mis Compras',
-          tabBarIcon: ({ color }) => < ShoppingCart color={color} size={24} />,
+          tabBarIcon: ({ color }) => <ShoppingCart color={color} size={24} />,
         }}
       />
       <Tabs.Screen

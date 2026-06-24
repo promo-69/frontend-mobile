@@ -1,17 +1,11 @@
 import { Image as ExpoImage } from 'expo-image';
 import { Film } from 'lucide-react-native';
 import { useState } from 'react';
-import {
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View
-} from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export default function MovieCard({ title, posterUrl, onPress }) {
   const [imageError, setImageError] = useState(false);
 
-  // Si no hay url o la imagen ya dio error previo, usamos el estado para asegurar el fallback
   const displayPlaceholder = !posterUrl || imageError;
 
   return (
@@ -58,9 +52,8 @@ const styles = StyleSheet.create({
     width: 200,
     height: 300,
     borderRadius: 20,
-    overflow: 'hidden', // Corta los bordes de la imagen o del placeholder
-    backgroundColor: '#1E1235', // Fondo morado muy oscuro de respaldo
-    // Sombras nativas
+    overflow: 'hidden',
+    backgroundColor: '#1E1235',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,

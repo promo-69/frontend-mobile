@@ -95,9 +95,8 @@ export default function LoginScreen() {
           return;
         }
 
-        // Usamos el mensaje ya resuelto por AuthContext (incluye fallback del backend,
-        // por ejemplo los minutos restantes reales en un bloqueo de cuenta - código 423/ACCOUNT_LOCKED)
-        setError(result?.message || getErrorMessage(result?.code));
+        // Usamos el mapeador de errores basado en el código devuelto
+        setError(getErrorMessage(result?.code));
       }
     } catch (error) {
       console.error('Login error en el componente:', error);

@@ -1,9 +1,4 @@
-import {
-  act,
-  fireEvent,
-  render,
-  waitFor
-} from '@testing-library/react-native';
+import { act, fireEvent, render, waitFor } from '@testing-library/react-native';
 import { Animated } from 'react-native';
 import { AuthProvider } from '../../context/AuthContext';
 import { jwtHelper } from '../../helper/jwt.helper';
