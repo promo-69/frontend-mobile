@@ -12,20 +12,24 @@ import { useBottomSheet } from '../../context/BottomSheetContext';
 import { formatTime12hrs } from '../../utils/TimeUtils';
 
 const { width } = Dimensions.get('window');
+// Ajustamos dinámicamente el ancho de la tarjeta para que quepan 2 por fila con sus márgenes comunes
 const CARD_WIDTH = (width - 56) / 2;
 
-export default function ShowtimeCard({ showtime, contentId, type }) {
+export default function ShowtimeCard({ showtime, contentId, type, cinemaId }) {
   const router = useRouter();
   const { isAuthenticated } = useAuth();
   const { showBottomSheet } = useBottomSheet();
 
+  // Extraer las descripciones desde las relaciones del JSON
   const projectionType =
     showtime.projection_type?.description || 'Proyección Desconocida';
   const language = showtime.language?.description || 'Idioma Desconocido';
 
+  // Acceso directo a la sala y validación de disponibilidad
   const roomName = showtime.booking.room?.name || 'Sala General';
   const isSoldOut = showtime.booking.room?.available_seats === 0;
 
+  // Formateador de hora militar a formato 12 horas (Ej: { time: '07:30', ampm: 'PM' })
   const { time, ampm } = formatTime12hrs(showtime.booking?.start_time);
 
   const formatBadgeText = (text) => {
@@ -40,6 +44,7 @@ export default function ShowtimeCard({ showtime, contentId, type }) {
     if (isSoldOut) return;
 
     if (!isAuthenticated) {
+      // Si el usuario no está autenticado, disparamos el BottomSheet global de Login
       showBottomSheet({
         title: 'Sesión Requerida',
         message:
@@ -52,19 +57,16 @@ export default function ShowtimeCard({ showtime, contentId, type }) {
       return;
     }
 
-    console.log('ShowtimeCard -> navigate params', {
-      pathname: '/(buy)/selectSeats',
-      showtimeId: showtime.id,
-      movieId: contentId,
-      contentType: type,
-    });
-
+    // Navegación segura hacia el flujo de reserva (Flujo de compra de boletos)
+    // Pasamos showtimeId, el id del contenido, el tipo y la sucursal (cinemaId)
+    // para que el flujo de compra disponga de la sucursal desde el inicio.
     router.push({
       pathname: '/(buy)/selectSeats',
       params: {
         showtimeId: showtime.id,
         movieId: contentId,
         contentType: type,
+        cinemaId,
       },
     });
   };

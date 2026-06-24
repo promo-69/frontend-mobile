@@ -18,6 +18,8 @@ export function CartProvider({ children }) {
     products: [],
     movie: null,
     showtime: null,
+    cinemaId: null,
+    booking: null,
   });
 
   // Cargar carrito desde AsyncStorage
@@ -143,18 +145,32 @@ export function CartProvider({ children }) {
     });
   }, []);
 
-  const updateCartDetails = useCallback((movieData, showtimeData) => {
-    setCart((prev) => {
-      const isDifferentShowtime =
-        prev.showtime && prev.showtime.id !== showtimeData.id;
-      const isDifferentMovie = prev.movie && prev.movie.id !== movieData.id;
-      return {
-        ...prev,
-        movie: movieData,
-        showtime: showtimeData,
-        tickets: isDifferentShowtime || isDifferentMovie ? [] : prev.tickets,
-      };
-    });
+  const updateCartDetails = useCallback(
+    (movieData, showtimeData, extra = {}) => {
+      setCart((prev) => {
+        const isDifferentShowtime =
+          prev.showtime && prev.showtime.id !== showtimeData.id;
+        const isDifferentMovie = prev.movie && prev.movie.id !== movieData.id;
+        const shouldReset = isDifferentShowtime || isDifferentMovie;
+        return {
+          ...prev,
+          movie: movieData,
+          showtime: showtimeData,
+          // cinemaId y booking se actualizan si vienen en `extra`, si no se preservan
+          cinemaId: extra.cinemaId ?? prev.cinemaId,
+          booking: extra.booking ?? prev.booking,
+          tickets: shouldReset ? [] : prev.tickets,
+        };
+      });
+    },
+    []
+  );
+
+  /**
+   * Fija la sucursal (cinemaId) del carrito de forma explícita.
+   */
+  const setCinemaId = useCallback((cinemaId) => {
+    setCart((prev) => ({ ...prev, cinemaId: cinemaId ?? null }));
   }, []);
 
   const setShowtime = useCallback((showtime) => {
@@ -167,6 +183,8 @@ export function CartProvider({ children }) {
       products: [],
       movie: null,
       showtime: null,
+      cinemaId: null,
+      booking: null,
     });
     try {
       await AsyncStorage.removeItem(ASYNC_STORAGE_KEY);
@@ -201,6 +219,7 @@ export function CartProvider({ children }) {
         removeProduct,
         setMovie,
         setShowtime,
+        setCinemaId,
         updateCartDetails,
         clearCart,
         ...totalsCalculated,

@@ -257,22 +257,30 @@ export default function ConcessionsScreen() {
   } = useLocalSearchParams();
   const { cart, addProduct, updateProductQuantity, removeProduct } = useCart();
 
-  // Si viene cinemaId por params (flujo con película), lo usamos directo.
-  // Si no, dejamos que el usuario elija la sucursal aquí.
+  // El cinemaId puede venir por params (navegación directa) o del carrito
+  // (cuando ya se abrió la sesión de compra en SelectSeats). Priorizamos params.
+  const resolvedCinemaId = paramCinemaId
+    ? Number(paramCinemaId)
+    : cart.cinemaId
+      ? Number(cart.cinemaId)
+      : null;
+
+  // Si ya conocemos la sucursal (flujo de compra), la usamos directo y NO
+  // mostramos el selector. Solo se pide elegir sucursal si no hay ninguna.
   const [selectedCinema, setSelectedCinema] = useState(
-    paramCinemaId ? { id: Number(paramCinemaId) } : null
+    resolvedCinemaId ? { id: resolvedCinemaId } : null
   );
   const [cinemas, setCinemas] = useState([]);
   const [cinemaModalVisible, setCinemaModalVisible] = useState(false);
-  const [loadingCinemas, setLoadingCinemas] = useState(!paramCinemaId);
+  const [loadingCinemas, setLoadingCinemas] = useState(!resolvedCinemaId);
 
   const [loading, setLoading] = useState(false);
   const [combos, setCombos] = useState([]);
   const [products, setProducts] = useState([]);
 
-  // Paso 1: Si no hay cinemaId de params, cargar sucursales y mostrar modal.
+  // Paso 1: Si no hay sucursal resuelta, cargar sucursales y mostrar modal.
   useEffect(() => {
-    if (paramCinemaId) return; // ya tenemos sucursal del flujo con película
+    if (resolvedCinemaId) return; // ya tenemos sucursal del flujo de compra
 
     let isMounted = true;
     const fetchCinemas = async () => {
@@ -301,7 +309,7 @@ export default function ConcessionsScreen() {
     return () => {
       isMounted = false;
     };
-  }, [paramCinemaId]);
+  }, [resolvedCinemaId]);
 
   // Paso 2: Cuando ya hay sucursal (por params o por selección), cargar catálogo.
   useEffect(() => {
@@ -394,7 +402,7 @@ export default function ConcessionsScreen() {
     [cart.products]
   );
 
-  const cinemaId = selectedCinema?.id ?? paramCinemaId;
+  const cinemaId = selectedCinema?.id ?? resolvedCinemaId;
 
   const goToCheckout = () =>
     router.push({

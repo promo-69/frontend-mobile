@@ -10,12 +10,9 @@ const COLORS = {
   border: 'rgba(255, 255, 255, 0.08)',
 };
 
-export default function ShowtimesList({
-  cinemasData,
-  showtimesData,
-  contentId,
-  type,
-}) {
+export default function ShowtimesList({ cinemasData, showtimesData, contentId, type }) {
+
+  // Estado vacío: Si ninguna sucursal tiene funciones asignadas para este día
   if (!cinemasData || cinemasData.length === 0) {
     return (
       <View style={styles.emptyContainer}>
@@ -31,6 +28,7 @@ export default function ShowtimesList({
     <View style={styles.listContainer}>
       {cinemasData.map((cinemaGroup) => (
         <View key={cinemaGroup.cinema.id} style={styles.cinemaCard}>
+
           {/* Renderizado de la información del Cinema */}
           <View style={styles.cinemaHeader}>
             <MapPin size={18} color={COLORS.accent} />
@@ -45,9 +43,11 @@ export default function ShowtimesList({
                 showtime={showtime}
                 contentId={contentId}
                 type={type}
+                cinemaId={cinemaGroup.cinema.id}
               />
             ))}
           </View>
+
         </View>
       ))}
     </View>
@@ -56,48 +56,15 @@ export default function ShowtimesList({
 
 const styles = StyleSheet.create({
   listContainer: { width: '100%', marginBottom: 30 },
-  cinemaCard: {
-    backgroundColor: COLORS.cardBg,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    padding: 16,
-    marginBottom: 16,
-  },
-  cinemaHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
-    paddingBottom: 8,
-  },
+  cinemaCard: { backgroundColor: COLORS.cardBg, borderRadius: 16, borderWidth: 1, borderColor: COLORS.border, padding: 16, marginBottom: 16 },
+  cinemaHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 16, borderBottomWidth: 1, borderBottomColor: COLORS.border, paddingBottom: 8 },
   cinemaName: { color: COLORS.textMain, fontSize: 15, fontWeight: '700' },
   hoursGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 12,
-    justifyContent: 'flex-start',
+    justifyContent: 'flex-start'
   },
-  emptyContainer: {
-    width: '100%',
-    paddingVertical: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: COLORS.cardBg,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    borderStyle: 'dashed',
-    marginBottom: 30,
-    gap: 12,
-  },
-  emptyText: {
-    color: COLORS.textGray,
-    fontSize: 14,
-    fontWeight: '500',
-    textAlign: 'center',
-    paddingHorizontal: 20,
-  },
+  emptyContainer: { width: '100%', paddingVertical: 40, alignItems: 'center', justifyContent: 'center', backgroundColor: COLORS.cardBg, borderRadius: 16, borderWidth: 1, borderColor: COLORS.border, borderStyle: 'dashed', marginBottom: 30, gap: 12 },
+  emptyText: { color: COLORS.textGray, fontSize: 14, fontWeight: '500', textAlign: 'center', paddingHorizontal: 20 },
 });

@@ -127,7 +127,7 @@ function SeatCategoryCard({
 export default function TicketsSelectionCategory() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { showtimeId } = useLocalSearchParams();
+  const { showtimeId, movieId, cinemaId } = useLocalSearchParams();
 
   // Del carrito obtenemos los asientos ya seleccionados en la pantalla anterior
   const { cart, updateTickets } = useCart();
@@ -229,8 +229,19 @@ export default function TicketsSelectionCategory() {
     // Actualizar el carrito con los tickets enriquecidos
     updateTickets(enrichedTickets);
 
-    router.push('/(buy)/concessions');
-  }, [selectedSeats, categoryMap, updateTickets, router]);
+    router.push({
+      pathname: '/(buy)/concessions',
+      params: { showtimeId, movieId, cinemaId },
+    });
+  }, [
+    selectedSeats,
+    categoryMap,
+    updateTickets,
+    router,
+    showtimeId,
+    movieId,
+    cinemaId,
+  ]);
 
   // ─── Totales ──────────────────────────────────────────────────────────────
   const estimatedTotal = useMemo(() => {

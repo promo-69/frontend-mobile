@@ -14,12 +14,13 @@ import SeatLegend from '../../../components/seats/SeatLegend';
 import SeatMap from '../../../components/seats/SeatMap';
 import ShowtimeHeader from '../../../components/seats/ShowtimeHeader';
 import ZoomableContainer from '../../../components/seats/ZoomableContainer';
-import { useCart } from '../../../context/CartContext'; // Asumiendo que CartContext existe
+import { useCart } from '../../../context/CartContext';
 import { getMovieById } from '../../../services/movies.service';
 import {
   getShowtimeById,
   getShowtimeSeats,
 } from '../../../services/showtimes.service';
+import { createQuote, cancelSession } from '../../../services/orders.service';
 
 const COLORS = {
   bgDeep: '#231640', // Morado profundo
@@ -31,10 +32,7 @@ const COLORS = {
 };
 
 export default function SelectSeats() {
-  const params = useLocalSearchParams();
-  console.log('SelectSeats params raw:', params);
-
-  const { movieId, showtimeId } = useLocalSearchParams();
+  const { movieId, showtimeId, cinemaId } = useLocalSearchParams();
   const router = useRouter();
   const { cart, toggleSeat, updateCartDetails, totalAmount } = useCart();
 
@@ -47,12 +45,24 @@ export default function SelectSeats() {
   useEffect(() => {
     async function loadData() {
       if (!movieId || !showtimeId) {
-        setError('Movie ID or Showtime ID missing.');
+        setError('Falta el ID de la película o de la función.');
+        setLoading(false);
+        return;
+      }
+      if (!cinemaId) {
+        setError('No se recibió la sucursal. Vuelve atrás e intenta de nuevo.');
         setLoading(false);
         return;
       }
 
       try {
+        // 1. Abrir la sesión de compra (quote) ANTES de pedir el seat-map.
+        //    Esto permite que el backend devuelva el pricing matrix con precios
+        //    reales por categoría de audiencia. Cancelamos cualquier sesión previa.
+        await cancelSession().catch(() => {});
+        await createQuote(Number(cinemaId));
+
+        // 2. Cargar película, función y mapa de asientos (ya con quote activa)
         const [movieResponse, showtimeResponse, seatsResponse] =
           await Promise.all([
             getMovieById(movieId),
@@ -60,36 +70,53 @@ export default function SelectSeats() {
             getShowtimeSeats(showtimeId),
           ]);
 
-        // Normalizamos la data: el backend devuelve arrays incluso para consultas por ID
+        // Normalizamos la data: el backend puede devolver arrays para consultas por ID
         const cleanMovie = Array.isArray(movieResponse)
           ? movieResponse[0]
           : movieResponse;
         const cleanShowtime = Array.isArray(showtimeResponse)
           ? showtimeResponse[0]
           : showtimeResponse;
-
-        // Para los asientos, manejamos si la respuesta es el objeto directo o un array
         const cleanSeatsObj = Array.isArray(seatsResponse)
-          ? seatsResponse
+          ? seatsResponse[0]
           : seatsResponse;
+
+        // El booking id es necesario para el checkout (uno por función)
+        const bookingId =
+          cleanSeatsObj?.booking_id ?? cleanShowtime?.booking?.id ?? null;
 
         setMovie(cleanMovie);
         setShowtime(cleanShowtime);
         setSeatsData(cleanSeatsObj?.seats || []);
-        updateCartDetails(cleanMovie, cleanShowtime); // Actualiza el carrito con los detalles de la película y la función
+
+        // 3. Guardar en el carrito los detalles + sucursal + booking
+        updateCartDetails(cleanMovie, cleanShowtime, {
+          cinemaId: Number(cinemaId),
+          booking: bookingId,
+        });
       } catch (err) {
-        console.error('Error loading seat selection data:', err);
-        setError('Failed to load movie or showtime details. Please try again.');
+        console.error('Error cargando la selección de asientos:', err);
+        setError(
+          'No se pudieron cargar los detalles para la selección de asientos.'
+        );
         Alert.alert(
           'Error',
-          'No se pudieron cargar los detalles para la selección de asientos.'
+          err?.response?.data?.message ||
+            'No se pudieron cargar los detalles para la selección de asientos.'
         );
       } finally {
         setLoading(false);
       }
     }
     loadData();
-  }, [movieId, showtimeId]); //evaluemos si updateCartDetails causa re-renders infinitos
+  }, [movieId, showtimeId, cinemaId]);
+
+  // Inyecta el booking del carrito en cada asiento seleccionado, ya que el
+  // checkout exige `booking` por cada ticket.
+  const handleToggleSeat = (seatId, seatData) => {
+    const bookingId = cart.booking ?? showtime?.booking?.id ?? null;
+    toggleSeat(seatId, { ...seatData, booking: bookingId });
+  };
 
   const handleContinueToPayment = () => {
     if (cart.tickets.length === 0) {
@@ -99,8 +126,11 @@ export default function SelectSeats() {
       );
       return;
     }
-    // Navegar al paso de selección de categoría de boleto
-    router.push({ pathname: '/(buy)/tickets', params: { showtimeId } });
+    // Continuar al paso de selección de categoría de boleto, propagando contexto
+    router.push({
+      pathname: '/(buy)/tickets',
+      params: { showtimeId, movieId, cinemaId },
+    });
   };
 
   if (loading) {
@@ -170,7 +200,7 @@ export default function SelectSeats() {
           <SeatMap
             seatsData={seatsData}
             selectedSeats={cart.tickets}
-            onToggleSeat={toggleSeat}
+            onToggleSeat={handleToggleSeat}
           />
         </ZoomableContainer>
       </View>
