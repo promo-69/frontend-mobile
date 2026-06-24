@@ -1,6 +1,6 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Film } from 'lucide-react-native';
+import { Film, Trash2 } from 'lucide-react-native';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -41,7 +41,15 @@ const formatDate = (iso) => {
 };
 
 // ─── Sub-componentes ──────────────────────────────────────────────────────────
-function LineRow({ label, value, subValue, bold, accent, separator }) {
+function LineRow({
+  label,
+  value,
+  subValue,
+  bold,
+  accent,
+  separator,
+  onRemove,
+}) {
   return (
     <>
       {separator && <View style={styles.separator} />}
@@ -55,18 +63,30 @@ function LineRow({ label, value, subValue, bold, accent, separator }) {
         >
           {label}
         </AppText>
-        <View style={styles.lineValueGroup}>
-          <AppText
-            style={[
-              styles.lineValue,
-              bold && styles.bold,
-              accent && styles.accentText,
-            ]}
-          >
-            {value}
-          </AppText>
-          {subValue ? (
-            <AppText style={styles.lineSubValue}>{subValue}</AppText>
+        <View style={styles.lineRowRight}>
+          <View style={styles.lineValueGroup}>
+            <AppText
+              style={[
+                styles.lineValue,
+                bold && styles.bold,
+                accent && styles.accentText,
+              ]}
+            >
+              {value}
+            </AppText>
+            {subValue ? (
+              <AppText style={styles.lineSubValue}>{subValue}</AppText>
+            ) : null}
+          </View>
+          {onRemove ? (
+            <TouchableOpacity
+              style={styles.removeBtn}
+              onPress={onRemove}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              activeOpacity={0.7}
+            >
+              <Trash2 size={16} color={colors.error} />
+            </TouchableOpacity>
           ) : null}
         </View>
       </View>
@@ -97,7 +117,7 @@ export default function CheckoutScreen() {
     mode = 'buy',
   } = useLocalSearchParams();
   const isConcessionsMode = mode === 'concessions';
-  const { cart, subtotal, iva, total } = useCart();
+  const { cart, subtotal, iva, total, removeProduct, removeTicket } = useCart();
 
   const [serverTotals, setServerTotals] = useState(null);
   const [processing, setProcessing] = useState(false);
@@ -379,6 +399,7 @@ export default function CheckoutScreen() {
                     key={t.seatId || i}
                     label={`Asiento ${t.row || ''}${t.column || t.seatId}`}
                     value={fmtUsd(t.price)}
+                    onRemove={() => removeTicket(t.seatId)}
                   />
                 ))}
               </View>
@@ -395,13 +416,18 @@ export default function CheckoutScreen() {
 
         {hasConcessions && (
           <SectionCard title="Confitería">
-            {cart.products.map((p, i) => (
-              <LineRow
-                key={p.productId || p.comboId || i}
-                label={`${p.name}  ×${p.quantity}`}
-                value={fmtUsd(p.price * p.quantity)}
-              />
-            ))}
+            {cart.products.map((p, i) => {
+              const isCombo = !!p.comboId;
+              const itemId = isCombo ? p.comboId : p.productId;
+              return (
+                <LineRow
+                  key={p.productId || p.comboId || i}
+                  label={`${p.name}  ×${p.quantity}`}
+                  value={fmtUsd(p.price * p.quantity)}
+                  onRemove={() => removeProduct(itemId, isCombo)}
+                />
+              );
+            })}
           </SectionCard>
         )}
 
@@ -564,6 +590,14 @@ const styles = StyleSheet.create({
   },
   lineLabel: { color: colors.textSecondary, flex: 1, fontSize: 13 },
   lineValueGroup: { alignItems: 'flex-end' },
+  lineRowRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.s8,
+  },
+  removeBtn: {
+    padding: spacing.s4,
+  },
   lineValue: { color: colors.textSecondary, fontSize: 13 },
   lineSubValue: { color: colors.textSecondary, fontSize: 11, opacity: 0.7 },
   bold: {

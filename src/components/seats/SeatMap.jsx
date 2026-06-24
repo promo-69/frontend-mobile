@@ -1,4 +1,3 @@
-import { LinearGradient } from 'expo-linear-gradient';
 import { useMemo } from 'react';
 import {
   ScrollView,
@@ -8,179 +7,166 @@ import {
   View,
 } from 'react-native';
 
-const SEAT_SIZE = 35;
-const SEAT_MARGIN = 8;
-const SCREEN_HEIGHT = 20;
+const SEAT_SIZE = 30;
+const SEAT_GAP = 6;
+const LABEL_SIZE = 22;
 
 const COLORS = {
-  available: '#713182', // Morado intermedio
-  selected: '#F6AD38', // Dorado brillante
-  occupied: '#4b5563', // Gris oscuro
-  textMain: '#FFFFFF',
-  textOccupied: '#A0AEC0', // Gris claro para texto de asiento ocupado
-  screenGradientStart: '#f4b400',
-  screenGradientEnd: 'rgba(244, 180, 0, 0.2)',
+  available: '#713182', // Morado (igual que la leyenda)
+  selected: '#F6AD38', // Dorado
+  occupied: '#4b5563', // Gris
+  label: '#E9E3F5', // Letras/números de ejes: claros y legibles
 };
 
-export default function SeatMap({ seatsData, selectedSeats, onToggleSeat }) {
-  // Agrupar y ordenar asientos por fila y columna
-  const groupedSeats = useMemo(() => {
+export default function SeatMap({
+  seatsData = [],
+  selectedSeats = [],
+  onToggleSeat,
+}) {
+  const { groupedSeats, columns } = useMemo(() => {
     const rowsMap = new Map();
-    seatsData.forEach((seat) => {
-      if (!rowsMap.has(seat.row)) {
-        rowsMap.set(seat.row, []);
-      }
+    const colSet = new Set();
+    (seatsData || []).forEach((seat) => {
+      if (!rowsMap.has(seat.row)) rowsMap.set(seat.row, []);
       rowsMap.get(seat.row).push(seat);
+      const col = seat.column ?? seat.number;
+      if (col != null) colSet.add(col);
     });
 
-    // Ordenar columnas dentro de cada fila y luego las filas alfabéticamente
     const sortedRows = Array.from(rowsMap.entries())
-      .sort(([rowA], [rowB]) => rowA.localeCompare(rowB))
-      .map(([rowName, seatsInRow]) => {
-        const sortedSeats = seatsInRow.sort((a, b) => a.column - b.column);
-        return { rowName, seats: sortedSeats };
-      });
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([rowName, seatsInRow]) => ({
+        rowName,
+        seats: seatsInRow.sort((a, b) => a.column - b.column),
+      }));
 
-    return sortedRows;
+    const sortedCols = Array.from(colSet).sort((a, b) => a - b);
+    return { groupedSeats: sortedRows, columns: sortedCols };
   }, [seatsData]);
 
   return (
-    <View style={styles.container}>
-      {/* Representación de la Pantalla */}
-      <View style={styles.screenContainer}>
-        <LinearGradient
-          colors={[COLORS.screenGradientStart, COLORS.screenGradientEnd]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
-          style={styles.screenGradient}
-        />
-        <Text style={styles.screenText}>PANTALLA</Text>
-      </View>
+    <ScrollView
+      style={styles.vScroll}
+      contentContainerStyle={styles.vScrollContent}
+      showsVerticalScrollIndicator={false}
+    >
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.hScrollContent}
+      >
+        {/* Header y filas en el mismo contenedor: scrollean juntos y los
+            números de columna quedan siempre alineados con los asientos. */}
+        <View>
+          {/* Encabezado de números de columna */}
+          <View style={styles.headerRow}>
+            <View style={styles.cornerCell} />
+            {columns.map((col) => (
+              <View key={`col-${col}`} style={styles.headerCell}>
+                <Text style={styles.axisLabel}>{col}</Text>
+              </View>
+            ))}
+          </View>
 
-      {/* Contenedor de Scroll para el mapa de asientos */}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-        <ScrollView
-          contentContainerStyle={styles.seatMapContent}
-          showsVerticalScrollIndicator={false}
-        >
+          {/* Filas de asientos */}
           {groupedSeats.map((row) => (
             <View key={row.rowName} style={styles.row}>
-              <Text style={styles.rowLabel}>{row.rowName}</Text>
+              <View style={styles.rowLabelCell}>
+                <Text style={styles.axisLabel}>{row.rowName}</Text>
+              </View>
               {row.seats.map((seat) => {
                 const seatId = seat.id ?? seat.seatId ?? seat._id;
                 const seatColumn = seat.column ?? seat.number ?? '';
-
                 const isSelected =
                   Array.isArray(selectedSeats) &&
                   selectedSeats.some((s) => s.seatId === seatId);
-
-                // Basado en el nuevo API, los estados pueden ser: 'available', 'sold', 'maintenance', 'locked'
-                // Si no viene el estado, asumimos 'available'
                 const status = seat.status ?? 'available';
                 const isOccupied = status !== 'available';
-                const isDisabled = isOccupied;
 
                 return (
                   <TouchableOpacity
                     key={seatId ?? `${row.rowName}-${seatColumn}`}
                     style={[
                       styles.seat,
+                      !isOccupied && !isSelected && styles.seatAvailable,
                       isOccupied && styles.seatOccupied,
                       isSelected && styles.seatSelected,
-                      !isOccupied && !isSelected && styles.seatAvailable,
                     ]}
                     onPress={() =>
-                      !isDisabled &&
+                      !isOccupied &&
                       onToggleSeat(seatId, {
                         row: seat.row,
                         column: seatColumn,
+                        category: seat.category ?? null,
                         price: seat.price ?? 0,
                       })
                     }
-                    disabled={isDisabled}
+                    disabled={isOccupied}
+                    activeOpacity={0.7}
                     accessibilityLabel={`Asiento ${seat.row}${seatColumn} ${isOccupied ? 'ocupado' : 'disponible'}`}
                     accessibilityState={{
-                      disabled: isDisabled,
+                      disabled: isOccupied,
                       selected: isSelected,
                     }}
-                  >
-                    <Text
-                      style={[
-                        styles.seatText,
-                        isOccupied && styles.seatTextOccupied,
-                      ]}
-                    >
-                      {seatColumn}
-                    </Text>
-                  </TouchableOpacity>
+                  />
                 );
               })}
             </View>
           ))}
-        </ScrollView>
+        </View>
       </ScrollView>
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    paddingVertical: 20,
+  vScroll: { flex: 1 },
+  vScrollContent: {
+    paddingTop: 12,
+    paddingBottom: 24,
+    flexGrow: 1,
   },
-  screenContainer: {
-    alignSelf: 'center',
-    width: '80%',
-    height: SCREEN_HEIGHT,
-    borderRadius: 10,
-    overflow: 'hidden',
-    marginBottom: 20,
-    transform: [{ perspective: 100 }, { rotateX: '40deg' }], // Simula la perspectiva de una pantalla
-    shadowColor: COLORS.screenGradientStart,
-    shadowOffset: { width: 0, height: 5 },
-    shadowOpacity: 0.5,
-    shadowRadius: 10,
-    elevation: 10,
+  hScrollContent: {
+    paddingHorizontal: 16,
+    minWidth: '100%',
+    justifyContent: 'center',
   },
-  screenGradient: {
-    ...StyleSheet.absoluteFillObject,
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: SEAT_GAP,
   },
-  screenText: {
-    position: 'absolute',
-    alignSelf: 'center',
-    top: '50%',
-    marginTop: -8, // Ajuste para centrar verticalmente
-    color: COLORS.textMain,
-    fontSize: 12,
-    fontWeight: 'bold',
-  },
-  seatMapContent: {
-    paddingHorizontal: 20,
-    alignItems: 'flex-start', // Asegura que las filas se alineen a la izquierda
+  cornerCell: { width: LABEL_SIZE, marginRight: SEAT_GAP },
+  headerCell: {
+    width: SEAT_SIZE,
+    marginHorizontal: SEAT_GAP / 2,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: SEAT_MARGIN,
+    marginBottom: SEAT_GAP,
   },
-  rowLabel: {
-    width: SEAT_SIZE,
-    textAlign: 'center',
-    color: COLORS.textGray,
-    fontWeight: 'bold',
-    marginRight: SEAT_MARGIN,
+  rowLabelCell: {
+    width: LABEL_SIZE,
+    marginRight: SEAT_GAP,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  // Etiquetas de ejes (filas y columnas): claras, SIEMPRE legibles
+  axisLabel: {
+    color: COLORS.label,
+    fontWeight: '700',
+    fontSize: 12,
   },
   seat: {
     width: SEAT_SIZE,
     height: SEAT_SIZE,
-    borderRadius: 8,
-    marginHorizontal: SEAT_MARGIN / 2,
-    justifyContent: 'center',
-    alignItems: 'center',
+    borderRadius: 6,
+    marginHorizontal: SEAT_GAP / 2,
   },
   seatAvailable: { backgroundColor: COLORS.available },
   seatSelected: { backgroundColor: COLORS.selected },
   seatOccupied: { backgroundColor: COLORS.occupied },
-  seatText: { color: COLORS.textMain, fontWeight: 'bold', fontSize: 14 },
-  seatTextOccupied: { color: COLORS.textOccupied },
 });

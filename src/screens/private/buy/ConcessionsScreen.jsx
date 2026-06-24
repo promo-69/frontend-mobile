@@ -27,9 +27,18 @@ const { colors, spacing, borderRadius } = theme;
 const LINE_TYPE_PRODUCT = 1;
 const LINE_TYPE_COMBO = 2;
 
+// Obtiene el precio del producto/combo: el backend lo entrega en
+// pricing.final_price; mantenemos item.price como respaldo.
+function getItemPrice(item) {
+  if (item?.pricing?.final_price !== undefined)
+    return Number(item.pricing.final_price);
+  if (item?.price !== undefined) return Number(item.price);
+  return 0;
+}
+
 // ─── ConcessionItem (inline para evitar problemas de path) ───────────────────
 function ConcessionItem({ item, quantity, onAdd, onRemove, isCombo }) {
-  const price = `$${Number(item.price || 0).toFixed(2)}`;
+  const price = `$${getItemPrice(item).toFixed(2)}`;
   const imageUri = item.image_url || item.imageUrl;
 
   return (
@@ -210,9 +219,7 @@ function GridSection({ items, lineType, getQuantity, onAdd, onRemove }) {
               />
             </View>
           ))}
-          {row.length === 1 && (
-            <View key={`spacer-${lineType}-${ri}`} style={gridStyles.cell} />
-          )}
+          {row.length === 1 && <View key={`spacer-${lineType}-${ri}`} style={gridStyles.cell} />}
         </View>
       ))}
     </View>
@@ -292,11 +299,7 @@ export default function ConcessionsScreen() {
       .then((data) => {
         const cinema = data?.data ?? data;
         if (!cancelled && cinema?.name) {
-          setSelectedCinema((prev) => ({
-            ...prev,
-            ...cinema,
-            id: resolvedCinemaId,
-          }));
+          setSelectedCinema((prev) => ({ ...prev, ...cinema, id: resolvedCinemaId }));
         }
       })
       .catch(() => {});
@@ -397,7 +400,7 @@ export default function ConcessionsScreen() {
           productId: isCombo ? undefined : item.id,
           comboId: isCombo ? item.id : undefined,
           name: item.name,
-          price: Number(item.price),
+          price: getItemPrice(item),
           imageUrl: item.image_url || item.imageUrl,
           line_type: lineType,
           quantity: 1,
@@ -521,9 +524,7 @@ export default function ConcessionsScreen() {
 
       <SectionList
         sections={sections}
-        keyExtractor={(item, i) =>
-          `${item.comboId ? 'combo' : 'prod'}-${item.id}-${i}`
-        }
+        keyExtractor={(item, i) => `${item.comboId ? 'combo' : 'prod'}-${item.id}-${i}`}
         contentContainerStyle={[
           styles.listContent,
           { paddingBottom: bottomPad + (itemCount > 0 ? 36 : 0) },
