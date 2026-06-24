@@ -33,6 +33,14 @@ const METHODS = [
   { key: 'points', label: 'Cine Puntos', icon: '🎟️' },
 ];
 
+// IDs de método de pago que espera el backend (PAYMENT_METHOD en magic-vars).
+// CASH:1, POS:2, MOBILE_PAYMENT:3, BANK_TRANSFER:4, LOYALTY_POINTS:5
+const PAYMENT_METHOD_ID = {
+  mobile_payment: 3,
+  transfer: 4,
+  points: 5,
+};
+
 const BANK_INFO = {
   bank: 'Banco Mercantil',
   account: '0105-0000-00-0000000000',
@@ -408,7 +416,7 @@ export default function PaymentScreen() {
     try {
       const pointsAmount = Number(pointsToRedeem) || 0;
       const payload = {
-        payment_method: selectedMethod,
+        payment_method: PAYMENT_METHOD_ID[selectedMethod] ?? selectedMethod,
         amount: selectedMethod === 'points' ? pointsAmount : totalVes,
         currency,
         ...(formData.reference.trim()
@@ -435,6 +443,11 @@ export default function PaymentScreen() {
           qrCode,
           total: String(totalVes),
           paymentMethod: method?.label ?? '',
+          isPoints: selectedMethod === 'points' ? '1' : '0',
+          pointsUsed:
+            selectedMethod === 'points'
+              ? String(Number(pointsToRedeem) || 0)
+              : '0',
         },
       });
     } catch (err) {
