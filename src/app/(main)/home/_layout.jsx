@@ -18,8 +18,15 @@ export default function HomeLayout() {
       <Stack.Screen 
         name="index" 
       />
-
-      
+      <Stack.Screen
+        name="releases"
+      />
+      <Stack.Screen
+        name="upcoming"
+      />
+      <Stack.Screen
+        name="events"
+      />      
       {/* NOTA: Si más adelante se agrega la sub-pantalla de la IA ('ai-assistant.jsx'), no es obligatorio registrarla aquí. Con solo crear el archivo en la carpeta, Expo Router la mapeará automáticamente heredando estas mismas configuraciones. */}
     </Stack>
   );
