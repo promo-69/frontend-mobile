@@ -15,7 +15,12 @@ import { AppText } from '../../../components/AppText';
 import { theme } from '../../../constants';
 
 const { colors, spacing, borderRadius } = theme;
-const fmt = (n) => `$${Number(n || 0).toFixed(2)}`;
+const fmt = (n) =>
+  `${Number(n || 0).toLocaleString('es-VE', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })} Bs`;
+const fmtPts = (n) => `${Number(n || 0).toLocaleString('es-VE')} pts`;
 
 // ─── Check animado ────────────────────────────────────────────────────────────
 function SuccessCheckmark() {
@@ -93,8 +98,11 @@ function DetailRow({ icon, label, value }) {
 // ─── Pantalla ─────────────────────────────────────────────────────────────────
 export default function OrderSuccessScreen() {
   const router = useRouter();
-  const { qrCode, total, paymentMethod } = useLocalSearchParams();
+  const { qrCode, total, paymentMethod, isPoints, pointsUsed } =
+    useLocalSearchParams();
   const totalAmount = Number(total || 0);
+  const paidWithPoints = isPoints === '1';
+  const pointsRedeemed = Number(pointsUsed || 0);
 
   const handleShare = async () => {
     try {
@@ -143,6 +151,16 @@ export default function OrderSuccessScreen() {
             value={paymentMethod || '—'}
           />
           <View style={styles.divider} />
+          {paidWithPoints ? (
+            <>
+              <DetailRow
+                icon="🎟️"
+                label="CinePuntos canjeados"
+                value={fmtPts(pointsRedeemed)}
+              />
+              <View style={styles.divider} />
+            </>
+          ) : null}
           <DetailRow icon="💰" label="Total pagado" value={fmt(totalAmount)} />
           <View style={styles.divider} />
           <DetailRow

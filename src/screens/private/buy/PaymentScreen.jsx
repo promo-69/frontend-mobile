@@ -15,13 +15,18 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppText } from '../../../components/AppText';
 import { useCart } from '../../../context/CartContext';
-import { registerPayment } from '../../../services/orders.service';
+import {
+  registerPayment,
+  getSessionState,
+  getSessionDetails,
+} from '../../../services/orders.service';
 import { usersService } from '../../../services/users.service';
 import { theme } from '../../../constants';
 
 const { colors, spacing, borderRadius } = theme;
 
 const USD_CURRENCY_ID = 1;
+const PTS_CURRENCY_ID = 3; // Cinepuntos (ver tabla currencies del backend)
 
 const fmtVes = (n) =>
   `Bs. ${Number(n || 0).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -32,6 +37,14 @@ const METHODS = [
   { key: 'transfer', label: 'Transferencia', icon: '🏦' },
   { key: 'points', label: 'Cine Puntos', icon: '🎟️' },
 ];
+
+// IDs de método de pago que espera el backend (PAYMENT_METHOD en magic-vars).
+// CASH:1, POS:2, MOBILE_PAYMENT:3, BANK_TRANSFER:4, LOYALTY_POINTS:5
+const PAYMENT_METHOD_ID = {
+  mobile_payment: 3,
+  transfer: 4,
+  points: 5,
+};
 
 const BANK_INFO = {
   bank: 'Banco Mercantil',
@@ -172,13 +185,27 @@ function CinePuntosForm({
   totalVes,
   exchangeRates,
 }) {
-  const maxRedeemable = Math.min(pointsBalance, Math.round(totalVes));
+  // Tasa real de Cinepuntos del backend: cada punto vale `ptsRate` Bs.
+  const ptsRate = Number(exchangeRates?.[PTS_CURRENCY_ID]?.rate) || 0;
+
+  // Puntos necesarios para cubrir el total (total Bs / valor de cada punto).
+  // Si no hay tasa, no se puede pagar con puntos.
+  const pointsNeeded = ptsRate > 0 ? Math.ceil(totalVes / ptsRate) : 0;
+
+  // Máximo que se puede escribir: el saldo del usuario. Si no alcanza para
+  // cubrir el total, la validación al pagar se lo indicará claramente.
+  const maxRedeemable = pointsBalance;
+
   const entered = Number(pointsToRedeem) || 0;
-  const remaining = Math.max(0, totalVes - entered);
+  // Valor en Bs que cubren los puntos ingresados (a la tasa real).
+  const coveredVes = entered * ptsRate;
+  const remaining = Math.max(0, totalVes - coveredVes);
 
   const usdRate = exchangeRates?.[USD_CURRENCY_ID]?.rate;
   const pointsInUsd =
-    usdRate && pointsBalance ? (pointsBalance / usdRate).toFixed(2) : null;
+    usdRate && pointsBalance
+      ? ((pointsBalance * ptsRate) / usdRate).toFixed(2)
+      : null;
 
   return (
     <View style={styles.bankCard}>
@@ -201,26 +228,62 @@ function CinePuntosForm({
           </View>
         )}
       </View>
+
+      {/* Costo real en puntos de esta compra */}
+      {ptsRate > 0 ? (
+        <AppText style={styles.estimateNote}>
+          Esta compra cuesta{' '}
+          <AppText
+            style={{
+              color: colors.primary,
+              fontFamily: theme.typography.family.primary.bold,
+            }}
+          >
+            {pointsNeeded.toLocaleString('es-VE')} pts
+          </AppText>{' '}
+          (1 pt = {fmtVes(ptsRate)})
+        </AppText>
+      ) : (
+        <AppText style={styles.estimateNote}>
+          El pago con CinePuntos no está disponible en este momento.
+        </AppText>
+      )}
+
       <View style={styles.fieldWrapper}>
         <AppText style={styles.fieldLabel}>Puntos a utilizar</AppText>
         <TextInput
           style={styles.redeemInput}
-          placeholder={`Máx. ${maxRedeemable.toLocaleString('es-VE')}`}
+          placeholder={`Necesarios: ${pointsNeeded.toLocaleString('es-VE')}`}
           placeholderTextColor={colors.midnight[400]}
           keyboardType="numeric"
           value={pointsToRedeem}
           onChangeText={(v) => {
-            const num = Number(v) || 0;
+            // Solo dígitos, sin ceros a la izquierda
+            const clean = v.replace(/[^0-9]/g, '').replace(/^0+(?=\d)/, '');
+            const num = Number(clean) || 0;
             if (num > maxRedeemable) {
               onChangePoints(String(maxRedeemable));
             } else {
-              onChangePoints(v);
+              onChangePoints(clean);
             }
           }}
         />
+        {/* Atajo: rellenar con los puntos exactos que requiere la compra,
+            disponible solo si el usuario tiene saldo suficiente. */}
+        {ptsRate > 0 && pointsNeeded > 0 && pointsBalance >= pointsNeeded && (
+          <TouchableOpacity
+            onPress={() => onChangePoints(String(pointsNeeded))}
+            style={styles.fillNeededBtn}
+            activeOpacity={0.8}
+          >
+            <AppText style={styles.fillNeededText}>
+              Usar {pointsNeeded.toLocaleString('es-VE')} pts (total)
+            </AppText>
+          </TouchableOpacity>
+        )}
         {entered > 0 && (
           <AppText style={styles.estimateNote}>
-            Cubre {fmtVes(entered)} · Restante: {fmtVes(remaining)}
+            Cubre {fmtVes(coveredVes)} · Restante: {fmtVes(remaining)}
           </AppText>
         )}
       </View>
@@ -243,16 +306,64 @@ export default function PaymentScreen() {
   const totalVes = Number(total || 0);
   const currency = Number(currencyParam || 2);
 
-  const exchangeRates = (() => {
+  // Las tasas pueden venir por params; si llegan vacías (el checkout no las
+  // incluye), las pedimos a la sesión de compra, que sí las trae (incluida PTS).
+  const [exchangeRates, setExchangeRates] = useState(() => {
     try {
       return exchangeRatesParam ? JSON.parse(exchangeRatesParam) : {};
     } catch {
       return {};
     }
-  })();
+  });
+
+  useEffect(() => {
+    // El checkout debería incluir las tasas. Si falta la de Cinepuntos,
+    // las recuperamos de la sesión (probamos ambos endpoints).
+    const ptsOk =
+      exchangeRates &&
+      exchangeRates[PTS_CURRENCY_ID] &&
+      Number(exchangeRates[PTS_CURRENCY_ID]?.rate) > 0;
+    if (ptsOk) return;
+
+    let cancelled = false;
+    (async () => {
+      // 1. Intento con /orders/session
+      try {
+        const session = await getSessionState();
+        const rates = session?.exchange_rates ?? session?.data?.exchange_rates;
+        if (!cancelled && rates && rates[PTS_CURRENCY_ID]) {
+          setExchangeRates(rates);
+          return;
+        }
+      } catch (e) {
+        // Sin sesión activa: probamos el otro endpoint.
+      }
+      // 2. Respaldo con /orders/session/details
+      try {
+        const details = await getSessionDetails();
+        const rates =
+          details?.session?.exchange_rates ??
+          details?.data?.session?.exchange_rates;
+        if (!cancelled && rates && rates[PTS_CURRENCY_ID]) {
+          setExchangeRates(rates);
+        }
+      } catch (e) {
+        // No es crítico: la UI maneja la ausencia de tasa.
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const usdRate = exchangeRates?.[USD_CURRENCY_ID]?.rate;
   const totalUsd = usdRate ? totalVes / usdRate : null;
+
+  // Costo real en Cinepuntos: total Bs / valor de cada punto (tasa del backend).
+  const ptsRateMain = Number(exchangeRates?.[PTS_CURRENCY_ID]?.rate) || 0;
+  const totalPointsNeeded =
+    ptsRateMain > 0 ? Math.ceil(totalVes / ptsRateMain) : null;
 
   // ─── Timer sincronizado ──────────────────────────────────────────────────────
   const [timeLeft, setTimeLeft] = useState(null); // null = no inicializado
@@ -398,6 +509,27 @@ export default function PaymentScreen() {
         );
         return false;
       }
+      // Validamos con la TASA REAL de Cinepuntos del backend (no asumimos 1:1).
+      // Cada punto vale `ptsRate` Bs; los puntos deben cubrir el total.
+      const ptsRate = Number(exchangeRates?.[PTS_CURRENCY_ID]?.rate) || 0;
+      if (ptsRate <= 0) {
+        Alert.alert(
+          'CinePuntos no disponible',
+          'No hay una tasa de cambio de CinePuntos configurada. Usa otro método de pago.'
+        );
+        return false;
+      }
+      const pointsNeeded = Math.ceil(totalVes / ptsRate);
+      if (pts < pointsNeeded) {
+        Alert.alert(
+          'Puntos insuficientes para esta compra',
+          `Esta compra cuesta ${pointsNeeded.toLocaleString('es-VE')} puntos ` +
+            `(cada punto vale ${fmtVes(ptsRate)}). Vas a canjear ${pts.toLocaleString('es-VE')}. ` +
+            `El pago con CinePuntos debe cubrir el total. ` +
+            `Tienes ${pointsBalance.toLocaleString('es-VE')} puntos disponibles.`
+        );
+        return false;
+      }
     }
     return true;
   };
@@ -408,7 +540,7 @@ export default function PaymentScreen() {
     try {
       const pointsAmount = Number(pointsToRedeem) || 0;
       const payload = {
-        payment_method: selectedMethod,
+        payment_method: PAYMENT_METHOD_ID[selectedMethod] ?? selectedMethod,
         amount: selectedMethod === 'points' ? pointsAmount : totalVes,
         currency,
         ...(formData.reference.trim()
@@ -425,7 +557,23 @@ export default function PaymentScreen() {
       };
 
       const orderData = await registerPayment(payload);
+
+      // El backend responde con pago PARCIAL si el monto no cubre el total:
+      // { remaining_balance, message } SIN qr_code. La orden NO se completó,
+      // así que no debemos mostrar "compra exitosa".
+      const remaining =
+        orderData?.remaining_balance ?? orderData?.data?.remaining_balance;
       const qrCode = orderData?.qr_code ?? orderData?.data?.qr_code ?? '';
+
+      if ((remaining != null && Number(remaining) > 0) || !qrCode) {
+        const faltante =
+          remaining != null ? ` Faltan ${fmtVes(remaining)} por cubrir.` : '';
+        Alert.alert(
+          'Pago incompleto',
+          `El pago no cubrió el total de la orden, por lo que la compra no se completó.${faltante} Verifica el monto e intenta de nuevo.`
+        );
+        return;
+      }
 
       await clearCart();
       const method = METHODS.find((m) => m.key === selectedMethod);
@@ -435,6 +583,11 @@ export default function PaymentScreen() {
           qrCode,
           total: String(totalVes),
           paymentMethod: method?.label ?? '',
+          isPoints: selectedMethod === 'points' ? '1' : '0',
+          pointsUsed:
+            selectedMethod === 'points'
+              ? String(Number(pointsToRedeem) || 0)
+              : '0',
         },
       });
     } catch (err) {
@@ -495,9 +648,11 @@ export default function PaymentScreen() {
           {totalUsd !== null && (
             <AppText style={styles.totalAmountUsd}>{fmtUsd(totalUsd)}</AppText>
           )}
-          <AppText style={styles.totalPoints}>
-            ≈ {Math.round(totalVes).toLocaleString('es-VE')} pts
-          </AppText>
+          {totalPointsNeeded !== null && (
+            <AppText style={styles.totalPoints}>
+              ≈ {totalPointsNeeded.toLocaleString('es-VE')} pts
+            </AppText>
+          )}
         </View>
 
         {/* ── Métodos de pago ── */}
@@ -738,6 +893,21 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontStyle: 'italic',
     marginTop: spacing.s4,
+  },
+  fillNeededBtn: {
+    alignSelf: 'flex-start',
+    marginTop: spacing.s8,
+    paddingHorizontal: spacing.s12,
+    paddingVertical: spacing.s4,
+    borderRadius: 16,
+    backgroundColor: 'rgba(246,173,56,0.14)',
+    borderWidth: 1,
+    borderColor: 'rgba(246,173,56,0.4)',
+  },
+  fillNeededText: {
+    color: colors.primary,
+    fontSize: 12,
+    fontFamily: theme.typography.family.primary.bold,
   },
 
   bottomBar: {

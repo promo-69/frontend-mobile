@@ -1,5 +1,6 @@
 import { useRouter } from 'expo-router';
 import {
+  Award,
   ChevronLeft,
   ChevronRight,
   LogOut,
@@ -123,6 +124,11 @@ export default function ProfileScreen() {
             icon: User,
             title: 'Datos Personales',
             onPress: () => router.push('/profile/personal-data'),
+          })}
+          {renderMenuItem({
+            icon: Award,
+            title: 'CinePuntos',
+            onPress: () => router.push('/profile/loyalty-program'),
           })}
           {renderMenuItem({
             icon: ShieldCheck,
