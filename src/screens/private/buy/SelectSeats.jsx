@@ -1,6 +1,6 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -15,6 +15,7 @@ import SeatMap from '../../../components/seats/SeatMap';
 import ShowtimeHeader from '../../../components/seats/ShowtimeHeader';
 import ZoomableContainer from '../../../components/seats/ZoomableContainer';
 import { useCart } from '../../../context/CartContext';
+import { useSeatLock } from '../../../hooks/buy/useSeatLock';
 import { getMovieById } from '../../../services/movies.service';
 import {
   getShowtimeById,
@@ -34,13 +35,103 @@ const COLORS = {
 export default function SelectSeats() {
   const { movieId, showtimeId, cinemaId } = useLocalSearchParams();
   const router = useRouter();
-  const { cart, toggleSeat, updateCartDetails, totalAmount } = useCart();
+  const navigation = useNavigation();
+  const {
+    cart,
+    toggleSeat,
+    updateTickets,
+    updateCartDetails,
+    clearCart,
+    clearProducts,
+    totalAmount,
+  } = useCart();
+
+  // Marca si estamos avanzando en el flujo (no debemos liberar locks al avanzar)
+  const advancingRef = useRef(false);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [movie, setMovie] = useState(null);
   const [showtime, setShowtime] = useState(null);
   const [seatsData, setSeatsData] = useState([]);
+  // Overrides de estado en tiempo real: seatId -> 'occupied' | 'available'
+  const [liveSeatStatus, setLiveSeatStatus] = useState({});
+  const [lockingSeatId, setLockingSeatId] = useState(null);
+  // Indica que la quote ya fue creada → habilita la conexión en tiempo real
+  const [quoteReady, setQuoteReady] = useState(false);
+
+  // Marca asientos como ocupados cuando otros usuarios los toman o compran
+  const handleSeatsTakenByOthers = useCallback(
+    (seatIds) => {
+      setLiveSeatStatus((prev) => {
+        const next = { ...prev };
+        for (const id of seatIds) next[id] = 'occupied';
+        return next;
+      });
+      // Si alguno de esos asientos estaba en nuestro carrito, lo quitamos
+      seatIds.forEach((id) => {
+        if (cart.tickets.some((t) => t.seatId === id)) {
+          toggleSeat(id, {});
+        }
+      });
+    },
+    [cart.tickets, toggleSeat]
+  );
+
+  // Libera asientos (vuelven a disponibles) cuando otros los sueltan
+  const handleSeatsReleased = useCallback(
+    (seatIds) => {
+      setLiveSeatStatus((prev) => {
+        const next = { ...prev };
+        for (const id of seatIds) {
+          // Solo liberamos si no es nuestro asiento seleccionado
+          if (!cart.tickets.some((t) => t.seatId === id)) {
+            next[id] = 'available';
+          }
+        }
+        return next;
+      });
+    },
+    [cart.tickets]
+  );
+
+  const handleQuoteExpired = useCallback(() => {
+    Alert.alert(
+      'Sesión expirada',
+      'Tu tiempo de reserva ha expirado. Vuelve a seleccionar tus asientos.',
+      [{ text: 'Entendido', onPress: () => router.back() }]
+    );
+  }, [router]);
+
+  const { joined, realtimeReady, lockSeat, unlockSeat, leave } = useSeatLock(
+    showtimeId,
+    {
+      onSeatsTakenByOthers: handleSeatsTakenByOthers,
+      onSeatsReleased: handleSeatsReleased,
+      onQuoteExpired: handleQuoteExpired,
+    },
+    quoteReady
+  );
+
+  // Volver atrás liberando los bloqueos y cancelando la sesión de compra
+  const handleGoBack = useCallback(async () => {
+    leave();
+    await cancelSession().catch(() => {});
+    router.back();
+  }, [leave, router]);
+
+  // Interceptar cualquier salida hacia atrás (header, gesto, botón Android)
+  // para liberar los bloqueos y vaciar el carrito. Si avanzamos, no hacemos nada.
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('beforeRemove', () => {
+      if (advancingRef.current) return; // avanzando: conservar locks y carrito
+      // Salida hacia atrás: liberar locks, cancelar sesión y vaciar carrito
+      leave();
+      cancelSession().catch(() => {});
+      clearCart();
+    });
+    return unsubscribe;
+  }, [navigation, leave, clearCart]);
 
   useEffect(() => {
     async function loadData() {
@@ -58,9 +149,46 @@ export default function SelectSeats() {
       try {
         // 1. Abrir la sesión de compra (quote) ANTES de pedir el seat-map.
         //    Esto permite que el backend devuelva el pricing matrix con precios
-        //    reales por categoría de audiencia. Cancelamos cualquier sesión previa.
+        //    reales por categoría de audiencia.
+        //    Si ya existe una sesión activa (409), la cancelamos y reintentamos.
+        const openQuote = async (attempt = 0) => {
+          try {
+            await createQuote(Number(cinemaId));
+          } catch (e) {
+            const status = e?.response?.status;
+            if ((status === 409 || status === 400) && attempt < 1) {
+              // Sesión previa colgada → cancelarla y reintentar una vez
+              await cancelSession().catch(() => {});
+              await new Promise((r) => setTimeout(r, 400));
+              return openQuote(attempt + 1);
+            }
+            throw e;
+          }
+        };
+
         await cancelSession().catch(() => {});
-        await createQuote(Number(cinemaId));
+
+        // Si el carrito tiene confitería de OTRA sucursal, la descartamos: la
+        // sesión de compra es por sucursal y el checkout rechazaría productos
+        // que no existen en el inventario de la sucursal de esta función.
+        if (
+          cart.products.length > 0 &&
+          cart.cinemaId &&
+          Number(cart.cinemaId) !== Number(cinemaId)
+        ) {
+          clearProducts();
+          Alert.alert(
+            'Confitería de otra sucursal',
+            'Tu confitería era de otra sucursal y se vació, porque la película que elegiste es de una sucursal distinta. Puedes volver a agregar productos de esta sucursal más adelante.'
+          );
+        }
+
+        await openQuote();
+        // Quote lista → habilitamos la conexión en tiempo real (join_showtime)
+        setQuoteReady(true);
+        // Empezamos la selección de cero: los bloqueos son nuevos por sesión,
+        // así que descartamos asientos que pudieran haber quedado en el carrito.
+        updateTickets([]);
 
         // 2. Cargar película, función y mapa de asientos (ya con quote activa)
         const [movieResponse, showtimeResponse, seatsResponse] =
@@ -85,14 +213,22 @@ export default function SelectSeats() {
         const bookingId =
           cleanSeatsObj?.booking_id ?? cleanShowtime?.booking?.id ?? null;
 
+        // Capturamos el pricing matrix mientras la quote está fresca, para que
+        // la pantalla de Boletos lo lea del carrito sin volver a pedirlo.
+        const pricingMatrix =
+          cleanSeatsObj?.pricing?.pricing_matrix ??
+          cleanSeatsObj?.pricing?.matrix ??
+          [];
+
         setMovie(cleanMovie);
         setShowtime(cleanShowtime);
         setSeatsData(cleanSeatsObj?.seats || []);
 
-        // 3. Guardar en el carrito los detalles + sucursal + booking
+        // 3. Guardar en el carrito los detalles + sucursal + booking + pricing
         updateCartDetails(cleanMovie, cleanShowtime, {
           cinemaId: Number(cinemaId),
           booking: bookingId,
+          pricingMatrix,
         });
       } catch (err) {
         console.error('Error cargando la selección de asientos:', err);
@@ -111,12 +247,56 @@ export default function SelectSeats() {
     loadData();
   }, [movieId, showtimeId, cinemaId]);
 
-  // Inyecta el booking del carrito en cada asiento seleccionado, ya que el
-  // checkout exige `booking` por cada ticket.
-  const handleToggleSeat = (seatId, seatData) => {
-    const bookingId = cart.booking ?? showtime?.booking?.id ?? null;
-    toggleSeat(seatId, { ...seatData, booking: bookingId });
-  };
+  // Selección de asiento con bloqueo en tiempo real:
+  //  - Al seleccionar: pedir lock al backend; solo añadir al carrito si confirma.
+  //  - Al deseleccionar: liberar el lock.
+  const handleToggleSeat = useCallback(
+    async (seatId, seatData) => {
+      const isSelected = cart.tickets.some((t) => t.seatId === seatId);
+      const bookingId = cart.booking ?? showtime?.booking?.id ?? null;
+
+      if (isSelected) {
+        // Deseleccionar: liberar el lock y quitar del carrito
+        unlockSeat(seatId);
+        toggleSeat(seatId, { ...seatData, booking: bookingId });
+        return;
+      }
+
+      // Seleccionar: esperar a que el tiempo real esté listo (o en modo degradado)
+      if (!realtimeReady) {
+        Alert.alert(
+          'Un momento',
+          'Aún estamos preparando la sala. Intenta de nuevo en un segundo.'
+        );
+        return;
+      }
+
+      setLockingSeatId(seatId);
+      try {
+        await lockSeat(seatId);
+        // Confirmado por el backend → añadir al carrito
+        toggleSeat(seatId, { ...seatData, booking: bookingId });
+      } catch (err) {
+        // El asiento fue tomado por otro o expiró: marcar ocupado
+        setLiveSeatStatus((prev) => ({ ...prev, [seatId]: 'occupied' }));
+        Alert.alert(
+          'Asiento no disponible',
+          err?.message || 'Ese asiento acaba de ser ocupado. Elige otro.'
+        );
+      } finally {
+        setLockingSeatId(null);
+      }
+    },
+    [
+      cart.tickets,
+      cart.booking,
+      showtime,
+      realtimeReady,
+      lockSeat,
+      unlockSeat,
+      toggleSeat,
+    ]
+  );
 
   const handleContinueToPayment = () => {
     if (cart.tickets.length === 0) {
@@ -126,6 +306,8 @@ export default function SelectSeats() {
       );
       return;
     }
+    // Marcamos que avanzamos para que el listener no libere los bloqueos
+    advancingRef.current = true;
     // Continuar al paso de selección de categoría de boleto, propagando contexto
     router.push({
       pathname: '/(buy)/tickets',
@@ -185,6 +367,16 @@ export default function SelectSeats() {
     .map((t) => `${t.row}${t.column}`)
     .join(', ');
 
+  // Superponemos el estado en tiempo real sobre los asientos base
+  const displaySeats = seatsData.map((seat) => {
+    const override = liveSeatStatus[seat.id];
+    if (!override) return seat;
+    // No sobrescribimos el estado de un asiento que el propio usuario tiene seleccionado
+    const isMine = cart.tickets.some((t) => t.seatId === seat.id);
+    if (isMine) return seat;
+    return { ...seat, status: override };
+  });
+
   return (
     <SafeAreaView style={styles.fullScreen}>
       <LinearGradient
@@ -195,10 +387,18 @@ export default function SelectSeats() {
       <ShowtimeHeader movie={movie} showtime={showtime} />
       <SeatLegend />
 
+      {/* Indicador de conexión en tiempo real (solo mientras se prepara) */}
+      {!realtimeReady && (
+        <View style={styles.connectionBanner}>
+          <ActivityIndicator size="small" color={COLORS.accent} />
+          <Text style={styles.connectionText}>Preparando la sala...</Text>
+        </View>
+      )}
+
       <View style={styles.mapViewport}>
         <ZoomableContainer>
           <SeatMap
-            seatsData={seatsData}
+            seatsData={displaySeats}
             selectedSeats={cart.tickets}
             onToggleSeat={handleToggleSeat}
           />
@@ -214,6 +414,7 @@ export default function SelectSeats() {
           <TouchableOpacity
             style={styles.continueButton}
             onPress={handleContinueToPayment}
+            disabled={lockingSeatId !== null}
           >
             <Text style={styles.continueButtonText}>
               Continuar al pago ({showtime.currency?.symbol || '$'}
@@ -234,6 +435,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   loadingText: { color: COLORS.textGray, marginTop: 10, fontSize: 16 },
+  connectionBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 8,
+    backgroundColor: 'rgba(0,0,0,0.3)',
+  },
+  connectionText: { color: COLORS.textGray, fontSize: 13 },
   errorText: {
     color: COLORS.textMain,
     fontSize: 18,

@@ -271,6 +271,7 @@ export default function CinemaDetails() {
                           params: {
                             showtimeId: st.id,
                             movieId: item.id,
+                            cinemaId: cinemaId,
                           },
                         })
                       }

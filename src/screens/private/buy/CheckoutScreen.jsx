@@ -262,7 +262,12 @@ export default function CheckoutScreen() {
           },
         });
       } catch (err) {
-        console.error('Error checkout:', err);
+        console.error('Error checkout:', {
+          url: err?.config?.url,
+          status: err?.response?.status,
+          message: err?.response?.data?.message,
+          code: err?.response?.data?.code,
+        });
         // 409 = asiento ya no disponible o lock expirado: la sesión quedó inconsistente
         if (err?.response?.status === 409) {
           Alert.alert(
@@ -293,7 +298,20 @@ export default function CheckoutScreen() {
     isConcessionsMode,
   ]);
 
-  const handleAddMovie = () => router.push('/(main)/home');
+  // "Agregar película": llevamos al usuario a la cartelera de la MISMA sucursal
+  // de su confitería, para que película y confitería formen una sola compra.
+  // Los productos permanecen en el carrito local hasta el checkout.
+  const handleAddMovie = () => {
+    if (effectiveCinemaId) {
+      router.push({
+        pathname: '/(main)/cinemas/[cinemaId]',
+        params: { cinemaId: String(effectiveCinemaId) },
+      });
+    } else {
+      // Sin sucursal conocida, lo enviamos a la cartelera general
+      router.push('/(main)/home');
+    }
+  };
 
   const bottomBarHeight =
     56 + spacing.s12 + spacing.s16 + (insets.bottom || 16);
