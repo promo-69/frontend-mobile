@@ -134,7 +134,19 @@ export default function MoviesReleases() {
           <View style={styles.grid}>
             {filteredMovies.map((movie, index) => (
               <View key={`${movie.type}-${movie.id || index}`} style={styles.cardWrapper}>
-                <MovieGridCard movie={movie} isEventsPage={movie.isEvent} />
+                <MovieGridCard 
+                movie={movie} 
+                isEventsPage={movie.isEvent}
+                onPress={() => {
+                  router.push({
+                    pathname: `/content/${movie.id}`, // Ajusta la ruta base según tu árbol de archivos (ej: /movies/[movieId])
+                    params: { 
+                      movieId: movie.id, 
+                      type: movie.isEvent ? 'special_event' : 'movie' 
+                    }
+                  });
+                }} 
+                />
               </View>
             ))}
           </View>

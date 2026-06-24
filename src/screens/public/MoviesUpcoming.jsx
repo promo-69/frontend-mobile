@@ -128,8 +128,15 @@ export default function MoviesUpcoming() {
                   return (
                     <View key={`upcoming-${movie.id || index}`} style={styles.cardWrapper}>
                       <MovieGridCard 
-                        movie={{ ...movie, isEvent: isSpecialEvent }}
-                        upcoming={true}
+                       onPress={() => {
+                        router.push({
+                          pathname: `/content/${movie.id}`, 
+                          params: { 
+                            movieId: movie.id, 
+                            type: movie.isEvent ? 'special_event' : 'movie' 
+                          }
+                        });
+                      }}
                       />
                     </View>
                   );

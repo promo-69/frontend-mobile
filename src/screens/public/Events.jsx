@@ -136,7 +136,19 @@ export default function Events() {
               <View style={styles.grid}>
                 {groupedEvents[month].map((event, index) => (
                   <View key={`event-${event.id || index}`} style={styles.cardWrapper}>
-                    <MovieGridCard movie={event} isEventsPage={true} />
+                    <MovieGridCard 
+                    movie={event} 
+                    isEventsPage={true}
+                    onPress={() => {
+                        router.push({
+                        pathname: `/content/${event.id}`, 
+                        params: { 
+                            movieId: event.id, 
+                            type: 'special_event'
+                        }
+                    });
+                    }} 
+                    />
                   </View>
                 ))}
               </View>
