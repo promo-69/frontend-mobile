@@ -18,19 +18,13 @@ export function CartProvider({ children }) {
     products: [],
     movie: null,
     showtime: null,
+    cinemaId: null,
+    booking: null,
+    pricingMatrix: [],
   });
 
-  // Cargar carrito desde AsyncStorage
   useEffect(() => {
-    async function loadSavedCart() {
-      try {
-        const saved = await AsyncStorage.getItem(ASYNC_STORAGE_KEY);
-        if (saved) setCart(JSON.parse(saved));
-      } catch (error) {
-        console.error('Error cargando el carrito:', error);
-      }
-    }
-    loadSavedCart();
+    AsyncStorage.removeItem(ASYNC_STORAGE_KEY).catch(() => {});
   }, []);
 
   // Guardar carrito en AsyncStorage
@@ -71,6 +65,13 @@ export function CartProvider({ children }) {
       ...prev,
       tickets: prev.tickets.filter((t) => t.seatId !== seatId),
     }));
+  }, []);
+
+  /**
+   * Reemplaza la lista de tickets completa (útil para enriquecer con audienceCategoryId y precio final).
+   */
+  const updateTickets = useCallback((enrichedTickets) => {
+    setCart((prev) => ({ ...prev, tickets: enrichedTickets }));
   }, []);
 
   const addProduct = useCallback((product) => {
@@ -121,6 +122,13 @@ export function CartProvider({ children }) {
     }));
   }, []);
 
+  /**
+   * Vacía solo los productos de confitería (conserva boletos y demás contexto).
+   */
+  const clearProducts = useCallback(() => {
+    setCart((prev) => ({ ...prev, products: [] }));
+  }, []);
+
   const setMovie = useCallback((movie) => {
     setCart((prev) => {
       if (prev.movie && prev.movie.id !== movie.id) {
@@ -136,18 +144,33 @@ export function CartProvider({ children }) {
     });
   }, []);
 
-  const updateCartDetails = useCallback((movieData, showtimeData) => {
-    setCart((prev) => {
-      const isDifferentShowtime =
-        prev.showtime && prev.showtime.id !== showtimeData.id;
-      const isDifferentMovie = prev.movie && prev.movie.id !== movieData.id;
-      return {
-        ...prev,
-        movie: movieData,
-        showtime: showtimeData,
-        tickets: isDifferentShowtime || isDifferentMovie ? [] : prev.tickets,
-      };
-    });
+  const updateCartDetails = useCallback(
+    (movieData, showtimeData, extra = {}) => {
+      setCart((prev) => {
+        const isDifferentShowtime =
+          prev.showtime && prev.showtime.id !== showtimeData.id;
+        const isDifferentMovie = prev.movie && prev.movie.id !== movieData.id;
+        const shouldReset = isDifferentShowtime || isDifferentMovie;
+        return {
+          ...prev,
+          movie: movieData,
+          showtime: showtimeData,
+          // cinemaId, booking y pricingMatrix se actualizan si vienen en `extra`
+          cinemaId: extra.cinemaId ?? prev.cinemaId,
+          booking: extra.booking ?? prev.booking,
+          pricingMatrix: extra.pricingMatrix ?? prev.pricingMatrix,
+          tickets: shouldReset ? [] : prev.tickets,
+        };
+      });
+    },
+    []
+  );
+
+  /**
+   * Fija la sucursal (cinemaId) del carrito de forma explícita.
+   */
+  const setCinemaId = useCallback((cinemaId) => {
+    setCart((prev) => ({ ...prev, cinemaId: cinemaId ?? null }));
   }, []);
 
   const setShowtime = useCallback((showtime) => {
@@ -160,6 +183,9 @@ export function CartProvider({ children }) {
       products: [],
       movie: null,
       showtime: null,
+      cinemaId: null,
+      booking: null,
+      pricingMatrix: [],
     });
     try {
       await AsyncStorage.removeItem(ASYNC_STORAGE_KEY);
@@ -188,17 +214,20 @@ export function CartProvider({ children }) {
         addTicket,
         toggleSeat,
         removeTicket,
+        updateTickets,
         addProduct,
         updateProductQuantity,
         removeProduct,
+        clearProducts,
         setMovie,
         setShowtime,
+        setCinemaId,
         updateCartDetails,
         clearCart,
         ...totalsCalculated,
         totalAmount: totalsCalculated.total,
         clearCart,
-        getTotals: () => totalsCalculated, 
+        getTotals: () => totalsCalculated,
       }}
     >
       {children}

@@ -1,4 +1,4 @@
-import * as React from "react"
+import * as React from 'react';
 import Svg, {
   Path,
   Defs,
@@ -7,7 +7,7 @@ import Svg, {
   Pattern,
   Use,
   Image,
-} from "react-native-svg"
+} from 'react-native-svg';
 const Logo = (props) => (
   <Svg
     xmlns="http://www.w3.org/2000/svg"
@@ -51,5 +51,5 @@ const Logo = (props) => (
       />
     </Defs>
   </Svg>
-)
-export default Logo
+);
+export default Logo;

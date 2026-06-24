@@ -1,7 +1,13 @@
 import { ChevronDown } from 'lucide-react-native';
 import { useState } from 'react';
 import { Controller } from 'react-hook-form';
-import { StyleSheet, TouchableOpacity, View, Modal, TouchableWithoutFeedback } from 'react-native';
+import {
+  StyleSheet,
+  TouchableOpacity,
+  View,
+  Modal,
+  TouchableWithoutFeedback,
+} from 'react-native';
 import { theme } from '../constants';
 import {
   validateDate,
@@ -31,7 +37,7 @@ export const PersonalInfoSteps = ({
   control,
   errors,
   getValues,
-  setValue, 
+  setValue,
 }) => {
   const [isGenderOpen, setIsGenderOpen] = useState(false);
 
@@ -52,7 +58,10 @@ export const PersonalInfoSteps = ({
               required: 'Los nombres son obligatorios',
               validate: validateNames,
             }}
-            render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
+            render={({
+              field: { onChange, onBlur, value },
+              fieldState: { error },
+            }) => (
               <Input
                 label="Nombres"
                 value={value}
@@ -71,7 +80,10 @@ export const PersonalInfoSteps = ({
               required: 'Los apellidos son obligatorios',
               validate: validateNames,
             }}
-            render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
+            render={({
+              field: { onChange, onBlur, value },
+              fieldState: { error },
+            }) => (
               <Input
                 label="Apellidos"
                 value={value}
@@ -90,7 +102,10 @@ export const PersonalInfoSteps = ({
               required: 'El correo es obligatorio',
               validate: validateEmail,
             }}
-            render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
+            render={({
+              field: { onChange, onBlur, value },
+              fieldState: { error },
+            }) => (
               <Input
                 label="Correo Electrónico"
                 value={value}
@@ -105,53 +120,55 @@ export const PersonalInfoSteps = ({
 
           {/* Teléfono Internacional con Selector de Código de País */}
           <Controller
-          control={control}
-          name="phoneNumber"
-          rules={{
-            required: 'El teléfono es obligatorio',
-            validate: (value) => {
-              const digitsOnly = value ? value.replace(/\D/g, '') : '';
-              // Restamos los 2 dígitos correspondientes al prefijo internacional (+58 o +57)
-              const netLength = digitsOnly.length - 2; 
+            control={control}
+            name="phoneNumber"
+            rules={{
+              required: 'El teléfono es obligatorio',
+              validate: (value) => {
+                const digitsOnly = value ? value.replace(/\D/g, '') : '';
+                // Restamos los 2 dígitos correspondientes al prefijo internacional (+58 o +57)
+                const netLength = digitsOnly.length - 2;
 
-              if (netLength < 7 || netLength > 15) {
-                return 'Teléfono debe tener entre 7 y 15 dígitos';
-              }
-              return true;
-            }
-          }}
-          render={({ field: { onChange, onBlur, value = "+58" }, fieldState: { error } }) => {
-            // 1. Determinar cuál es el prefijo actual que está al inicio del string
-            const currentCode = value?.startsWith('+57') ? '+57' : '+58';
-            
-            // 2. Extraer el resto de la cadena telefónica pura para el input de texto
-            const currentNumber = value?.replace(currentCode, '') || '';
+                if (netLength < 7 || netLength > 15) {
+                  return 'Teléfono debe tener entre 7 y 15 dígitos';
+                }
+                return true;
+              },
+            }}
+            render={({
+              field: { onChange, onBlur, value = '+58' },
+              fieldState: { error },
+            }) => {
+              // 1. Determinar cuál es el prefijo actual que está al inicio del string
+              const currentCode = value?.startsWith('+57') ? '+57' : '+58';
 
-            return (
-              <SelectorInput
-                label="Teléfono"
-                // Evaluamos visualmente qué bandera mostrar según el prefijo activo en el form
-                selectedValue={currentCode === '+58' ? '🇻🇪' : '🇨🇴'}
-                value={currentNumber}
-                onBlur={onBlur}
-                keyboardType="phone-pad"
-                error={error?.message}
-                // Al tocar el dropdown del componente, alternamos o elegimos el país
-                onSelect={(newFlag) => {
-                  const newCode = newFlag === '🇻🇪' ? '+58' : '+57';
-                  onChange(newCode + currentNumber);
-                }}
-                // Al escribir sobre el teclado numérico, sanitizamos y concatenamos
-                onChangeText={(newNumber) => {
-                  const clean = newNumber.replace(/\D/g, "");
-                  onChange(currentCode + clean);
-                }}
-              
-                options={['🇻🇪','🇨🇴']}
-              />
-            );
-          }}
-        />
+              // 2. Extraer el resto de la cadena telefónica pura para el input de texto
+              const currentNumber = value?.replace(currentCode, '') || '';
+
+              return (
+                <SelectorInput
+                  label="Teléfono"
+                  // Evaluamos visualmente qué bandera mostrar según el prefijo activo en el form
+                  selectedValue={currentCode === '+58' ? '🇻🇪' : '🇨🇴'}
+                  value={currentNumber}
+                  onBlur={onBlur}
+                  keyboardType="phone-pad"
+                  error={error?.message}
+                  // Al tocar el dropdown del componente, alternamos o elegimos el país
+                  onSelect={(newFlag) => {
+                    const newCode = newFlag === '🇻🇪' ? '+58' : '+57';
+                    onChange(newCode + currentNumber);
+                  }}
+                  // Al escribir sobre el teclado numérico, sanitizamos y concatenamos
+                  onChangeText={(newNumber) => {
+                    const clean = newNumber.replace(/\D/g, '');
+                    onChange(currentCode + clean);
+                  }}
+                  options={['🇻🇪', '🇨🇴']}
+                />
+              );
+            }}
+          />
         </View>
       </View>
     );
@@ -163,31 +180,34 @@ export const PersonalInfoSteps = ({
       <View style={styles.container}>
         <View style={styles.formContainer}>
           <Controller
-        control={control}
-        name="documentNumber"
-        rules={{
-          required: "La cédula es requerida",
-          validate: validateDocumentNoType,
-        }}
-        render={({ field: { onChange, onBlur, value = "" }, fieldState: { error } }) => (
-          <SelectorInput
-            label="Cédula de Identidad"
-            selectedValue={getValues('documentType') || 'V'} // Lee el valor real del formulario
-            value={value}                // Muestra directamente el string limpio numérico de React Hook Form
-            onBlur={onBlur}
-            keyboardType="numeric"
-            error={error?.message}
-            onSelect={(newType) => {
-              setValue('documentType', newType); // Sincroniza el cambio con react-hook-form
+            control={control}
+            name="documentNumber"
+            rules={{
+              required: 'La cédula es requerida',
+              validate: validateDocumentNoType,
             }}
-            onChangeText={(newNumber) => {
-              const clean = newNumber.replace(/\D/g, "");
-              onChange(clean);
-            }}
-            options={['V', 'E']}
+            render={({
+              field: { onChange, onBlur, value = '' },
+              fieldState: { error },
+            }) => (
+              <SelectorInput
+                label="Cédula de Identidad"
+                selectedValue={getValues('documentType') || 'V'} // Lee el valor real del formulario
+                value={value} // Muestra directamente el string limpio numérico de React Hook Form
+                onBlur={onBlur}
+                keyboardType="numeric"
+                error={error?.message}
+                onSelect={(newType) => {
+                  setValue('documentType', newType); // Sincroniza el cambio con react-hook-form
+                }}
+                onChangeText={(newNumber) => {
+                  const clean = newNumber.replace(/\D/g, '');
+                  onChange(clean);
+                }}
+                options={['V', 'E']}
+              />
+            )}
           />
-        )}
-      />
 
           <Controller
             control={control}
@@ -196,7 +216,10 @@ export const PersonalInfoSteps = ({
               required: 'La fecha es requerida',
               validate: validateDate,
             }}
-            render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
+            render={({
+              field: { onChange, onBlur, value },
+              fieldState: { error },
+            }) => (
               <DateInput
                 label="Fecha de Nacimiento (DD/MM/AAAA)"
                 value={value}
@@ -211,14 +234,19 @@ export const PersonalInfoSteps = ({
             control={control}
             name="gender"
             rules={{ required: 'El género es requerido' }}
-            render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => {
+            render={({
+              field: { onChange, onBlur, value },
+              fieldState: { error },
+            }) => {
               const selectedGender = GENDER_OPTIONS.find(
                 (option) => option.value === value
               );
 
               return (
                 <View style={styles.genderWrapper}>
-                  <AppText variant="label" style={styles.inputLabel}>Género</AppText>
+                  <AppText variant="label" style={styles.inputLabel}>
+                    Género
+                  </AppText>
                   <TouchableOpacity
                     testID="gender-dropdown-trigger"
                     activeOpacity={0.7}
@@ -227,19 +255,27 @@ export const PersonalInfoSteps = ({
                     style={[
                       styles.genderDropdownTrigger,
                       error && styles.genderContainerError,
-                      isGenderOpen && styles.genderContainerFocused
+                      isGenderOpen && styles.genderContainerFocused,
                     ]}
                   >
-                    <AppText style={[
-                      styles.genderValueText,
-                      !selectedGender && { color: theme.colors.textSecondary }
-                    ]}>
+                    <AppText
+                      style={[
+                        styles.genderValueText,
+                        !selectedGender && {
+                          color: theme.colors.textSecondary,
+                        },
+                      ]}
+                    >
                       {selectedGender?.label || 'Seleccionar género'}
                     </AppText>
-                    <ChevronDown 
-                      size={20} 
-                      color={theme.colors.primary} 
-                      style={{ transform: [{ rotate: isGenderOpen ? '180deg' : '0deg' }] }}
+                    <ChevronDown
+                      size={20}
+                      color={theme.colors.primary}
+                      style={{
+                        transform: [
+                          { rotate: isGenderOpen ? '180deg' : '0deg' },
+                        ],
+                      }}
                     />
                   </TouchableOpacity>
 
@@ -251,19 +287,22 @@ export const PersonalInfoSteps = ({
                           testID={`gender-option-${option.label}`}
                           style={styles.dropdownOption}
                           onPress={() => {
-            
                             setValue('gender', option.value); // Asegura que el número llegue al padre
                             setIsGenderOpen(false);
                           }}
                         >
-                          <AppText style={styles.optionText}>{option.label}</AppText>
+                          <AppText style={styles.optionText}>
+                            {option.label}
+                          </AppText>
                         </TouchableOpacity>
                       ))}
                     </View>
                   )}
 
                   {error && (
-                    <AppText style={styles.errorTextSmall}>{error.message}</AppText>
+                    <AppText style={styles.errorTextSmall}>
+                      {error.message}
+                    </AppText>
                   )}
                 </View>
               );
@@ -279,14 +318,17 @@ export const PersonalInfoSteps = ({
     return (
       <View style={styles.container}>
         <View style={styles.formContainer}>
-           <Controller
+          <Controller
             control={control}
             name="password"
             rules={{
               required: 'La contraseña es requerida',
               validate: validatePassword,
             }}
-            render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
+            render={({
+              field: { onChange, onBlur, value },
+              fieldState: { error },
+            }) => (
               <Input
                 label="Contraseña"
                 value={value}
@@ -306,7 +348,10 @@ export const PersonalInfoSteps = ({
               validate: (val) =>
                 val === getValues('password') || 'Las contraseñas no coinciden',
             }}
-            render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
+            render={({
+              field: { onChange, onBlur, value },
+              fieldState: { error },
+            }) => (
               <Input
                 label="Confirmar contraseña"
                 value={value}
@@ -317,12 +362,13 @@ export const PersonalInfoSteps = ({
               />
             )}
           />
-          
-         <Controller
+
+          <Controller
             control={control}
             name="acceptTerms"
             rules={{
-              validate: (v) => v === true || 'Debes aceptar los términos y condiciones',
+              validate: (v) =>
+                v === true || 'Debes aceptar los términos y condiciones',
             }}
             render={({ field: { onChange, value }, fieldState: { error } }) => (
               <Checkbox
@@ -330,7 +376,10 @@ export const PersonalInfoSteps = ({
                 onChange={onChange}
                 error={error?.message}
               >
-                <AppText variant="label" style={{ color: theme.colors.textPrimary }}>
+                <AppText
+                  variant="label"
+                  style={{ color: theme.colors.textPrimary }}
+                >
                   Acepto los{' '}
                   <AppText
                     variant="label"
@@ -345,7 +394,7 @@ export const PersonalInfoSteps = ({
               </Checkbox>
             )}
           />
-      </View>
+        </View>
       </View>
     );
   }

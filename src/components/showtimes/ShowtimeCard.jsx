@@ -1,11 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import {
-    Dimensions,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Dimensions,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
 import { useBottomSheet } from '../../context/BottomSheetContext';
@@ -15,7 +15,7 @@ const { width } = Dimensions.get('window');
 // Ajustamos dinámicamente el ancho de la tarjeta para que quepan 2 por fila con sus márgenes comunes
 const CARD_WIDTH = (width - 56) / 2;
 
-export default function ShowtimeCard({ showtime, contentId, type }) {
+export default function ShowtimeCard({ showtime, contentId, type, cinemaId }) {
   const router = useRouter();
   const { isAuthenticated } = useAuth();
   const { showBottomSheet } = useBottomSheet();
@@ -58,23 +58,15 @@ export default function ShowtimeCard({ showtime, contentId, type }) {
     }
 
     // Navegación segura hacia el flujo de reserva (Flujo de compra de boletos)
-    // Pasamos el showtimeId, el id del contenido y el tipo para mapear la compra en el checkout
-    console.log('ShowtimeCard -> navigate params', {
-        pathname: '/(buy)/selectSeats',
-        showtimeId: showtime.id,
-        movieId: contentId,
-        contentType: type
-    });
-    
-    
-    
-    
+    // Pasamos showtimeId, el id del contenido, el tipo y la sucursal (cinemaId)
+    // para que el flujo de compra disponga de la sucursal desde el inicio.
     router.push({
       pathname: '/(buy)/selectSeats',
       params: {
         showtimeId: showtime.id,
         movieId: contentId,
         contentType: type,
+        cinemaId,
       },
     });
   };

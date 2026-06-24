@@ -2,18 +2,21 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ChevronLeft } from 'lucide-react-native';
 import { Controller, useForm } from 'react-hook-form';
 import {
-    KeyboardAvoidingView,
-    Platform,
-    StyleSheet,
-    TouchableOpacity,
-    View,
+  KeyboardAvoidingView,
+  Platform,
+  StyleSheet,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { AppText } from '../../../components/AppText';
 import { ScreenWrapper } from '../../../components/ScreenWrapper';
 import { CustomButton } from '../../../components/ui/CustomButton';
 import { Input } from '../../../components/ui/Input';
 import { theme } from '../../../constants';
-import { validatePassword, validatePasswordMatch } from '../../../utils/validators';
+import {
+  validatePassword,
+  validatePasswordMatch,
+} from '../../../utils/validators';
 
 export const ResetPasswordScreen = () => {
   const router = useRouter();
@@ -24,34 +27,32 @@ export const ResetPasswordScreen = () => {
     reValidateMode: 'onChange',
     defaultValues: {
       password: '',
-      confirmPassword: ''
-    }
+      confirmPassword: '',
+    },
   });
 
   const newPassword = watch('password');
 
-  const onSubmit = async(data) => {
-      try {
-        // API
-        // await api.post('/auth/reset-password', { 
-        // password: data.password,
-        // email: params.email
-        //  });
-        //
-        console.log('Cambiando clave para:', email);
-        console.log('Nueva clave:', data.password);
-        router.replace('/success-reset');
-
-      } catch (error) {
-        // Manejar error de servidor
-        console.error('Error en el servidor:', error);
-      }
-    };  
+  const onSubmit = async (data) => {
+    try {
+      // API
+      // await api.post('/auth/reset-password', {
+      // password: data.password,
+      // email: params.email
+      //  });
+      //
+      console.log('Cambiando clave para:', email);
+      console.log('Nueva clave:', data.password);
+      router.replace('/success-reset');
+    } catch (error) {
+      // Manejar error de servidor
+      console.error('Error en el servidor:', error);
+    }
+  };
 
   const handleBack = () => {
     router.back();
   };
-
 
   return (
     <ScreenWrapper>
@@ -78,11 +79,11 @@ export const ResetPasswordScreen = () => {
               name="password"
               rules={{
                 required: 'La contraseña es obligatoria',
-                validate: validatePassword, 
+                validate: validatePassword,
               }}
-              render={({ 
-                field: { onChange, onBlur, value }, 
-                fieldState: { error } 
+              render={({
+                field: { onChange, onBlur, value },
+                fieldState: { error },
               }) => (
                 <Input
                   label="Nueva Contraseña"
@@ -99,11 +100,11 @@ export const ResetPasswordScreen = () => {
               name="confirmPassword"
               rules={{
                 required: 'Debes confirmar la contraseña',
-                validate: (value) => validatePasswordMatch(newPassword, value) 
+                validate: (value) => validatePasswordMatch(newPassword, value),
               }}
-              render={({ 
-                field: { onChange, onBlur, value }, 
-                fieldState: { error } 
+              render={({
+                field: { onChange, onBlur, value },
+                fieldState: { error },
               }) => (
                 <Input
                   label="Confirmar Contraseña"

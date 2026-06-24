@@ -1,19 +1,18 @@
 import { useFonts } from 'expo-font';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
-import * as NavigationBar from 'expo-navigation-bar';
 import { useEffect } from 'react';
-import { Platform } from 'react-native';
+import { Platform, StatusBar } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import BottomSheet from '../components/ui/BottomSheet';
 import { AuthProvider, useAuth } from '../context/AuthContext';
 import { CartProvider } from '../context/CartContext';
 import { BottomSheetProvider } from '../context/BottomSheetContext';
-import { GestureHandlerRootView } from 'react-native-gesture-handler'
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { theme } from '../constants';
 
 SplashScreen.preventAutoHideAsync();
- 
+
 function NavigationGuard() {
   const { isAuthenticated, isLoading } = useAuth();
   const segments = useSegments();
@@ -65,11 +64,11 @@ export default function RootLayout() {
   });
 
   useEffect(() => {
-    if (Platform.OS === 'android') {
-      // Sincroniza la barra de botones de Android con el color del Tab Bar
-      NavigationBar.setBackgroundColorAsync(theme.colors.background.accent);
-      NavigationBar.setButtonStyleAsync('light'); // Iconos claros para fondo oscuro
-    }
+    if (Platform.OS !== 'android') return;
+    // Usamos StatusBar de React Native (estable en todas las arquitecturas)
+    // para sincronizar el color de la barra de sistema con el Tab Bar
+    StatusBar.setBackgroundColor(theme.colors.background.accent);
+    StatusBar.setBarStyle('light-content');
   }, []);
 
   useEffect(() => {
@@ -81,19 +80,17 @@ export default function RootLayout() {
   if (!fontsLoaded) return null;
 
   return (
-    <GestureHandlerRootView style={{flex: 1}}>
+    <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
-    <AuthProvider>
-      <CartProvider>
-        <BottomSheetProvider>
-          
-            <NavigationGuard />
-            <BottomSheet />
-          
-        </BottomSheetProvider>
-      </CartProvider>
-    </AuthProvider>
-    </SafeAreaProvider>
+        <AuthProvider>
+          <CartProvider>
+            <BottomSheetProvider>
+              <NavigationGuard />
+              <BottomSheet />
+            </BottomSheetProvider>
+          </CartProvider>
+        </AuthProvider>
+      </SafeAreaProvider>
     </GestureHandlerRootView>
   );
 }

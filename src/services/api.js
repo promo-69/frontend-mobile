@@ -14,7 +14,6 @@ const api = axios.create({
 //  Interceptor de Peticiones: Inyectar el Bearer Token
 api.interceptors.request.use(
   async (config) => {
-  
     const token = await storageHelper.getAccessToken();
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -45,7 +44,7 @@ api.interceptors.response.use(
         data: error.response.data,
       });
     }
-    
+
     // Si el error es 401 (No autorizado) y no hemos reintentado ya esta petición
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
@@ -59,25 +58,32 @@ api.interceptors.response.use(
 
         // Intentar renovar el token usando el endpoint
         // Nota: Usamos axios directamente para evitar bucles infinitos con la instancia 'api'
-        const response = await axios.post(`${ENV.API_URL}/auth/refresh`, {}, {
-          headers:
-          { Authorization: `Bearer ${refreshToken}` }
-        });
+        const response = await axios.post(
+          `${ENV.API_URL}/auth/refresh`,
+          {},
+          {
+            headers: { Authorization: `Bearer ${refreshToken}` },
+          }
+        );
 
         // Extraer tokens de forma defensiva (varios formatos posibles)
         const res = response.data?.data ?? response.data ?? {};
 
         const accessToken = res?.tokens?.accessToken || null;
-        const newRefreshToken = res?.tokens?.refreshToken || null;       
+        const newRefreshToken = res?.tokens?.refreshToken || null;
 
         if (!accessToken) {
           throw new Error('Refresh response did not include an access token');
         }
 
         // Persistir tokens y datos frescos del usuario (loyaltyPoints, etc.)
-        // respPayload = response.data.data → { user, tokens: { accessToken, refreshToken } }
-        const freshUser = respPayload.user ?? null;
-        await storageHelper.saveSession(accessToken, newRefreshToken ?? null, freshUser);
+        // `res` = response.data.data → { user, tokens: { accessToken, refreshToken } }
+        const freshUser = res?.user ?? null;
+        await storageHelper.saveSession(
+          accessToken,
+          newRefreshToken ?? null,
+          freshUser
+        );
 
         // Actualizar el header de la petición original y reintentar
         originalRequest.headers = originalRequest.headers || {};

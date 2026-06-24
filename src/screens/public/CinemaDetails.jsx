@@ -2,16 +2,24 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState, useMemo } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, View, TouchableOpacity } from 'react-native';
+import {
+  ActivityIndicator,
+  ScrollView,
+  StyleSheet,
+  View,
+  TouchableOpacity,
+} from 'react-native';
 import { AppText } from '../../components/AppText';
 import { ScreenWrapper } from '../../components/ScreenWrapper';
 import { theme } from '../../constants';
 import { generateNextDays } from '../../utils/dateUtils';
-import { getCinemaById, getCinemaBillboard } from '../../services/cinemas.service';
-
+import {
+  getCinemaById,
+  getCinemaBillboard,
+} from '../../services/cinemas.service';
 
 export default function CinemaDetails() {
- const { cinemaId } = useLocalSearchParams();
+  const { cinemaId } = useLocalSearchParams();
   const router = useRouter();
 
   const [cinema, setCinema] = useState(null);
@@ -32,18 +40,20 @@ export default function CinemaDetails() {
 
         if (matchedCinema) {
           setCinema(matchedCinema);
-          
+
           // 2. Intentar obtener la cartelera de forma independiente
           try {
             const billboard = await getCinemaBillboard(matchedCinema.id);
             setBillboardData(billboard);
           } catch (billboardError) {
-            console.warn('La cartelera no se pudo cargar (404), pero la sucursal existe:', billboardError.config?.url);
+            console.warn(
+              'La cartelera no se pudo cargar (404), pero la sucursal existe:',
+              billboardError.config?.url
+            );
             setBillboardData([]);
           }
         }
-      }
-      catch (error) {
+      } catch (error) {
         console.error('Error crítico al cargar detalles del cine:', error);
         setCinema(null);
       } finally {
@@ -60,14 +70,16 @@ export default function CinemaDetails() {
 
     return billboardData
       .map((item) => {
-        const content =  item.movie || item.event;
+        const content = item.movie || item.event;
 
         if (!content) return null;
 
-        const matchingShowtimes = item.showtimes ? item.showtimes.filter((st) => {
-          if (!st.booking?.start_time) return false;
-          return st.booking.start_time.split('T')[0] === selectedDate;
-        }) : [];
+        const matchingShowtimes = item.showtimes
+          ? item.showtimes.filter((st) => {
+              if (!st.booking?.start_time) return false;
+              return st.booking.start_time.split('T')[0] === selectedDate;
+            })
+          : [];
 
         return {
           id: content.id,
@@ -82,9 +94,8 @@ export default function CinemaDetails() {
       })
       .filter((item) => item !== null)
 
-      .filter((item) => item.showtimes.length > 0); 
+      .filter((item) => item.showtimes.length > 0);
   }, [billboardData, selectedDate]);
-
 
   if (loading) {
     return (
@@ -110,61 +121,71 @@ export default function CinemaDetails() {
 
   return (
     <ScreenWrapper scroll>
-      
-        {/* HEADER BANNER PANORÁMICO */}
+      {/* HEADER BANNER PANORÁMICO */}
       <View style={styles.bannerContainer}>
         <Image
           source={{
-            uri: cinema.image_url || 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?q=80&w=1000',
+            uri:
+              cinema.image_url ||
+              'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?q=80&w=1000',
           }}
           style={styles.cinemaImage}
           contentFit="cover"
           transition={400}
         />
-        <LinearGradient colors={['transparent', '#180F2A']} style={styles.gradientOverlay} />
+        <LinearGradient
+          colors={['transparent', '#180F2A']}
+          style={styles.gradientOverlay}
+        />
         <View style={styles.titleOverlay}>
           <AppText style={styles.upperLabel}>CARTELERA EN</AppText>
-          <AppText variant="h1" style={styles.title}>{cinema.name}</AppText>
+          <AppText variant="h1" style={styles.title}>
+            {cinema.name}
+          </AppText>
         </View>
       </View>
 
       {/*CARD DE INFORMACIÓN DE LA SUCURSAL */}
-    <View style={styles.cinemaInfoCard}>
-      {/* Dirección */}
-      <View style={styles.infoRow}>
-        <AppText style={styles.infoText} numberOfLines={2}>
-          {cinema.address}
-        </AppText>
-      </View>
-
-      <View style={styles.divider} />
-
-      {/* Horario y Teléfono en paralelo para ahorrar espacio vertical */}
-      <View style={styles.twoColumnRow}>
-        
-        {/* Horarios */}
-        <View style={[styles.infoRow, { flex: 1 }]}>
-          <View>
-            <AppText style={styles.infoLabel}>Horario</AppText>
-            <AppText style={styles.infoSubText}>
-              {cinema.opening_time?.substring(0, 5)} - {cinema.closing_time?.substring(0, 5)}
-            </AppText>
-          </View>
+      <View style={styles.cinemaInfoCard}>
+        {/* Dirección */}
+        <View style={styles.infoRow}>
+          <AppText style={styles.infoText} numberOfLines={2}>
+            {cinema.address}
+          </AppText>
         </View>
 
-        {/* Teléfono */}
-        <View style={[styles.infoRow, { flex: 1, marginLeft: 10 }]}>
-          <View>
-            <AppText style={styles.infoLabel}>Contacto</AppText>
-            <AppText style={styles.infoSubText}>{cinema.phone}</AppText>
+        <View style={styles.divider} />
+
+        {/* Horario y Teléfono en paralelo para ahorrar espacio vertical */}
+        <View style={styles.twoColumnRow}>
+          {/* Horarios */}
+          <View style={[styles.infoRow, { flex: 1 }]}>
+            <View>
+              <AppText style={styles.infoLabel}>Horario</AppText>
+              <AppText style={styles.infoSubText}>
+                {cinema.opening_time?.substring(0, 5)} -{' '}
+                {cinema.closing_time?.substring(0, 5)}
+              </AppText>
+            </View>
+          </View>
+
+          {/* Teléfono */}
+          <View style={[styles.infoRow, { flex: 1, marginLeft: 10 }]}>
+            <View>
+              <AppText style={styles.infoLabel}>Contacto</AppText>
+              <AppText style={styles.infoSubText}>{cinema.phone}</AppText>
+            </View>
           </View>
         </View>
       </View>
-    </View>
 
       {/** SELECTOR DE FECHAS */}
       <View style={styles.carouselContainer}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.dateScroll}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.dateScroll}
+        >
           {dateTabs.map((day) => {
             const isSelected = day.fullDate === selectedDate;
             return (
@@ -173,9 +194,21 @@ export default function CinemaDetails() {
                 onPress={() => setSelectedDate(day.fullDate)}
                 style={[styles.dateCard, isSelected && styles.dateCardActive]}
               >
-                <AppText style={[styles.dateDay, isSelected && styles.textActive]}>{day.day}</AppText>
-                <AppText style={[styles.dateNumber, isSelected && styles.textActive]}>{day.date}</AppText>
-                <AppText style={[styles.dateMonth, isSelected && styles.textActive]}>{day.month}</AppText>
+                <AppText
+                  style={[styles.dateDay, isSelected && styles.textActive]}
+                >
+                  {day.day}
+                </AppText>
+                <AppText
+                  style={[styles.dateNumber, isSelected && styles.textActive]}
+                >
+                  {day.date}
+                </AppText>
+                <AppText
+                  style={[styles.dateMonth, isSelected && styles.textActive]}
+                >
+                  {day.month}
+                </AppText>
               </TouchableOpacity>
             );
           })}
@@ -194,20 +227,32 @@ export default function CinemaDetails() {
           filteredBillboard.map((item) => (
             <View key={`${item.type}-${item.id}`} style={styles.movieCard}>
               <Image
-                source={{ uri: item.posterUrl || 'https://images.unsplash.com/photo-1594909122845-11baa439b7bf?q=80&w=500' }}
+                source={{
+                  uri:
+                    item.posterUrl ||
+                    'https://images.unsplash.com/photo-1594909122845-11baa439b7bf?q=80&w=500',
+                }}
                 style={styles.moviePoster}
                 contentFit="cover"
               />
-              
+
               <View style={styles.movieInfo}>
                 <View>
                   <View style={styles.badgeRow}>
-                    <AppText style={styles.lifecycleBadge}>{item.lifecycle}</AppText>
+                    <AppText style={styles.lifecycleBadge}>
+                      {item.lifecycle}
+                    </AppText>
                     {item.type === 'special_event' && (
-                      <AppText style={styles.eventBadge}>Evento Especial</AppText>
+                      <AppText style={styles.eventBadge}>
+                        Evento Especial
+                      </AppText>
                     )}
                   </View>
-                  <AppText variant="subtitle" style={styles.movieTitle} numberOfLines={2}>
+                  <AppText
+                    variant="subtitle"
+                    style={styles.movieTitle}
+                    numberOfLines={2}
+                  >
                     {item.title}
                   </AppText>
                   <AppText style={styles.movieMeta}>
@@ -217,26 +262,36 @@ export default function CinemaDetails() {
 
                 <View style={styles.showtimesContainer}>
                   {item.showtimes.map((st) => (
-                    <TouchableOpacity 
-                      key={st.id} 
+                    <TouchableOpacity
+                      key={st.id}
                       style={styles.timeBadge}
-                      onPress={() => router.push({
-                        pathname: '/(buy)/selectSeats',
-                        params: { 
-                          showtimeId: st.id,
-                          movieId: item.id 
-                        }
-                      })}
+                      onPress={() =>
+                        router.push({
+                          pathname: '/(buy)/selectSeats',
+                          params: {
+                            showtimeId: st.id,
+                            movieId: item.id,
+                            cinemaId: cinemaId,
+                          },
+                        })
+                      }
                     >
                       <AppText style={styles.timeText}>
-                        {new Date(st.booking.start_time).toLocaleTimeString('es-ES', {
-                          hour: '2-digit',
-                          minute: '2-digit',
-                          hour12: true
-                        })}
+                        {new Date(st.booking.start_time).toLocaleTimeString(
+                          'es-ES',
+                          {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            hour12: true,
+                          }
+                        )}
                       </AppText>
                       <AppText style={styles.formatText}>
-                        {st.projection_type?.description.replace(' Digital', '')} ({st.language?.description.substring(0, 3)})
+                        {st.projection_type?.description.replace(
+                          ' Digital',
+                          ''
+                        )}{' '}
+                        ({st.language?.description.substring(0, 3)})
                       </AppText>
                     </TouchableOpacity>
                   ))}
@@ -347,7 +402,7 @@ const styles = StyleSheet.create({
   },
 
   // ==========================================
-  // CONTENEDOR PRINCIPAL Y TARJETAS 
+  // CONTENEDOR PRINCIPAL Y TARJETAS
   // ==========================================
   scrollContent: {
     paddingHorizontal: 20,
@@ -446,7 +501,7 @@ const styles = StyleSheet.create({
   },
 
   // ==========================================
-  // 7.  ESTADO VACÍO 
+  // 7.  ESTADO VACÍO
   // ==========================================
   emptyContainer: {
     padding: 50,

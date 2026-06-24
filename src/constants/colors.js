@@ -111,10 +111,9 @@ const palette = {
     900: '#01221e',
     950: '#001714',
   },
-  purple:{
+  purple: {
     50: '#7B1A82',
-
-  }
+  },
 };
 
 export const COLORS = {
@@ -126,13 +125,13 @@ export const COLORS = {
   surface: palette.gold[500],
   accent: palette.gold[300],
 
-  background:{
+  background: {
     main: 'rgba(42, 21, 75, 1)',
     secondary: palette.midnight[900],
-    accent:  'rgba(35, 22, 64, 1)',
+    accent: 'rgba(35, 22, 64, 1)',
   },
 
-  itemInactive:  '#B0A8C5',
+  itemInactive: '#B0A8C5',
   itemActive: palette.gold[300],
 
   textPrimary: palette.grey[50],
@@ -151,8 +150,6 @@ export const COLORS = {
     secondary: palette.lila[300],
     error: palette.red[400],
   },
-
-
 
   // Estados de acciones de usuario
   error: palette.red[500],

@@ -6,7 +6,8 @@ export default function LoyaltyRewardsScreen() {
   return (
     <ScreenWrapper style={styles.container}>
       <AppText variant="h2">Premios</AppText>
-      <AppText variant="body">Catálogo de canje por puntos (Funciones/Combos bloqueados/desbloqueados)
+      <AppText variant="body">
+        Catálogo de canje por puntos (Funciones/Combos bloqueados/desbloqueados)
       </AppText>
     </ScreenWrapper>
   );

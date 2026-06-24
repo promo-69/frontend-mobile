@@ -59,9 +59,12 @@ export default function RegisterScreen() {
   const handleNext = async () => {
     let fieldsToValidate = [];
 
-    if (step === 1) fieldsToValidate = ['firstName', 'lastName', 'email', 'phoneNumber'];
-    if (step === 2) fieldsToValidate = ['documentNumber', 'birthDate', 'gender'];
-    if (step === 3) fieldsToValidate = ['password', 'confirmPassword', 'acceptTerms'];
+    if (step === 1)
+      fieldsToValidate = ['firstName', 'lastName', 'email', 'phoneNumber'];
+    if (step === 2)
+      fieldsToValidate = ['documentNumber', 'birthDate', 'gender'];
+    if (step === 3)
+      fieldsToValidate = ['password', 'confirmPassword', 'acceptTerms'];
 
     const isStepValid = await trigger(fieldsToValidate);
 
@@ -99,7 +102,7 @@ export default function RegisterScreen() {
         documentNumber: finalForm.documentNumber, // Ahora sí llegará el número
         phoneNumber: finalForm.phoneNumber,
         gender: finalForm.gender ? Number(finalForm.gender) : null,
-        birthDate: finalForm.birthDate,           // Ahora sí llegará YYYY-MM-DD
+        birthDate: finalForm.birthDate, // Ahora sí llegará YYYY-MM-DD
       };
 
       const result = await register(payload);

@@ -15,6 +15,8 @@ export const getCinemaById = async (id) => {
 //GET - Cartelera específica de una sucursal
 // con los mismos filtros opcionales (cinemaId, movieId, projectionType, language)
 export const getCinemaBillboard = async (cinemaId, params = {}) => {
-  const response = await api.get(`/cinemas/${cinemaId}/showtimes/billboard`, { params }); // Se cambió 'billboard' a 'showtimes'
+  const response = await api.get(`/cinemas/${cinemaId}/showtimes/billboard`, {
+    params,
+  }); // Se cambió 'billboard' a 'showtimes'
   return response.data.data || [];
 };

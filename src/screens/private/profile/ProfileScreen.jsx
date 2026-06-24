@@ -136,14 +136,14 @@ export default function ProfileScreen() {
           })}
         </View>
 
-        {/* --- CATEGORÍA 2: CONFIGURACIÓN DE APP --- 
+        {/* --- CATEGORÍA 2: CONFIGURACIÓN DE APP ---
         <AppText variant="small" style={styles.categoryTitle}>App Settings</AppText>
         <View style={styles.menuGroup}>
           {renderMenuItem({ icon: Globe, title: 'Language', onPress: () => alert('Próximamente') })}
           {renderMenuItem({ icon: Bell, title: 'Notification', onPress: () => alert('Próximamente') })}
         </View>
 
-        {/* --- CATEGORÍA 3: SOPORTE --- 
+        {/* --- CATEGORÍA 3: SOPORTE ---
         <AppText variant="small" style={styles.categoryTitle}>Support</AppText>
         <View style={styles.menuGroup}>
           {renderMenuItem({ icon: HelpCircle, title: 'Help Center', onPress: () => alert('Próximamente') })}

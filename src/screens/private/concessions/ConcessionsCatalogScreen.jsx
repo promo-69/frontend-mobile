@@ -231,7 +231,14 @@ export default function ConcessionsCatalogScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { isAuthenticated } = useAuth();
-  const { cart, addProduct, updateProductQuantity, removeProduct } = useCart();
+  const {
+    cart,
+    addProduct,
+    updateProductQuantity,
+    removeProduct,
+    setCinemaId,
+    clearProducts,
+  } = useCart();
   const { cinemaId: cinemaIdParam } = useLocalSearchParams();
 
   // ─── Selección de sucursal ────────────────────────────────────────────────
@@ -242,13 +249,37 @@ export default function ConcessionsCatalogScreen() {
   const [cinemaModalVisible, setCinemaModalVisible] = useState(false);
   const [loadingCinemas, setLoadingCinemas] = useState(!cinemaIdParam);
 
+  // Guardamos la sucursal elegida en el carrito. Si cambia respecto a la que
+  // ya tenía el carrito y hay productos viejos, los limpiamos para no mezclar
+  // inventario de sucursales distintas (el checkout lo rechazaría con 404).
+  useEffect(() => {
+    if (!selectedCinema?.id) return;
+    const newId = Number(selectedCinema.id);
+    if (
+      cart.cinemaId &&
+      Number(cart.cinemaId) !== newId &&
+      cart.products.length > 0
+    ) {
+      clearProducts();
+    }
+    setCinemaId(newId);
+  }, [
+    selectedCinema?.id,
+    setCinemaId,
+    clearProducts,
+    cart.cinemaId,
+    cart.products.length,
+  ]);
+
   useEffect(() => {
     if (cinemaIdParam) return;
     let isMounted = true;
     const fetchCinemas = async () => {
       setLoadingCinemas(true);
       try {
-        const data = await getCinemas();
+        const response = await getCinemas();
+        // getCinemas devuelve { data: [...], metadata } — normalizamos al array
+        const data = Array.isArray(response) ? response : response?.data || [];
         if (isMounted && data && data.length > 0) {
           setCinemas(data);
           setCinemaModalVisible(true);
@@ -464,7 +495,10 @@ export default function ConcessionsCatalogScreen() {
         style={styles.cinemaBar}
         onPress={() => {
           if (cinemas.length === 0) {
-            getCinemas().then((data) => {
+            getCinemas().then((response) => {
+              const data = Array.isArray(response)
+                ? response
+                : response?.data || [];
               if (data?.length) {
                 setCinemas(data);
                 setCinemaModalVisible(true);

@@ -1,11 +1,10 @@
 import React from 'react';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { CartProvider } from '../../context/CartContext';
 
 export default function BuyLayout() {
   return (
-    <CartProvider>
+    <>
       <StatusBar style="light" />
       <Stack
         screenOptions={{
@@ -16,15 +15,8 @@ export default function BuyLayout() {
           headerBackTitleVisible: false,
           animation: 'slide_from_right',
         }}
-
-        
       >
-        <Stack.Screen
-          name='tickets'
-          options={{ title: ' Boletos '}}
-        />
-          
-       
+        <Stack.Screen name="tickets" options={{ title: ' Boletos ' }} />
         <Stack.Screen
           name="selectSeats"
           options={{ title: 'Selecciona tus Asientos' }}
@@ -37,10 +29,7 @@ export default function BuyLayout() {
           name="checkout"
           options={{ title: 'Resumen de tu Orden' }}
         />
-        <Stack.Screen 
-        name="payment" 
-        options={{ title: 'Proceder al Pago' }} 
-        />
+        <Stack.Screen name="payment" options={{ title: 'Proceder al Pago' }} />
         <Stack.Screen
           name="order-success"
           options={{
@@ -50,6 +39,6 @@ export default function BuyLayout() {
           }}
         />
       </Stack>
-    </CartProvider>
+    </>
   );
 }

@@ -14,18 +14,9 @@ export const GenreChip = ({ label, isSelected, onPress, style }) => {
     <TouchableOpacity
       activeOpacity={0.7}
       onPress={onPress}
-      style={[
-        styles.chipContainer,
-        isSelected && styles.chipSelected,
-        style 
-      ]}
+      style={[styles.chipContainer, isSelected && styles.chipSelected, style]}
     >
-      <AppText 
-        style={[
-          styles.label,
-          isSelected && styles.labelSelected
-        ]}
-      >
+      <AppText style={[styles.label, isSelected && styles.labelSelected]}>
         {label}
       </AppText>
     </TouchableOpacity>
@@ -38,7 +29,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.s16,
     borderRadius: 25,
     borderWidth: 2,
-    borderColor: theme.colors.lila[100], 
+    borderColor: theme.colors.lila[100],
     backgroundColor: 'transparent',
     alignItems: 'center',
     justifyContent: 'center',
@@ -53,7 +44,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   labelSelected: {
-    color: theme.colors.midnight[500], 
+    color: theme.colors.midnight[500],
     fontWeight: 'bold',
   },
 });

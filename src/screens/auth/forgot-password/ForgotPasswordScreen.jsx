@@ -17,27 +17,27 @@ import { sanitizeInput, validateEmail } from '../../../utils/validators';
 
 export default function ForgotPasswordScreen() {
   const router = useRouter();
-  const { control, handleSubmit, 
-    formState: { 
-      errors, 
-      isSubmitting 
-    } } = useForm({
+  const {
+    control,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm({
     mode: 'onBlur',
     reValidateMode: 'onChange',
     defaultValues: {
-      email: ''
+      email: '',
     },
   });
 
-  const onSubmit = async(data) => {
+  const onSubmit = async (data) => {
     const cleanEmail = sanitizeInput(data.email, 'email');
     try {
       // API
       // await api.post('/auth/forgot-password', { email: cleanEmail });
       console.log('Login intent (sanitized):', cleanEmail);
-      router.push({ 
-        pathname: '/verify-code', 
-        params: { email: cleanEmail } 
+      router.push({
+        pathname: '/verify-code',
+        params: { email: cleanEmail },
       });
     } catch (error) {
       // Manejar error de servidor
@@ -84,26 +84,23 @@ export default function ForgotPasswordScreen() {
             control={control}
             name="email"
             rules={{
-              required: "El correo es obligatorio",
+              required: 'El correo es obligatorio',
               validate: validateEmail,
             }}
-            render={({ 
+            render={({
               field: { onChange, onBlur, value },
-              fieldState: {error}
-            
+              fieldState: { error },
             }) => (
-
-              
-            <Input
-              value={value}
-              onChangeText={onChange}
-              onBlur={onBlur}
-              label="Correo"
-              keyboardType="email-address"
-              error={error?.message}
-            />
+              <Input
+                value={value}
+                onChangeText={onChange}
+                onBlur={onBlur}
+                label="Correo"
+                keyboardType="email-address"
+                error={error?.message}
+              />
             )}
-            />
+          />
           <View style={styles.actionSection}>
             <CustomButton title="Enviar" onPress={handleSubmit(onSubmit)} />
             <CustomButton

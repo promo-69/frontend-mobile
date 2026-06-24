@@ -30,10 +30,8 @@ export const Checkbox = ({ label, value, onChange, error, children }) => {
           )}
         </View>
       </TouchableOpacity>
-      
-      {error && (
-        <AppText style={styles.errorLabel}>{error}</AppText>
-      )}
+
+      {error && <AppText style={styles.errorLabel}>{error}</AppText>}
     </View>
   );
 };
@@ -70,6 +68,6 @@ const styles = StyleSheet.create({
     color: theme.colors.error,
     ...theme.typography.variants.caption,
     marginTop: theme.spacing.s4,
-    marginLeft: 32, 
+    marginLeft: 32,
   },
 });

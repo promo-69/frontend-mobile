@@ -1,3 +1,4 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createContext, useContext, useEffect, useState } from 'react';
 import { getErrorMessage, AUTH_ERRORS } from '../constants/errorMessages';
 import { storageHelper } from '../helper/storage.helper';
@@ -5,6 +6,8 @@ import { jwtHelper } from '../helper/jwt.helper';
 import { authService } from '../services/auth.service';
 
 const AuthContext = createContext({});
+
+const CART_STORAGE_KEY = 'cineflix_cart';
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -163,6 +166,8 @@ export const AuthProvider = ({ children }) => {
       }
 
       await storageHelper.clearSession();
+      // Vaciar el carrito persistido para que no se arrastre entre sesiones
+      await AsyncStorage.removeItem(CART_STORAGE_KEY).catch(() => {});
 
       setUser(null);
 

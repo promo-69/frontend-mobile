@@ -19,7 +19,7 @@ import {
   getAvailableCombos,
   getAvailableProducts,
 } from '../../../services/concessions.service';
-import { getCinemas } from '../../../services/cinemas.service';
+import { getCinemas, getCinemaById } from '../../../services/cinemas.service';
 import { theme } from '../../../constants';
 
 const { colors, spacing, borderRadius } = theme;
@@ -198,9 +198,9 @@ function GridSection({ items, lineType, getQuantity, onAdd, onRemove }) {
   return (
     <View style={gridStyles.section}>
       {rows.map((row, ri) => (
-        <View key={ri} style={gridStyles.row}>
+        <View key={`row-${lineType}-${ri}`} style={gridStyles.row}>
           {row.map((item) => (
-            <View key={item.id} style={gridStyles.cell}>
+            <View key={`${lineType}-${item.id}`} style={gridStyles.cell}>
               <ConcessionItem
                 item={item}
                 isCombo={lineType === LINE_TYPE_COMBO}
@@ -210,7 +210,9 @@ function GridSection({ items, lineType, getQuantity, onAdd, onRemove }) {
               />
             </View>
           ))}
-          {row.length === 1 && <View style={gridStyles.cell} />}
+          {row.length === 1 && (
+            <View key={`spacer-${lineType}-${ri}`} style={gridStyles.cell} />
+          )}
         </View>
       ))}
     </View>
@@ -257,28 +259,62 @@ export default function ConcessionsScreen() {
   } = useLocalSearchParams();
   const { cart, addProduct, updateProductQuantity, removeProduct } = useCart();
 
-  // Si viene cinemaId por params (flujo con película), lo usamos directo.
-  // Si no, dejamos que el usuario elija la sucursal aquí.
+  // El cinemaId fuente de verdad es el del carrito (con el que se creó la quote
+  // en la selección de asientos). Solo usamos el param si el carrito no lo tiene.
+  const resolvedCinemaId = cart.cinemaId
+    ? Number(cart.cinemaId)
+    : paramCinemaId
+      ? Number(paramCinemaId)
+      : null;
+
+  // Flujo de compra: la sucursal viene fija desde la selección de asientos.
+  // En este caso NO se permite cambiar de sucursal.
+  const isPurchaseFlow = !!resolvedCinemaId;
+
+  // Si ya conocemos la sucursal (flujo de compra), la usamos directo y NO
+  // mostramos el selector. Solo se pide elegir sucursal si no hay ninguna.
   const [selectedCinema, setSelectedCinema] = useState(
-    paramCinemaId ? { id: Number(paramCinemaId) } : null
+    resolvedCinemaId ? { id: resolvedCinemaId } : null
   );
   const [cinemas, setCinemas] = useState([]);
   const [cinemaModalVisible, setCinemaModalVisible] = useState(false);
-  const [loadingCinemas, setLoadingCinemas] = useState(!paramCinemaId);
+  const [loadingCinemas, setLoadingCinemas] = useState(!resolvedCinemaId);
 
   const [loading, setLoading] = useState(false);
   const [combos, setCombos] = useState([]);
   const [products, setProducts] = useState([]);
 
-  // Paso 1: Si no hay cinemaId de params, cargar sucursales y mostrar modal.
+  // Cargar el nombre real de la sucursal cuando viene fija del flujo de compra
   useEffect(() => {
-    if (paramCinemaId) return; // ya tenemos sucursal del flujo con película
+    if (!resolvedCinemaId) return;
+    let cancelled = false;
+    getCinemaById(resolvedCinemaId)
+      .then((data) => {
+        const cinema = data?.data ?? data;
+        if (!cancelled && cinema?.name) {
+          setSelectedCinema((prev) => ({
+            ...prev,
+            ...cinema,
+            id: resolvedCinemaId,
+          }));
+        }
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [resolvedCinemaId]);
+
+  // Paso 1: Si no hay sucursal resuelta, cargar sucursales y mostrar modal.
+  useEffect(() => {
+    if (resolvedCinemaId) return; // ya tenemos sucursal del flujo de compra
 
     let isMounted = true;
     const fetchCinemas = async () => {
       setLoadingCinemas(true);
       try {
-        const data = await getCinemas();
+        const response = await getCinemas();
+        const data = Array.isArray(response) ? response : response?.data || [];
         if (isMounted && data && data.length > 0) {
           setCinemas(data);
           setCinemaModalVisible(true);
@@ -301,7 +337,7 @@ export default function ConcessionsScreen() {
     return () => {
       isMounted = false;
     };
-  }, [paramCinemaId]);
+  }, [resolvedCinemaId]);
 
   // Paso 2: Cuando ya hay sucursal (por params o por selección), cargar catálogo.
   useEffect(() => {
@@ -394,7 +430,7 @@ export default function ConcessionsScreen() {
     [cart.products]
   );
 
-  const cinemaId = selectedCinema?.id ?? paramCinemaId;
+  const cinemaId = selectedCinema?.id ?? resolvedCinemaId;
 
   const goToCheckout = () =>
     router.push({
@@ -464,13 +500,18 @@ export default function ConcessionsScreen() {
       {selectedCinema && (
         <TouchableOpacity
           style={styles.selectedCinemaBar}
-          onPress={() => setCinemaModalVisible(true)}
-          activeOpacity={0.8}
+          onPress={() => {
+            if (!isPurchaseFlow) setCinemaModalVisible(true);
+          }}
+          activeOpacity={isPurchaseFlow ? 1 : 0.8}
+          disabled={isPurchaseFlow}
         >
           <AppText style={styles.selectedCinemaText}>
             📍 {selectedCinema.name || `Sucursal #${selectedCinema.id}`}
           </AppText>
-          <AppText style={styles.changeCinemaText}>Cambiar</AppText>
+          {!isPurchaseFlow && (
+            <AppText style={styles.changeCinemaText}>Cambiar</AppText>
+          )}
         </TouchableOpacity>
       )}
 
@@ -480,7 +521,9 @@ export default function ConcessionsScreen() {
 
       <SectionList
         sections={sections}
-        keyExtractor={(item, i) => `${item.id}-${i}`}
+        keyExtractor={(item, i) =>
+          `${item.comboId ? 'combo' : 'prod'}-${item.id}-${i}`
+        }
         contentContainerStyle={[
           styles.listContent,
           { paddingBottom: bottomPad + (itemCount > 0 ? 36 : 0) },

@@ -19,16 +19,28 @@ const { colors, spacing, borderRadius } = theme;
 // ─── Mapeo de estados del backend ────────────────────────────────────────────
 // 1=Pendiente, 2=Pagado(empleado), 3=Cancelado, 4=Completado
 const ORDER_STATUS = {
-  1: { label: 'Pendiente',  color: colors.yellow[400],  bg: `${colors.yellow[400]}22` },
-  2: { label: 'Pagado',     color: colors.indigo[300],  bg: `${colors.indigo[300]}22` },
-  3: { label: 'Cancelado',  color: colors.red[500],     bg: `${colors.red[500]}22`    },
-  4: { label: 'Completado', color: colors.green[500],   bg: `${colors.green[500]}22`  },
+  1: {
+    label: 'Pendiente',
+    color: colors.yellow[400],
+    bg: `${colors.yellow[400]}22`,
+  },
+  2: {
+    label: 'Pagado',
+    color: colors.indigo[300],
+    bg: `${colors.indigo[300]}22`,
+  },
+  3: { label: 'Cancelado', color: colors.red[500], bg: `${colors.red[500]}22` },
+  4: {
+    label: 'Completado',
+    color: colors.green[500],
+    bg: `${colors.green[500]}22`,
+  },
 };
 
 const FILTERS = [
-  { key: 'all',        label: 'Todas'           },
-  { key: 'tickets',    label: 'Próximas'        },
-  { key: 'concessions',label: 'Solo confitería' },
+  { key: 'all', label: 'Todas' },
+  { key: 'tickets', label: 'Próximas' },
+  { key: 'concessions', label: 'Solo confitería' },
 ];
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -37,7 +49,9 @@ const fmt = (n) => `$${Number(n || 0).toFixed(2)}`;
 const formatDate = (iso) => {
   if (!iso) return '—';
   return new Date(iso).toLocaleDateString('es-VE', {
-    day: 'numeric', month: 'short', year: 'numeric',
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
   });
 };
 
@@ -47,9 +61,7 @@ const getMovieTitle = (order) => {
   if (!tickets.length) return null;
   const booking = tickets[0]?._RoomBookings;
   return (
-    booking?._Showtimes?._Movies?.title ||
-    booking?._RoomEvents?.title ||
-    null
+    booking?._Showtimes?._Movies?.title || booking?._RoomEvents?.title || null
   );
 };
 
@@ -72,8 +84,12 @@ const getShowtimeDate = (order) => {
   const st = booking?._Showtimes;
   if (!st?.start_time) return null;
   return new Date(st.start_time).toLocaleDateString('es-VE', {
-    weekday: 'short', day: 'numeric', month: 'short',
-    hour: '2-digit', minute: '2-digit', hour12: true,
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true,
   });
 };
 
@@ -88,19 +104,26 @@ const getCinemaName = (order) => order._Cinemas?.name || '—';
 const getSeatLabels = (order) => {
   const tickets = order._Tickets || [];
   if (!tickets.length) return '—';
-  return tickets
-    .map((t) => `${t._Seats?.row_identifier || ''}${t._Seats?.column_number || ''}`)
-    .filter(Boolean)
-    .join(', ') || '—';
+  return (
+    tickets
+      .map(
+        (t) =>
+          `${t._Seats?.row_identifier || ''}${t._Seats?.column_number || ''}`
+      )
+      .filter(Boolean)
+      .join(', ') || '—'
+  );
 };
 
 const getConcessionsText = (order) => {
   const lines = order._OrderLines || [];
   if (!lines.length) return null;
-  return lines.map((l) => {
-    const name = l._Products?.name || l._Combos?.name || 'Ítem';
-    return `${l.quantity}× ${name}`;
-  }).join('  •  ');
+  return lines
+    .map((l) => {
+      const name = l._Products?.name || l._Combos?.name || 'Ítem';
+      return `${l.quantity}× ${name}`;
+    })
+    .join('  •  ');
 };
 
 // ─── Componente: tarjeta de orden ────────────────────────────────────────────
@@ -114,10 +137,15 @@ function OrderCard({ order, onPress }) {
   const seats = getSeatLabels(order);
   const concessions = getConcessionsText(order);
   const hasTickets = (order._Tickets || []).length > 0;
-  const isOnlyConcessionsOrder = !hasTickets && (order._OrderLines || []).length > 0;
+  const isOnlyConcessionsOrder =
+    !hasTickets && (order._OrderLines || []).length > 0;
 
   return (
-    <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.85}>
+    <TouchableOpacity
+      style={styles.card}
+      onPress={onPress}
+      activeOpacity={0.85}
+    >
       {/* Fecha de compra (encima de la tarjeta, centrada) */}
       <AppText variant="caption" style={styles.purchasedAt}>
         Comprado el {formatDate(order.created_at)}
@@ -127,7 +155,11 @@ function OrderCard({ order, onPress }) {
         {/* Poster / imagen */}
         <View style={styles.posterContainer}>
           {posterUrl ? (
-            <Image source={{ uri: posterUrl }} style={styles.poster} resizeMode="cover" />
+            <Image
+              source={{ uri: posterUrl }}
+              style={styles.poster}
+              resizeMode="cover"
+            />
           ) : (
             <View style={styles.posterPlaceholder}>
               <AppText style={styles.posterPlaceholderText}>
@@ -139,19 +171,20 @@ function OrderCard({ order, onPress }) {
 
         {/* Contenido central */}
         <View style={styles.cardContent}>
-          <AppText variant="smallText" style={styles.movieTitle} numberOfLines={2}>
-            {movieTitle || (isOnlyConcessionsOrder ? 'Confitería' : 'Orden #' + order.id)}
+          <AppText
+            variant="smallText"
+            style={styles.movieTitle}
+            numberOfLines={2}
+          >
+            {movieTitle ||
+              (isOnlyConcessionsOrder ? 'Confitería' : 'Orden #' + order.id)}
           </AppText>
 
           {showtimeDate && (
             <InfoRow label="Fecha y Hora" value={showtimeDate} />
           )}
-          {hasTickets && (
-            <InfoRow label="Boletos" value={seats} />
-          )}
-          {roomName && (
-            <InfoRow label="Función" value={roomName} />
-          )}
+          {hasTickets && <InfoRow label="Boletos" value={seats} />}
+          {roomName && <InfoRow label="Función" value={roomName} />}
           <InfoRow label="Sucursal" value={cinemaName} />
           {concessions && (
             <InfoRow label="Confitería" value={concessions} multiline />
@@ -163,25 +196,37 @@ function OrderCard({ order, onPress }) {
       <View style={styles.cardFooter}>
         {/* Badge de estado */}
         <View style={[styles.statusBadge, { backgroundColor: statusInfo.bg }]}>
-          <AppText variant="caption" style={[styles.statusText, { color: statusInfo.color }]}>
+          <AppText
+            variant="caption"
+            style={[styles.statusText, { color: statusInfo.color }]}
+          >
             {statusInfo.label}
           </AppText>
         </View>
 
         <View style={styles.footerRight}>
           <View style={styles.totalBadge}>
-            <AppText variant="caption" style={styles.totalBadgeLabel}>Total</AppText>
+            <AppText variant="caption" style={styles.totalBadgeLabel}>
+              Total
+            </AppText>
             <AppText variant="smallText" style={styles.totalBadgeValue}>
               {fmt(order.total_amount_base_currency)}
             </AppText>
           </View>
 
           {/* Solo mostrar "Ver QR" si la orden está pagada/completada y tiene QR */}
-          {(order.order_status === 2 || order.order_status === 4) && order.qr_code && (
-            <TouchableOpacity style={styles.downloadBtn} onPress={onPress} activeOpacity={0.8}>
-              <AppText variant="caption" style={styles.downloadBtnText}>Ver QR</AppText>
-            </TouchableOpacity>
-          )}
+          {(order.order_status === 2 || order.order_status === 4) &&
+            order.qr_code && (
+              <TouchableOpacity
+                style={styles.downloadBtn}
+                onPress={onPress}
+                activeOpacity={0.8}
+              >
+                <AppText variant="caption" style={styles.downloadBtnText}>
+                  Ver QR
+                </AppText>
+              </TouchableOpacity>
+            )}
         </View>
       </View>
     </TouchableOpacity>
@@ -192,7 +237,9 @@ function OrderCard({ order, onPress }) {
 function InfoRow({ label, value, multiline }) {
   return (
     <View style={styles.infoRow}>
-      <AppText variant="caption" style={styles.infoLabel}>{label}</AppText>
+      <AppText variant="caption" style={styles.infoLabel}>
+        {label}
+      </AppText>
       <AppText
         variant="caption"
         style={styles.infoValue}
@@ -237,7 +284,10 @@ export default function PurchasesScreen() {
       return (order._Tickets || []).length > 0;
     }
     if (activeFilter === 'concessions') {
-      return (order._Tickets || []).length === 0 && (order._OrderLines || []).length > 0;
+      return (
+        (order._Tickets || []).length === 0 &&
+        (order._OrderLines || []).length > 0
+      );
     }
     return true;
   });
@@ -273,7 +323,9 @@ export default function PurchasesScreen() {
     <ScreenWrapper>
       {/* ── Header ── */}
       <View style={styles.header}>
-        <AppText variant="h2" style={styles.headerTitle}>Mis Compras</AppText>
+        <AppText variant="h2" style={styles.headerTitle}>
+          Mis Compras
+        </AppText>
         <AppText variant="caption" style={styles.headerSubtitle}>
           Consulta tus boletos y el registro de tus compras
         </AppText>
@@ -284,13 +336,19 @@ export default function PurchasesScreen() {
         {FILTERS.map((f) => (
           <TouchableOpacity
             key={f.key}
-            style={[styles.filterChip, activeFilter === f.key && styles.filterChipActive]}
+            style={[
+              styles.filterChip,
+              activeFilter === f.key && styles.filterChipActive,
+            ]}
             onPress={() => setActiveFilter(f.key)}
             activeOpacity={0.8}
           >
             <AppText
               variant="caption"
-              style={[styles.filterLabel, activeFilter === f.key && styles.filterLabelActive]}
+              style={[
+                styles.filterLabel,
+                activeFilter === f.key && styles.filterLabelActive,
+              ]}
             >
               {f.label}
             </AppText>

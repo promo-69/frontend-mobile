@@ -1,4 +1,3 @@
-// src/app/(main)/profile/_layout.jsx
 import { Stack } from 'expo-router';
 import { theme } from '../../../constants';
 
@@ -6,33 +5,27 @@ export default function ProfileLayout() {
   return (
     <Stack
       screenOptions={{
-        // Estilo global para el header nativo si decides usarlo (opcional)
-        headerShown: false, // Lo ponemos en false porque ya diseñaste tus propios headers con ChevronLeft
+        headerShown: false,
         contentStyle: {
-          backgroundColor: theme.colors.background// Asegura el fondo oscuro de Cineflix en la transición
+          backgroundColor: theme.colors.background,
         },
         animation: 'slide_from_bottom', // Animación nativa fluida de derecha a izquierda
       }}
     >
       {/* Index es el menú principal con las tarjetas de opciones */}
-      <Stack.Screen 
-        name="index" 
-        options={{ title: 'Mi Perfil' }} 
-      />
-      
+      <Stack.Screen name="index" options={{ title: 'Mi Perfil' }} />
+
       {/* Pantalla de formulario de datos personales */}
-      <Stack.Screen 
-        name="personal-data" 
-        options={{ 
+      <Stack.Screen
+        name="personal-data"
+        options={{
           title: 'Datos Personales',
-          gestureEnabled: true, 
-        }} 
+          gestureEnabled: true,
+        }}
       />
-      
+
       {/* Pantalla de cambio de credenciales / seguridad */}
-      <Stack.Screen 
-        name="security/index" 
-      />
+      <Stack.Screen name="security/index" />
     </Stack>
   );
 }

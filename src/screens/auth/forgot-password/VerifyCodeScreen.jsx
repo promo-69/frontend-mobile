@@ -2,11 +2,11 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ChevronLeft } from 'lucide-react-native';
 import { useState } from 'react';
 import {
-    KeyboardAvoidingView,
-    Platform,
-    StyleSheet,
-    TouchableOpacity,
-    View,
+  KeyboardAvoidingView,
+  Platform,
+  StyleSheet,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { AppText } from '../../../components/AppText';
 import { OTPInput } from '../../../components/OTPInput';
@@ -49,12 +49,12 @@ export const VerifyCodeScreen = () => {
           <View style={styles.actionSection}>
             <CustomButton
               title="Confirmar Código"
-              onPress={() =>router.push(
-                  {
-                    pathname:'/reset-password',
-                    params: {email: email}
-                  }
-                  )}
+              onPress={() =>
+                router.push({
+                  pathname: '/reset-password',
+                  params: { email: email },
+                })
+              }
             />
             <TouchableOpacity activeOpacity={0.7}>
               <AppText style={styles.resendText}>

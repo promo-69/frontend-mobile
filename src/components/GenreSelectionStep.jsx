@@ -10,22 +10,27 @@ import { theme } from '../constants';
  */
 
 const AVAILABLE_GENRES = [
-  "Musical", "Animada", "Comedia", "Acción", 
-  "Aníme", "Aventura", "Terror", "Drama", 
-  "Historias", "Suspenso", "Adulto", "Biografía", 
-  "Deportes", "Ficción"
+  'Musical',
+  'Animada',
+  'Comedia',
+  'Acción',
+  'Aníme',
+  'Aventura',
+  'Terror',
+  'Drama',
+  'Historias',
+  'Suspenso',
+  'Adulto',
+  'Biografía',
+  'Deportes',
+  'Ficción',
 ];
 
-export const GenreSelectionStep = ({ 
-  value = [], 
-  onChange, 
-  error 
-}) => {
-
- const handleToggle = (genre) => {
+export const GenreSelectionStep = ({ value = [], onChange, error }) => {
+  const handleToggle = (genre) => {
     const isSelected = value.includes(genre);
     const nextGenres = isSelected
-      ? value.filter(g => g !== genre)
+      ? value.filter((g) => g !== genre)
       : [...value, genre];
     onChange(nextGenres);
   };
@@ -36,12 +41,12 @@ export const GenreSelectionStep = ({
         <AppText variant="h2" style={styles.title}>
           ¿Qué géneros te gustan?
         </AppText>
-        
+
         {error ? (
           <AppText style={styles.errorText}>{error}</AppText>
         ) : (
           <AppText variant="body" style={styles.subtitle}>
-            Selecciona al menos 3 categorías 
+            Selecciona al menos 3 categorías
           </AppText>
         )}
       </View>
@@ -67,7 +72,7 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: 'center',
-    marginBottom: theme.spacing.s24, 
+    marginBottom: theme.spacing.s24,
   },
   title: {
     textAlign: 'center',
@@ -83,10 +88,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
-    gap: theme.spacing.s12, 
+    gap: theme.spacing.s12,
   },
   chipItem: {
-    width: '48%', 
+    width: '48%',
   },
   errorText: {
     color: theme.colors.error,

@@ -66,18 +66,18 @@ export const getUpcomingMovies = async (page = 1, limit = 10) => {
   }
 };
 
-// De un peliculas, obtengo las sucursales y funciones disponibles 
+// De un peliculas, obtengo las sucursales y funciones disponibles
 export const getCinemaShowtimebyDateMovies = async (movieId, date) => {
   const response = await api.get(`/showtimes/by-content/movie/${movieId}/`, {
-  params: { date }
-  })
-  return response.data.data 
-}
+    params: { date },
+  });
+  return response.data.data;
+};
 
 // Endpoint para obtener las películas en cartelera (estreno) - Mary
 export const getMoviesNowPlaying = async (genre) => {
-  const response = await apiPublic.get('/movies/now-playing', {
+  const response = await api.get('/movies/now-playing', {
     params: { genre },
-  })
-  return response.data?.data || []
-}
+  });
+  return response.data?.data || [];
+};

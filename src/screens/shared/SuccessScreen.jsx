@@ -1,24 +1,25 @@
-import { CheckCircle2 } from 'lucide-react-native'
-import { useEffect, useRef } from 'react'
-import { Animated, BackHandler, StyleSheet, View } from 'react-native'
-import { AppText } from '../../components/AppText'
-import { CustomButton } from '../../components/ui/CustomButton'
-import { theme } from '../../constants'
+import { CheckCircle2 } from 'lucide-react-native';
+import { useEffect, useRef } from 'react';
+import { Animated, BackHandler, StyleSheet, View } from 'react-native';
+import { AppText } from '../../components/AppText';
+import { CustomButton } from '../../components/ui/CustomButton';
+import { theme } from '../../constants';
 
-export const SuccessScreen = ({ 
-  title, 
-  message, 
-  buttonText = "Continuar", 
-  onPress 
+export const SuccessScreen = ({
+  title,
+  message,
+  buttonText = 'Continuar',
+  onPress,
 }) => {
-  
   const scaleAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     // Bloquear el botón de atrás físico en Android para que no regresen al formulario
-    const backHandler = BackHandler.addEventListener('hardwareBackPress', () => true);
+    const backHandler = BackHandler.addEventListener(
+      'hardwareBackPress',
+      () => true
+    );
 
-   
     Animated.spring(scaleAnim, {
       toValue: 1,
       friction: 4,
@@ -31,21 +32,25 @@ export const SuccessScreen = ({
   return (
     <View style={styles.container}>
       <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
-        <CheckCircle2 
-          size={100} 
-          color={theme.colors.primary} 
-          strokeWidth={1.5} 
+        <CheckCircle2
+          size={100}
+          color={theme.colors.primary}
+          strokeWidth={1.5}
         />
       </Animated.View>
 
       <View style={styles.textContainer}>
-        <AppText variant="h2" style={styles.title}>{title}</AppText>
-        <AppText variant="body" style={styles.message}>{message}</AppText>
+        <AppText variant="h2" style={styles.title}>
+          {title}
+        </AppText>
+        <AppText variant="body" style={styles.message}>
+          {message}
+        </AppText>
       </View>
 
-      <CustomButton 
-        title={buttonText} 
-        onPress={onPress} 
+      <CustomButton
+        title={buttonText}
+        onPress={onPress}
         style={styles.button}
       />
     </View>

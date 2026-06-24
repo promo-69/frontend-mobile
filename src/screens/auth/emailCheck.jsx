@@ -1,23 +1,30 @@
 import { useRouter } from 'expo-router';
 import { useState, useEffect, useCallback } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
+import {
+  StyleSheet,
+  Text,
+  View,
+  TouchableOpacity,
+  ActivityIndicator,
+  Alert,
+} from 'react-native';
 import { storageHelper } from '../../helper/storage.helper';
 import { ScreenWrapper } from '../../components/ScreenWrapper';
 import { CustomButton } from '../../components/ui/CustomButton';
 import { OTPInput } from '../../components/OTPInput';
 import { useAuth } from '../../context/AuthContext';
-import { SuccessScreen } from '../shared/SuccessScreen'; 
+import { SuccessScreen } from '../shared/SuccessScreen';
 import { theme } from '../../constants';
 
 export default function EmailCheck() {
   const router = useRouter();
   const { verifyAccount, sendRecoveryEmail } = useAuth();
-  
+
   const [email, setEmail] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
   const [isResending, setIsResending] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
-  
+
   // Estado para el código como string (necesario para OTPInput)
   const [code, setCode] = useState('');
 
@@ -28,7 +35,10 @@ export default function EmailCheck() {
       if (savedEmail) {
         setEmail(savedEmail);
       } else {
-        Alert.alert("Aviso", "No se encontró un correo pendiente de verificación.");
+        Alert.alert(
+          'Aviso',
+          'No se encontró un correo pendiente de verificación.'
+        );
         router.replace('/register');
       }
     };
@@ -37,50 +47,62 @@ export default function EmailCheck() {
 
   const handleResendCode = async () => {
     if (!email) {
-      Alert.alert("Error", "No hay un correo para reenviar el código.");
+      Alert.alert('Error', 'No hay un correo para reenviar el código.');
       return;
     }
     setIsResending(true);
     try {
       const result = await sendRecoveryEmail(email);
       if (result.success) {
-        Alert.alert("Éxito", "Se ha reenviado el código a tu correo.");
+        Alert.alert('Éxito', 'Se ha reenviado el código a tu correo.');
       } else {
-        Alert.alert("Error", result.message || "No se pudo reenviar el código.");
+        Alert.alert(
+          'Error',
+          result.message || 'No se pudo reenviar el código.'
+        );
       }
     } catch (error) {
-      console.error("Error reenviando código:", error);
-      Alert.alert("Error", "Ocurrió un problema al reenviar el código.");
+      console.error('Error reenviando código:', error);
+      Alert.alert('Error', 'Ocurrió un problema al reenviar el código.');
     } finally {
       setIsResending(false);
     }
   };
 
-  const handleContinue = useCallback(async (fullCode) => {
-    const finalCode = typeof fullCode === 'string' ? fullCode : code;
-    
-    if (finalCode.length < 4) {
-      Alert.alert("Código incompleto", "Por favor ingresa los 4 dígitos.");
-      return;
-    }
+  const handleContinue = useCallback(
+    async (fullCode) => {
+      const finalCode = typeof fullCode === 'string' ? fullCode : code;
 
-    setIsVerifying(true);
-    try {
-      const result = await verifyAccount(email, finalCode);
-
-      if (result.success) {
-        await storageHelper.removeValue('user_email_to_verify');
-        setShowSuccess(true);
-      } else {
-        Alert.alert("Verificación fallida", result.message || "Código incorrecto.");
-        setCode('');
+      if (finalCode.length < 4) {
+        Alert.alert('Código incompleto', 'Por favor ingresa los 4 dígitos.');
+        return;
       }
-    } catch (error) {
-      Alert.alert("Error", "Ocurrió un problema al conectar con el servidor.");
-    } finally {
-      setIsVerifying(false);
-    }
-  }, [code, email, verifyAccount]);
+
+      setIsVerifying(true);
+      try {
+        const result = await verifyAccount(email, finalCode);
+
+        if (result.success) {
+          await storageHelper.removeValue('user_email_to_verify');
+          setShowSuccess(true);
+        } else {
+          Alert.alert(
+            'Verificación fallida',
+            result.message || 'Código incorrecto.'
+          );
+          setCode('');
+        }
+      } catch (error) {
+        Alert.alert(
+          'Error',
+          'Ocurrió un problema al conectar con el servidor.'
+        );
+      } finally {
+        setIsVerifying(false);
+      }
+    },
+    [code, email, verifyAccount]
+  );
 
   // Efecto para redirigir al Login después de ver la pantalla de Éxito
   useEffect(() => {
@@ -114,7 +136,9 @@ export default function EmailCheck() {
       <View style={styles.content}>
         <Text style={styles.title}>¡Revisa tu bandeja de entrada!</Text>
         <Text style={styles.subtitle}>
-          Te enviamos un código de 4 dígitos a <Text style={{fontWeight: 'bold'}}>{email || 'tu correo'}</Text> para validar y culminar tu registro.
+          Te enviamos un código de 4 dígitos a{' '}
+          <Text style={{ fontWeight: 'bold' }}>{email || 'tu correo'}</Text>{' '}
+          para validar y culminar tu registro.
         </Text>
 
         {/* Uso del componente OTPInput */}

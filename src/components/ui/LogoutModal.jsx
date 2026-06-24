@@ -7,14 +7,20 @@ export const LogoutModal = ({ visible, onConfirm, onCancel, onClose }) => {
   const handleCancel = onCancel ?? onClose;
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={handleCancel}>
+    <Modal
+      visible={visible}
+      transparent
+      animationType="fade"
+      onRequestClose={handleCancel}
+    >
       <View style={styles.overlay}>
         <View style={styles.modalCard}>
           <AppText variant="h2" style={styles.modalTitle}>
             Cerrar Sesión
           </AppText>
           <AppText variant="body" style={styles.modalDesc}>
-            ¿Estás seguro de que deseas salir de tu cuenta? Perderás el acceso a tus funciones personalizadas.
+            ¿Estás seguro de que deseas salir de tu cuenta? Perderás el acceso a
+            tus funciones personalizadas.
           </AppText>
 
           <View style={styles.modalActions}>
@@ -48,7 +54,11 @@ const styles = StyleSheet.create({
     borderRadius: 28,
     padding: theme.spacing.s32,
   },
-  modalTitle: { color: '#ff4444', textAlign: 'center', marginBottom: theme.spacing.s12 },
+  modalTitle: {
+    color: '#ff4444',
+    textAlign: 'center',
+    marginBottom: theme.spacing.s12,
+  },
   modalDesc: {
     color: theme.colors.textPrimary,
     textAlign: 'center',

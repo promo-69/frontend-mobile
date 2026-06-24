@@ -5,22 +5,21 @@ import { ChevronLeft } from 'lucide-react-native';
 import { AppText } from '../AppText';
 
 export const CustomHeader = ({ title, rightComponent, onPressAction }) => {
-    
   const router = useRouter();
 
   const handleDefaultBack = () => {
     if (router.canGoBack()) {
-      router.back(); 
+      router.back();
     } else {
-      router.replace('/(main)/home'); 
+      router.replace('/(main)/home');
     }
   };
 
   return (
     <View style={styles.headerContainer}>
       {/* Botón de Regresar condicional */}
-      <TouchableOpacity 
-        style={styles.backButton} 
+      <TouchableOpacity
+        style={styles.backButton}
         onPress={onPressAction || handleDefaultBack}
         activeOpacity={0.7}
       >
@@ -29,10 +28,7 @@ export const CustomHeader = ({ title, rightComponent, onPressAction }) => {
 
       {/* Título de la pantalla */}
       <View style={styles.titleContainer}>
-        {title && 
-        <AppText style={styles.headerTitle}>
-            {title}
-        </AppText>}
+        {title && <AppText style={styles.headerTitle}>{title}</AppText>}
       </View>
 
       {/* Espacio para un botón extra a la derecha si fuese necesario (ej. Guardar o un ícono) */}
@@ -48,7 +44,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#442F6B', 
+    backgroundColor: '#442F6B',
     height: 56,
     paddingHorizontal: 16,
     borderBottomWidth: 1,
@@ -69,5 +65,5 @@ const styles = StyleSheet.create({
   },
   rightContainer: {
     alignItems: 'flex-end',
-  }
+  },
 });

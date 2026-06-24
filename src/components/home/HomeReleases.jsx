@@ -31,10 +31,12 @@ export default function HomeReleases({ movies = [] }) {
             key={`release-${movie.id}`}
             title={movie.title}
             posterUrl={movie.poster_url}
-            onPress={() => router.push({
-              pathname: `/content/${movie.id}`,
-              params: { movieId: movie.id, type: movie.type || 'movie' }
-            })}
+            onPress={() =>
+              router.push({
+                pathname: `/content/${movie.id}`,
+                params: { movieId: movie.id, type: movie.type || 'movie' },
+              })
+            }
           />
         ))}
       </ScrollView>

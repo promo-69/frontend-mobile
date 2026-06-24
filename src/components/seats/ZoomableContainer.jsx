@@ -1,14 +1,13 @@
 import { Dimensions, StyleSheet } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
-    useAnimatedStyle,
-    useSharedValue
+  useAnimatedStyle,
+  useSharedValue,
 } from 'react-native-reanimated';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 export default function ZoomableContainer({ children }) {
-  // Valores compartidos en el hilo de UI nativo
   const scale = useSharedValue(1);
   const savedScale = useSharedValue(1);
 

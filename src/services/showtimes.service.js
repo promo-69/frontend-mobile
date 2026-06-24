@@ -51,7 +51,7 @@ export const getContentDetails = async (type, id) => {
 
   const response = await api.get(endpoint);
   const data = response.data.data;
- 
+
   // Adaptamos y normalizamos las propiedades para que el componente lea siempre lo mismo
   return {
     id: data?.id,
@@ -72,10 +72,10 @@ export const getContentDetails = async (type, id) => {
   };
 };
 
-/*Devuelve todos los horarios futuros de una película o evento especial específico, agrupados por cine. 
-Opcionalmente, filtra por una fecha específica. 
-Si no se proporciona una fecha, devuelve 
-los horarios de la fecha disponible más cercana. 
+/*Devuelve todos los horarios futuros de una película o evento especial específico, agrupados por cine.
+Opcionalmente, filtra por una fecha específica.
+Si no se proporciona una fecha, devuelve
+los horarios de la fecha disponible más cercana.
 Devuelve una lista de fechas disponibles.
 */
 export const getContentShowtimes = async (type, id, date) => {

@@ -6,7 +6,9 @@ export default function LoyaltyScreen() {
   return (
     <ScreenWrapper style={styles.container}>
       <AppText variant="h2">Mis Compras</AppText>
-      <AppText variant="body">Historial de boletos y dulcería (Próximamente)</AppText>
+      <AppText variant="body">
+        Historial de boletos y dulcería (Próximamente)
+      </AppText>
     </ScreenWrapper>
   );
 }

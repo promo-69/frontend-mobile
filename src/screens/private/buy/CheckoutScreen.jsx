@@ -17,6 +17,7 @@ import {
   createQuote,
   processCheckout,
   cancelSession,
+  getSessionState,
 } from '../../../services/orders.service';
 import { storageHelper } from '../../../helper/storage.helper';
 import { theme } from '../../../constants';
@@ -149,9 +150,11 @@ export default function CheckoutScreen() {
   const movie = cart.movie;
   const showtime = cart.showtime;
 
-  const effectiveCinemaId = paramCinemaId
-    ? Number(paramCinemaId)
-    : cart.showtime?.room?.cinema?.id || null;
+  const effectiveCinemaId = cart.cinemaId
+    ? Number(cart.cinemaId)
+    : paramCinemaId
+      ? Number(paramCinemaId)
+      : cart.showtime?.room?.cinema?.id || null;
 
   const displayTotal = serverTotals
     ? fmtVes(serverTotals.total_amount_base_currency)
@@ -190,19 +193,39 @@ export default function CheckoutScreen() {
 
     setProcessing(true);
 
-    const executeCheckout = async (attempt = 0) => {
+    const executeCheckout = async () => {
       try {
-        // Cancelar sesión previa
-        await cancelSession().catch(() => {});
-        if (attempt > 0)
-          await new Promise((resolve) => setTimeout(resolve, 500));
+        let expiresAt;
 
-        // Crear cotización
-        const quoteResult = await createQuote(effectiveCinemaId);
-        // Usar expires_at del backend si existe, si no calcular con expires_in
-        const expiresAt = quoteResult.expires_at
-          ? new Date(quoteResult.expires_at).getTime()
-          : Date.now() + (quoteResult.expires_in || 600) * 1000;
+        if (isConcessionsMode) {
+          // Flujo de SOLO confitería: no se pasó por la selección de asientos,
+          // así que aquí abrimos una sesión de compra nueva.
+          await cancelSession().catch(() => {});
+          const quoteResult = await createQuote(effectiveCinemaId);
+          expiresAt = quoteResult.expires_at
+            ? new Date(quoteResult.expires_at).getTime()
+            : Date.now() + (quoteResult.expires_in || 600) * 1000;
+        } else {
+          // Flujo de BOLETOS: la quote ya fue creada en la selección de asientos.
+          // NO la recreamos: hacerlo cancelaría los bloqueos de asientos.
+          const session = await getSessionState().catch(() => null);
+          if (!session) {
+            Alert.alert(
+              'Sesión expirada',
+              'Tu sesión de compra venció. Vuelve a seleccionar tus asientos.',
+              [
+                {
+                  text: 'Entendido',
+                  onPress: () => router.replace('/(main)/home'),
+                },
+              ]
+            );
+            return;
+          }
+          expiresAt = session.expires_at
+            ? new Date(session.expires_at).getTime()
+            : Date.now() + (session.expires_in || 600) * 1000;
+        }
 
         // Preparar payloads
         const ticketsPayload = cart.tickets.map((t) => ({
@@ -239,26 +262,56 @@ export default function CheckoutScreen() {
           },
         });
       } catch (err) {
-        if (err?.response?.status === 409 && attempt === 0) {
-          console.warn('⚠️ Conflicto (409), reintentando...');
-          await executeCheckout(attempt + 1);
+        console.error('Error checkout:', {
+          url: err?.config?.url,
+          status: err?.response?.status,
+          message: err?.response?.data?.message,
+          code: err?.response?.data?.code,
+        });
+        // 409 = asiento ya no disponible o lock expirado: la sesión quedó inconsistente
+        if (err?.response?.status === 409) {
+          Alert.alert(
+            'Asientos no disponibles',
+            err.response?.data?.message ||
+              'Uno o más asientos ya no están disponibles. Vuelve a seleccionarlos.',
+            [{ text: 'Entendido', onPress: () => router.back() }]
+          );
           return;
         }
-        console.error('Error checkout:', err);
         Alert.alert(
           'Error al procesar la orden',
           err.response?.data?.message || err.message || 'Ocurrió un problema.'
         );
-        await cancelSession().catch(() => {});
       } finally {
         setProcessing(false);
       }
     };
 
     await executeCheckout();
-  }, [cart, hasItems, hasTickets, router, effectiveCinemaId, processing]);
+  }, [
+    cart,
+    hasItems,
+    hasTickets,
+    router,
+    effectiveCinemaId,
+    processing,
+    isConcessionsMode,
+  ]);
 
-  const handleAddMovie = () => router.push('/(main)/home');
+  // "Agregar película": llevamos al usuario a la cartelera de la MISMA sucursal
+  // de su confitería, para que película y confitería formen una sola compra.
+  // Los productos permanecen en el carrito local hasta el checkout.
+  const handleAddMovie = () => {
+    if (effectiveCinemaId) {
+      router.push({
+        pathname: '/(main)/cinemas/[cinemaId]',
+        params: { cinemaId: String(effectiveCinemaId) },
+      });
+    } else {
+      // Sin sucursal conocida, lo enviamos a la cartelera general
+      router.push('/(main)/home');
+    }
+  };
 
   const bottomBarHeight =
     56 + spacing.s12 + spacing.s16 + (insets.bottom || 16);

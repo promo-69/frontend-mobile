@@ -1,10 +1,10 @@
 import { ChevronRight } from 'lucide-react-native';
 import {
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import ContentSkeleton from '../showtimes/ContentSkeleton';
 import MovieCard from '../showtimes/MovieCard';

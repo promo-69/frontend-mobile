@@ -39,10 +39,12 @@ export default function HomeUpcoming({ movies = [] }) {
             subtitle={`Estreno: ${formatReleaseDate(movie.release_date)}`}
             subtitleColor="#FFC864"
             badgeText="Próximamente"
-            onPress={() => router.push({
-              pathname: `/content/${movie.id}`,
-              params: { movieId: movie.id, type: movie.type || 'movie' }
-            })}
+            onPress={() =>
+              router.push({
+                pathname: `/content/${movie.id}`,
+                params: { movieId: movie.id, type: movie.type || 'movie' },
+              })
+            }
           />
         ))}
       </ScrollView>

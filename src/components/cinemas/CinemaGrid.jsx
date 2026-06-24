@@ -1,14 +1,26 @@
-import { ActivityIndicator, FlatList, StyleSheet, View, Text } from 'react-native';
-import { AppText } from '../../components/AppText'
+import {
+  ActivityIndicator,
+  FlatList,
+  StyleSheet,
+  View,
+  Text,
+} from 'react-native';
+import { AppText } from '../../components/AppText';
 import { theme } from '../../constants';
 import CinemaCard from './CinemaCard';
 
-export default function CinemaGrid({ cinemas = [], onPress, onLoadMore, loadingMore }) {
-  
+export default function CinemaGrid({
+  cinemas = [],
+  onPress,
+  onLoadMore,
+  loadingMore,
+}) {
   if (!cinemas || cinemas.length === 0) {
     return (
       <View style={styles.emptyContainer}>
-        <Text style={styles.emptyText}>No hay sucursales disponibles por ahora.</Text>
+        <Text style={styles.emptyText}>
+          No hay sucursales disponibles por ahora.
+        </Text>
       </View>
     );
   }
@@ -17,7 +29,7 @@ export default function CinemaGrid({ cinemas = [], onPress, onLoadMore, loadingM
     if (!loadingMore) return null;
     return (
       <View style={styles.footerLoader}>
-        <ActivityIndicator size="small" color="theme.colors.primary"/>
+        <ActivityIndicator size="small" color="theme.colors.primary" />
       </View>
     );
   };
@@ -29,7 +41,7 @@ export default function CinemaGrid({ cinemas = [], onPress, onLoadMore, loadingM
         <AppText style={styles.mainTitle}>
           Nuestros <AppText style={styles.highlightedText}>Cines</AppText>
         </AppText>
-        
+
         {/* TEXTO DESCRIPTIVO */}
         <AppText style={styles.subtitle}>
           Encuentra el complejo Cineflix más cercano a ti y vive la magia.
@@ -43,15 +55,11 @@ export default function CinemaGrid({ cinemas = [], onPress, onLoadMore, loadingM
       data={cinemas}
       keyExtractor={(item) => item.id.toString()}
       renderItem={({ item }) => (
-        <CinemaCard 
-        cinema={item} 
-        onPress={() => onPress(item.id)}
-        />
-
-      ) }
+        <CinemaCard cinema={item} onPress={() => onPress(item.id)} />
+      )}
       contentContainerStyle={styles.container}
       showsVerticalScrollIndicator={false}
-      ListHeaderComponent={renderHeader} 
+      ListHeaderComponent={renderHeader}
       onEndReached={onLoadMore}
       onEndReachedThreshold={0.3}
       ListFooterComponent={renderFooter}
@@ -80,7 +88,6 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     lineHeight: 24,
     color: '#FFFFFF',
-   
   },
   highlightedText: {
     fontSize: 28,
@@ -88,7 +95,7 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: 14,
-    color: '#B0A8C5', 
+    color: '#B0A8C5',
     textTransform: 'uppercase',
     letterSpacing: 1,
     fontWeight: 'semibold',
