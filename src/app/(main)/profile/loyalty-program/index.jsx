@@ -59,9 +59,18 @@ export default function LoyaltyScreen() {
   );
   const nextLevelPoints = Number(nextLevel?.required_points ?? 0);
 
-  // Progreso 0..1 dentro del tramo del nivel actual hacia el siguiente
-  let progressRatio = 1;
-  if (nextLevel && nextLevelPoints > currentLevelPoints) {
+  // ¿Se cargó correctamente la tabla de niveles?
+  const levelsLoaded =
+    Array.isArray(levels?.levels) && levels.levels.length > 0;
+  // ¿El usuario está realmente en el nivel máximo? (niveles cargados y sin siguiente)
+  const isMaxLevel = levelsLoaded && !nextLevel;
+
+  // Progreso 0..1 dentro del tramo del nivel actual hacia el siguiente.
+  // Por defecto 0 (vacío); solo se llena con datos reales.
+  let progressRatio = 0;
+  if (isMaxLevel) {
+    progressRatio = 1;
+  } else if (nextLevel && nextLevelPoints > currentLevelPoints) {
     progressRatio = Math.min(
       1,
       Math.max(
@@ -144,9 +153,13 @@ export default function LoyaltyScreen() {
                 </AppText>{' '}
                 para alcanzar {nextLevel.name}
               </AppText>
-            ) : (
+            ) : isMaxLevel ? (
               <AppText style={styles.progressText}>
                 ¡Estás en el nivel máximo! 🎉
+              </AppText>
+            ) : (
+              <AppText style={styles.progressText}>
+                Acumula puntos para subir de nivel.
               </AppText>
             )}
           </View>
