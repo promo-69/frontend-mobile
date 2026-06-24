@@ -1,11 +1,10 @@
 import { Stack } from 'expo-router';
-import { theme } from '../../../../constants';
+import { theme } from '../../../constants';
 
-export default function LoyaltyLayout() {
+export default function ProfileLayout() {
   return (
     <Stack
       screenOptions={{
-        // Estilo global para el header nativo si decides usarlo (opcional)
         headerShown: false,
         contentStyle: {
           backgroundColor: theme.colors.background,
@@ -13,15 +12,23 @@ export default function LoyaltyLayout() {
         animation: 'slide_from_bottom',
       }}
     >
-      {/* Dashboard (Nivel, barra de progreso, balance)*/}
+      {/* Index es el menú principal con las tarjetas de opciones */}
+      <Stack.Screen name="index" options={{ title: 'Mi Perfil' }} />
 
-      <Stack.Screen name="index" options={{ title: 'CinePuntos' }} />
+      {/* Pantalla de formulario de datos personales */}
+      <Stack.Screen
+        name="personal-data"
+        options={{
+          title: 'Datos Personales',
+          gestureEnabled: true,
+        }}
+      />
 
-      {/*Historial contable (LoyaltyLedgers de la API)*/}
-      <Stack.Screen name="history" options={{ title: 'Historial' }} />
+      {/* Pantalla de cambio de credenciales / seguridad */}
+      <Stack.Screen name="security/index" />
 
-      {/**Catálogo de canje por puntos (Combos bloqueados/desbloqueados) */}
-      <Stack.Screen name="rewards" options={{ title: 'Premios' }} />
+      {/* Módulo de fidelidad (CinePuntos): dashboard, historial y niveles */}
+      <Stack.Screen name="loyalty-program" options={{ gestureEnabled: true }} />
     </Stack>
   );
 }

@@ -64,4 +64,25 @@ export const usersService = {
     const response = await api.get('/users/me/loyalty');
     return response.data.data;
   },
+
+  /**
+   * Obtiene el historial de movimientos de puntos (loyalty ledgers).
+   * Cada movimiento trae el tipo de operación (_OperationTypes con is_increment)
+   * para saber si suma o resta puntos.
+   * @param {Object} params - Filtros opcionales: limit, offset
+   * @returns {{ rows: Ledger[], count: number } | Ledger[]}
+   */
+  getLoyaltyLedgers: async (params = {}) => {
+    const response = await api.get('/users/me/loyalty/ledgers', { params });
+    return response.data.data;
+  },
+
+  /**
+   * Obtiene la tabla de niveles de fidelidad y el progreso del usuario.
+   * @returns {{ levels, current_level, next_level, level_progress_points, points_to_next_level }}
+   */
+  getLoyaltyLevels: async () => {
+    const response = await api.get('/users/me/loyalty/levels');
+    return response.data.data;
+  },
 };
