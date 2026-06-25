@@ -13,7 +13,6 @@ export default function CinemasLayout() {
       }}
     >
       <Stack.Screen name="index" options={{ title: 'Cines' }} />
-      <Stack.Screen name="rental" options={{ title: 'Alquiler de Sala' }} />
     </Stack>
   );
 }

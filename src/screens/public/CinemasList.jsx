@@ -1,12 +1,6 @@
 import { useRouter } from 'expo-router';
-import { CalendarClock, ChevronRight } from 'lucide-react-native';
 import { useCallback, useEffect, useState } from 'react';
-import {
-  ActivityIndicator,
-  StyleSheet,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { AppText } from '../../components/AppText';
 import CinemaGrid from '../../components/cinemas/CinemaGrid';
 import { ScreenWrapper } from '../../components/ScreenWrapper';
@@ -95,30 +89,12 @@ export default function CinemasList() {
           </AppText>
         </View>
       ) : (
-        <>
-          <TouchableOpacity
-            style={styles.rentalBanner}
-            onPress={() => router.push('/cinemas/rental')}
-            activeOpacity={0.85}
-          >
-            <View style={styles.rentalIconWrap}>
-              <CalendarClock size={20} color={theme.colors.textBlack} />
-            </View>
-            <View style={styles.rentalTexts}>
-              <AppText style={styles.rentalTitle}>Alquila una sala</AppText>
-              <AppText style={styles.rentalSub}>
-                Organiza tu evento privado con nosotros
-              </AppText>
-            </View>
-            <ChevronRight size={20} color={theme.colors.primary} />
-          </TouchableOpacity>
-          <CinemaGrid
-            cinemas={cinemas}
-            onPress={handleCinemaSelect}
-            onLoadMore={handleLoadMore}
-            loadingMore={loadingMore}
-          />
-        </>
+        <CinemaGrid
+          cinemas={cinemas}
+          onPress={handleCinemaSelect}
+          onLoadMore={handleLoadMore}
+          loadingMore={loadingMore}
+        />
       )}
     </ScreenWrapper>
   );
@@ -127,32 +103,4 @@ export default function CinemasList() {
 const styles = StyleSheet.create({
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   errorText: { color: theme.colors.error, textAlign: 'center', padding: 20 },
-  rentalBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing.s12,
-    marginHorizontal: theme.spacing.s16,
-    marginTop: theme.spacing.s12,
-    marginBottom: theme.spacing.s8,
-    backgroundColor: theme.colors.background.secondary,
-    borderWidth: 1,
-    borderColor: 'rgba(246,173,56,0.35)',
-    borderRadius: theme.borderRadius.s16,
-    padding: theme.spacing.s12,
-  },
-  rentalIconWrap: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: theme.colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  rentalTexts: { flex: 1 },
-  rentalTitle: {
-    color: theme.colors.textPrimary,
-    fontSize: 15,
-    fontFamily: theme.typography.family.primary.bold,
-  },
-  rentalSub: { color: theme.colors.textSecondary, fontSize: 12 },
 });

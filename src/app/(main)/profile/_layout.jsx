@@ -26,6 +26,9 @@ export default function ProfileLayout() {
 
       {/* Pantalla de cambio de credenciales / seguridad */}
       <Stack.Screen name="security/index" />
+
+      {/* Mis solicitudes de alquiler de salas */}
+      <Stack.Screen name="rental-requests" options={{ gestureEnabled: true }} />
     </Stack>
   );
 }
