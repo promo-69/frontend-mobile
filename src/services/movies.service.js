@@ -18,7 +18,8 @@ export const getMovieById = async (id) => {
   return response.data.data;
 };
 
-export const getShowtimesBillboard = async (page = 1, limit = 10) => {
+// Endpoint para peliculas en cartelera regular, estreno y ultimos dias
+export const getMoviesBillboard = async (page = 1, limit = 10) => {
   try {
     // Usamos el nuevo endpoint de cartelera completa
     const response = await api.get('/showtimes/billboard/full');
@@ -39,11 +40,12 @@ export const getShowtimesBillboard = async (page = 1, limit = 10) => {
     }
     return [];
   } catch (error) {
-    console.error('Error en getShowtimesBillboard:', error.message);
+    console.error('Error en getMoviesBillboard:', error.message);
     return [];
   }
 };
 
+// Endpoint para proximos estrenos
 export const getUpcomingMovies = async (page = 1, limit = 10) => {
   try {
     const response = await api.get(
@@ -81,3 +83,10 @@ export const getMoviesNowPlaying = async (genre) => {
   });
   return response.data?.data || [];
 };
+
+// Endpoint de peliculas activas 
+export const getActiveMovies = async () => {
+  const response = await api.get('/movies/active')
+  return response.data?.data || []
+}
+

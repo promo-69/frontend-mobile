@@ -126,7 +126,7 @@ export const COLORS = {
   accent: palette.gold[300],
 
   background: {
-    main: 'rgba(42, 21, 75, 1)',
+    main: palette.midnight[950],
     secondary: palette.midnight[900],
     accent: 'rgba(35, 22, 64, 1)',
   },
@@ -137,6 +137,7 @@ export const COLORS = {
   textPrimary: palette.grey[50],
   textSecondary: palette.grey[100],
   textDisabled: palette.grey[400],
+  textBlack: '#000000',
   textAccent: {
     gold: palette.gold[300],
   },
