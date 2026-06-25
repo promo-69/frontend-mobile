@@ -89,7 +89,7 @@ export default function ProfileScreen() {
           onPress={() => router.back()}
           style={styles.backButton}
         >
-          <ChevronLeft size={28} color={theme.colors.border} />
+          <ChevronLeft size={28} color={theme.colors.primary} />
         </TouchableOpacity>
         <AppText variant="h2" style={styles.headerTitle}>
           Mi Perfil

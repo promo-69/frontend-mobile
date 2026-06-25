@@ -137,7 +137,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     height: 48,
     borderBottomWidth: 2,
-    borderBottomColor: theme.colors.border,
+    borderBottomColor: 'rgba(255, 255, 255, 0.6)',
     backgroundColor: 'transparent',
     paddingHorizontal: theme.spacing.s4,
   },
