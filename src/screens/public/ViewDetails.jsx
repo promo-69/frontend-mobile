@@ -16,6 +16,7 @@ import ContentInfoSheet from '../../components/showtimes/ContentInfoSheet';
 import ContentSkeleton from '../../components/showtimes/ContentSkeleton';
 import DateCarousel from '../../components/showtimes/DateCarousel';
 import ShowtimesList from '../../components/showtimes/ShowtimesList';
+import ShowtimeFilters from '../../components/showtimes/ShowtimeFilters';
 import { MovieSubscribeButton } from '../../components/movies/MovieSubscribeButton';
 import { useAuth } from '../../context/AuthContext';
 import {
@@ -45,6 +46,10 @@ export default function ViewDetails() {
   const [showtimeData, setShowtimeData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [imageError, setImageError] = useState(false);
+
+  // Filtros de cartelera (formato de proyección e idioma)
+  const [selectedFormat, setSelectedFormat] = useState(null);
+  const [selectedLanguage, setSelectedLanguage] = useState(null);
 
   // ¿La película está en estado "Próximamente"? (lifecycle_state id 1)
   // Solo entonces tiene sentido ofrecer la alerta de estreno.
@@ -238,11 +243,22 @@ export default function ViewDetails() {
                 weekdays={combinedSevenDaysCarousel}
               />
 
+              {/* Filtros de formato e idioma */}
+              <ShowtimeFilters
+                cinemasData={showtimeData?.cinemas || []}
+                selectedFormat={selectedFormat}
+                selectedLanguage={selectedLanguage}
+                onChangeFormat={setSelectedFormat}
+                onChangeLanguage={setSelectedLanguage}
+              />
+
               {/* Listado de complejos de cine */}
               <ShowtimesList
                 cinemasData={showtimeData?.cinemas || []}
                 contentId={effectiveId}
                 type={type}
+                selectedFormat={selectedFormat}
+                selectedLanguage={selectedLanguage}
               />
             </>
           )}
