@@ -39,8 +39,9 @@ const ORDER_STATUS = {
 
 const FILTERS = [
   { key: 'all', label: 'Todas' },
-  { key: 'tickets', label: 'Próximas' },
-  { key: 'concessions', label: 'Solo confitería' },
+  { key: 'functions', label: 'Funciones' },
+  { key: 'concessions', label: 'Confitería' },
+  { key: 'completed', label: 'Completadas' },
 ];
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -280,7 +281,7 @@ export default function PurchasesScreen() {
 
   // ─── Filtrado local ──────────────────────────────────────────────────────
   const filteredOrders = orders.filter((order) => {
-    if (activeFilter === 'tickets') {
+    if (activeFilter === 'functions') {
       return (order._Tickets || []).length > 0;
     }
     if (activeFilter === 'concessions') {
@@ -288,6 +289,9 @@ export default function PurchasesScreen() {
         (order._Tickets || []).length === 0 &&
         (order._OrderLines || []).length > 0
       );
+    }
+    if (activeFilter === 'completed') {
+      return order.order_status === 4;
     }
     return true;
   });
