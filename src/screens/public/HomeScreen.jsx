@@ -15,45 +15,43 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import MovieCarousel from '../../components/home/MovieCarousel';
 import { theme } from '../../constants';
 import { useAuth } from '../../context/AuthContext';
+import { getEvents } from '../../services/events.service';
 import {
-  getShowtimesBillboard,
+  getMoviesBillboard,
   getUpcomingMovies,
 } from '../../services/movies.service';
-
-const COLORS = {
-  bgDark: '#2C1A4A',
-  headerBg: '#442F6B',
-  accent: '#FFC864',
-  textMain: '#FFFFFF',
-  textGray: '#B0A8C5',
-};
 
 export default function HomeScreen() {
   const router = useRouter();
   const { user, isAuthenticated, isLoading } = useAuth();
-  const [billboard, setBillboard] = useState([]);
+  const [releases, setReleases] = useState([]);
   const [upcoming, setUpcoming] = useState([]);
+  const [events, setEvents] = useState([]);
+  const [error, setError] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const loadData = async () => {
+    const loadHome = async () => {
       try {
         setLoading(true);
-        const [relData, upData] = await Promise.all([
-          getShowtimesBillboard(),
+        const [releasesData, upcomingData, eventsData] = await Promise.all([
+          getMoviesBillboard(),
           getUpcomingMovies(),
+          getEvents(),
         ]);
 
         // Los servicios ya devuelven los arrays normalizados
-        setBillboard(relData);
-        setUpcoming(upData);
+        setReleases(releasesData);
+        setUpcoming(upcomingData);
+        setEvents(eventsData);
       } catch (error) {
         console.error('Error crítico cargando la data del Home:', error);
+        setError(true);
       } finally {
         setLoading(false);
       }
     };
-    loadData();
+    loadHome();
   }, []);
 
   return (
@@ -106,9 +104,9 @@ export default function HomeScreen() {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <MovieCarousel
           title="En Cartelera"
-          movies={billboard}
+          movies={releases}
           loading={loading}
-          onSeeMore={() => router.push('/movies/billboard')}
+          onSeeMore={() => router.push('/home/releases')}
           onCardPress={(movie) =>
             router.push(`/content/${movie.id}?type=${movie.contentType}`)
           }
@@ -118,7 +116,18 @@ export default function HomeScreen() {
           title="Próximos Estrenos"
           movies={upcoming}
           loading={loading}
-          onSeeMore={() => router.push('/movies/upcoming')}
+          onSeeMore={() => router.push('/home/upcoming')}
+          onCardPress={(movie) =>
+            router.push(`/content/${movie.id}?type=${movie.contentType}`)
+          }
+        />
+
+        {/* Eventos (usando la misma lógica que MovieCarousel) */}
+        <MovieCarousel
+          title="Eventos"
+          movies={events}
+          loading={loading}
+          onSeeMore={() => router.push('/home/events')}
           onCardPress={(movie) =>
             router.push(`/content/${movie.id}?type=${movie.contentType}`)
           }
@@ -129,29 +138,18 @@ export default function HomeScreen() {
 }
 const styles = StyleSheet.create({
   container: {
-    flex: 1, // Ocupa todo el alto de la pantalla
-
-    backgroundColor: theme.colors.background.main, // Fondo morado oscuro
+    flex: 1,
+    backgroundColor: theme.colors.background.main,
   },
-
-  // Estilos del Header
-
   header: {
     height: 70, // Altura fija
-
     backgroundColor: theme.colors.background.accent,
-
     borderBottomColor: 'rgba(255, 200, 100, 0.3)',
     borderBottomWidth: 1,
-
     flexDirection: 'row', // Elementos en fila
-
     alignItems: 'center', // Centrado vertical
-
     justifyContent: 'space-between', // Espacio entre izquierda y derecha
-
-    paddingHorizontal: 16, // Espacio interno lateral
-
+    paddingHorizontal: theme.spacing.s16,
     shadowColor: '#000000',
     shadowOffset: {
       width: 0,
@@ -162,362 +160,52 @@ const styles = StyleSheet.create({
     elevation: 8,
     zIndex: 16,
   },
-
-  headerLeft: {
-    flexDirection: 'row',
-
-    alignItems: 'center',
-  },
-
   logo: {
     width: 50,
-
     height: 50,
-
-    borderRadius: 18,
-
-    marginRight: 10,
+    borderRadius: theme.borderRadius.s16,
+    marginRight: theme.spacing.s12,
   },
-
-  loginImage: {
-    width: 25,
-
-    height: 25,
-
-    marginLeft: 5,
-  },
-
-  locationContainer: {
-    flexDirection: 'row',
-
-    alignItems: 'center',
-  },
-
-  locationText: {
-    color: COLORS.textMain,
-
-    fontSize: 14,
-
-    fontWeight: '600',
-  },
-
-  locationArrow: {
-    color: COLORS.accent, // Dorado
-
-    fontSize: 18,
-
-    marginLeft: 5,
-
-    fontWeight: 'bold',
-  },
-
   loginButton: {
     flexDirection: 'row',
-
-    backgroundColor: theme.colors.accent, // Fondo dorado
-
-    paddingVertical: 8,
-
-    paddingHorizontal: 15,
-
-    borderRadius: 20, // Bordes redondeados 'píldora'
-
+    backgroundColor: theme.colors.accent,
+    paddingVertical: theme.spacing.s8,
+    paddingHorizontal: theme.spacing.s16,
+    borderRadius: theme.borderRadius.s24,
     alignItems: 'center',
   },
-
   loginButtonText: {
-    color: theme.colors.background.accent, // Texto morado oscuro
-
-    fontSize: 14,
-
-    fontWeight: 'bold',
-
-    marginRight: 8,
+    color: theme.colors.background.accent,
+    fontSize: theme.typography.size.s14,
+    fontFamily: theme.typography.family.primary.bold,
+    marginRight: theme.spacing.s8,
   },
-
-  loginIcon: {
-    fontSize: 16,
-
-    color: COLORS.bgDark,
-  },
-
-  carouselScrollContainer: {
-    paddingHorizontal: 10, // Espaciado al inicio y al final
-  },
-
-  posterWrapper: {
-    width: 220, // El ancho de cada tarjeta de película
-
-    marginRight: 15, // Espacio entre una película y otra
-
-    alignItems: 'center',
-  },
-
-  posterScroll: {
-    width: 200,
-
-    height: 300,
-
-    borderRadius: 20,
-
-    backgroundColor: '#000', // Fondo de respaldo por si tarda en cargar
-  },
-
-  peliTitleScroll: {
-    color: COLORS.textMain,
-
-    fontSize: 18,
-
-    fontWeight: 'bold',
-
-    marginTop: 12,
-
-    textAlign: 'center',
-  },
-
-  gridCardScroll: {
-    width: 160, // Aumentado para que no se vea tan pequeño
-
-    marginRight: 15,
-
-    alignItems: 'center',
-  },
-
-  gridPosterScroll: {
-    width: 160, // Debe coincidir con el width del contenedor
-
-    height: 240, // Proporción de aspecto 2:3
-
-    borderRadius: 15,
-
-    backgroundColor: '#000',
-  },
-
-  gridPeliTitle: {
-    color: COLORS.textMain,
-
-    fontSize: 15, // Un pelín más pequeño que el título principal
-
-    fontWeight: '600',
-
-    textAlign: 'center',
-
-    marginTop: 8,
-  },
-
-  // Estilos del Contenido Scrolleable
-
   scrollContent: {
-    paddingBottom: 30, // Espacio al final para que no pegue
+    paddingBottom: theme.spacing.s32,
   },
-
-  section: {
-    marginTop: 25, // Espacio entre secciones
-
-    paddingHorizontal: 15, // Espacio lateral para títulos
-  },
-
-  sectionTitle: {
-    color: COLORS.accent, // Dorado
-
-    fontSize: 22,
-
-    fontWeight: 'bold',
-
-    textTransform: 'uppercase', // Convierte a MAYÚSCULAS
-
-    marginBottom: 15,
-  },
-
-  // Estilos del Carrusel de Películas
-
-  carouselContainer: {
-    flexDirection: 'row', // Fila
-
-    justifyContent: 'center', // Centrado horizontal
-
-    alignItems: 'center', // Centrado vertical de las imágenes
-
-    marginBottom: 20,
-
-    overflow: 'hidden', // Corta lo que se salga de la vista
-  },
-
-  poster: {
-    borderRadius: 12,
-  },
-
-  posterCentralContainer: {
-    alignItems: 'center',
-
-    marginHorizontal: -30,
-
-    zIndex: 5,
-  },
-
-  posterCentral: {
-    width: 200, // Más grande
-
-    height: 300,
-  },
-
-  posterSide: {
-    width: 150, // Más pequeño
-
-    height: 220,
-
-    opacity: 0.5, // Semi-transparente
-
-    zIndex: 1,
-  },
-
-  peliTitle: {
-    color: COLORS.textMain,
-
-    fontSize: 20,
-
-    fontWeight: 'bold',
-
-    marginTop: 15,
-
-    textAlign: 'center',
-  },
-
-  // Flechas del Carrusel
-
-  carouselArrows: {
+  userProfileHeader: {
     flexDirection: 'row',
-
-    justifyContent: 'center',
-
-    marginTop: -10, // Sube un poco para que estén más cerca del título
-  },
-
-  arrowCircle: {
-    width: 40,
-
-    height: 40,
-
-    borderRadius: 20,
-
-    backgroundColor: COLORS.headerBg,
-
     alignItems: 'center',
-
-    justifyContent: 'center',
-
-    marginHorizontal: 20,
-
-    borderWidth: 1,
-
-    borderColor: COLORS.textGray,
   },
-
-  arrowText: {
-    color: COLORS.textMain,
-
-    fontSize: 24,
-
-    fontWeight: 'bold',
-
-    lineHeight: 28, // Ajuste visual de la flecha
+  userInfoText: {
+    alignItems: 'flex-end',
+    marginRight: theme.spacing.s12,
   },
-
-  // Estilos de la Grilla "PARA TÍ"
-
-  gridContainer: {
-    flexDirection: 'row',
-
-    justifyContent: 'space-between',
-  },
-
-  gridCard: {
-    width: '48%',
-
-    alignItems: 'center',
-
-    marginBottom: 15,
-  },
-
-  gridPoster: {
-    width: '100%', // Usa todo el ancho de la tarjeta
-
-    height: 260,
-
-    borderRadius: 15,
-
-    marginBottom: 10,
-  },
-
-  gridPeliTitle: {
-    color: COLORS.textMain,
-
-    fontSize: 16,
-
-    fontWeight: '600',
-
-    textAlign: 'center',
-  },
-
-  gridPeliTitleSmall: {
-    color: COLORS.textMain,
-
-    fontSize: 15,
-
-    fontWeight: '500',
-
-    textAlign: 'center',
-
-    marginTop: 8,
-  },
-
-  // Estilos Perfil (Autenticado)
-
-  userProfileHeader: { flexDirection: 'row', alignItems: 'center' },
-
-  userInfoText: { alignItems: 'flex-end', marginRight: 10 },
-
   welcomeLabel: {
-    color: COLORS.textGray,
-    fontSize: 10,
-    fontFamily: 'MainRegular',
+    color: theme.colors.itemInactive,
+    fontSize: theme.typography.size.s10,
+    fontFamily: theme.typography.family.primary.regular,
   },
-
   userNameText: {
-    color: COLORS.textMain,
-    fontSize: 14,
-    fontFamily: 'MainBold',
+    color: theme.colors.textPrimary,
+    fontSize: theme.typography.size.s14,
+    fontFamily: theme.typography.family.primary.bold,
   },
-
   avatarMini: {
-    backgroundColor: COLORS.accent,
-
-    padding: 8,
-
-    borderRadius: 25,
-
+    backgroundColor: theme.colors.accent,
+    padding: theme.spacing.s8,
+    borderRadius: theme.borderRadius.sFull,
     borderWidth: 2,
-
     borderColor: 'rgba(255,255,255,0.1)',
-  },
-
-  checkConnectionButton: {
-    backgroundColor: COLORS.accent,
-
-    padding: 10,
-
-    borderRadius: 5,
-
-    alignItems: 'center',
-
-    marginTop: 20,
-  },
-
-  checkConnectionText: {
-    color: COLORS.textMain,
-
-    fontSize: 16,
-
-    fontWeight: 'bold',
   },
 });

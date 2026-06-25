@@ -1,5 +1,5 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ChevronLeft } from 'lucide-react-native';
+import { Armchair, ChevronLeft, Ticket } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -141,7 +141,7 @@ export default function OrderDetailScreen() {
   useEffect(() => {
     async function loadOrder() {
       try {
-        const result = await usersService.getMyOrders({ limit: 100 });
+        const result = await usersService.getMyOrders({ limit: 50 });
         const rows = result?.rows || result || [];
         const found = rows.find((o) => String(o.id) === String(orderId));
         if (!found) setError('Orden no encontrada.');
@@ -264,8 +264,9 @@ export default function OrderDetailScreen() {
           <Section title={`BOLETOS (${tickets.length})`}>
             {tickets.map((ticket, i) => {
               const seat = ticket._Seats;
-              const seatLabel = seat
-                ? `${seat.row_identifier || ''}${seat.column_number || ''}`
+              const hasSeat = !!seat;
+              const seatLabel = hasSeat
+                ? `Asiento ${seat.row_identifier || ''}${seat.column_number || ''}`
                 : `Boleto ${i + 1}`;
               const category =
                 ticket._AudienceCategories?.name || ticket.audience_category;
@@ -274,20 +275,25 @@ export default function OrderDetailScreen() {
                   {i > 0 && <Divider />}
                   <View style={styles.ticketRow}>
                     <View style={styles.seatBadge}>
-                      <AppText variant="caption" style={styles.seatBadgeText}>
-                        {seatLabel}
-                      </AppText>
+                      {hasSeat ? (
+                        <Armchair size={20} color={colors.primary} />
+                      ) : (
+                        <Ticket size={20} color={colors.primary} />
+                      )}
                     </View>
                     <View style={{ flex: 1 }}>
+                      <AppText style={styles.seatLabelText}>
+                        {seatLabel}
+                      </AppText>
                       {category && (
                         <AppText variant="caption" style={styles.categoryText}>
                           {category}
                         </AppText>
                       )}
-                      <AppText variant="smallText" style={styles.ticketPrice}>
-                        {fmt(ticket.price)}
-                      </AppText>
                     </View>
+                    <AppText variant="smallText" style={styles.ticketPrice}>
+                      {fmt(ticket.price)}
+                    </AppText>
                   </View>
                 </View>
               );
@@ -508,8 +514,16 @@ const styles = StyleSheet.create({
     fontFamily: theme.typography.family.primary.bold,
     fontSize: 13,
   },
+  seatLabelText: {
+    color: colors.textPrimary,
+    fontFamily: theme.typography.family.primary.bold,
+    fontSize: 14,
+  },
   categoryText: { color: colors.textSecondary },
-  ticketPrice: { color: colors.textPrimary },
+  ticketPrice: {
+    color: colors.primary,
+    fontFamily: theme.typography.family.primary.bold,
+  },
 
   // ── Líneas de confitería ──
   lineRow: {

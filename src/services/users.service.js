@@ -85,4 +85,37 @@ export const usersService = {
     const response = await api.get('/users/me/loyalty/levels');
     return response.data.data;
   },
+
+  // ─── Suscripción a alertas de preventa (películas "Próximamente") ───────────
+
+  /**
+   * Consulta si el usuario está suscrito a las alertas de una película.
+   * El backend devuelve 404 si no hay suscripción (se maneja en el hook).
+   */
+  getMyMovieSubscriptionById: async (movieId) => {
+    const response = await api.get(`/users/me/movie-subscriptions/${movieId}`);
+    return response.data.data;
+  },
+
+  /**
+   * Suscribe al usuario a las alertas de estreno de una película.
+   * @param {number|string} movieId
+   */
+  subscribeToMovie: async (movieId) => {
+    const response = await api.post('/users/me/movie-subscriptions', {
+      movieId: Number(movieId),
+    });
+    return response.data.data;
+  },
+
+  /**
+   * Cancela la suscripción a las alertas de estreno de una película.
+   * @param {number|string} movieId
+   */
+  unsubscribeFromMovie: async (movieId) => {
+    const response = await api.delete(
+      `/users/me/movie-subscriptions/${movieId}`
+    );
+    return response.data.data;
+  },
 };

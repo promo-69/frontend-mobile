@@ -16,6 +16,9 @@ import ContentInfoSheet from '../../components/showtimes/ContentInfoSheet';
 import ContentSkeleton from '../../components/showtimes/ContentSkeleton';
 import DateCarousel from '../../components/showtimes/DateCarousel';
 import ShowtimesList from '../../components/showtimes/ShowtimesList';
+import ShowtimeFilters from '../../components/showtimes/ShowtimeFilters';
+import { MovieSubscribeButton } from '../../components/movies/MovieSubscribeButton';
+import { useAuth } from '../../context/AuthContext';
 import {
   getContentDetails,
   getContentShowtimes,
@@ -37,11 +40,30 @@ export default function ViewDetails() {
   const effectiveId = movieId || id;
 
   const router = useRouter();
+  const { isAuthenticated } = useAuth();
 
   const [contentInfo, setContentInfo] = useState(null);
   const [showtimeData, setShowtimeData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [imageError, setImageError] = useState(false);
+
+  // Filtros de cartelera (formato de proyección e idioma)
+  const [selectedFormat, setSelectedFormat] = useState(null);
+  const [selectedLanguage, setSelectedLanguage] = useState(null);
+
+  // ¿La película está en estado "Próximamente"? (lifecycle_state id 1)
+  // Solo entonces tiene sentido ofrecer la alerta de estreno.
+  const isUpcoming = useMemo(() => {
+    const state = contentInfo?.lifecycle_state;
+    const stateId = typeof state === 'object' ? state?.id : state;
+    const stateDesc =
+      typeof state === 'object' ? state?.description : undefined;
+    return (
+      type === 'movie' &&
+      (Number(stateId) === 1 ||
+        /próximamente|proximamente/i.test(stateDesc || ''))
+    );
+  }, [contentInfo?.lifecycle_state, type]);
 
   // 1. Obtener la fecha de hoy local en formato limpio YYYY-MM-DD
   const todayShortString = useMemo(() => {
@@ -69,16 +91,25 @@ export default function ViewDetails() {
     try {
       if (!contentInfo) setLoading(true);
 
-      const [infoRes, showtimesRes] = await Promise.all([
-        getContentDetails(type, effectiveId),
-        getContentShowtimes(type, effectiveId),
-      ]);
-
+      // Los detalles son obligatorios; las funciones son opcionales:
+      // una película en "Próximamente" no tiene cartelera y su endpoint
+      // de showtimes responde 404. Ese 404 NO debe tumbar la pantalla.
+      const infoRes = await getContentDetails(type, effectiveId);
       setContentInfo(infoRes);
-      setShowtimeData(showtimesRes);
+
+      try {
+        const showtimesRes = await getContentShowtimes(type, effectiveId);
+        setShowtimeData(showtimesRes);
+      } catch (showtimeErr) {
+        // Sin funciones disponibles (típico en preventa): no es un error crítico.
+        if (showtimeErr?.response?.status !== 404) {
+          console.error('Error cargando funciones:', showtimeErr);
+        }
+        setShowtimeData(null);
+      }
     } catch (error) {
-      // Catch simple como el original de la versión web
-      console.error('Error crítico en detalles de contendio:', error);
+      // Solo llega aquí si fallan los DETALLES del contenido.
+      console.error('Error crítico en detalles de contenido:', error);
       setContentInfo(null);
       setShowtimeData(null);
     } finally {
@@ -189,19 +220,48 @@ export default function ViewDetails() {
               'No hay descripción disponible para este contenido.'}
           </Text>
 
-          {/* Selector de 7 días fijos */}
-          <DateCarousel
-            selectedDate={selectedDate}
-            onSelectDate={setSelectedDate}
-            weekdays={combinedSevenDaysCarousel}
-          />
+          {isUpcoming ? (
+            // Película en preventa: ofrecemos alerta de estreno en lugar de
+            // funciones (todavía no tiene cartelera).
+            <View style={styles.upcomingBox}>
+              <Text style={styles.upcomingTitle}>Aún no está en cartelera</Text>
+              <Text style={styles.upcomingSub}>
+                {isAuthenticated
+                  ? 'Suscríbete y te avisaremos apenas se estrene.'
+                  : 'Inicia sesión para recibir una alerta cuando se estrene.'}
+              </Text>
+              {isAuthenticated && (
+                <MovieSubscribeButton movieId={effectiveId} />
+              )}
+            </View>
+          ) : (
+            <>
+              {/* Selector de 7 días fijos */}
+              <DateCarousel
+                selectedDate={selectedDate}
+                onSelectDate={setSelectedDate}
+                weekdays={combinedSevenDaysCarousel}
+              />
 
-          {/* Listado de complejos de cine */}
-          <ShowtimesList
-            cinemasData={showtimeData?.cinemas || []}
-            contentId={effectiveId}
-            type={type}
-          />
+              {/* Filtros de formato e idioma */}
+              <ShowtimeFilters
+                cinemasData={showtimeData?.cinemas || []}
+                selectedFormat={selectedFormat}
+                selectedLanguage={selectedLanguage}
+                onChangeFormat={setSelectedFormat}
+                onChangeLanguage={setSelectedLanguage}
+              />
+
+              {/* Listado de complejos de cine */}
+              <ShowtimesList
+                cinemasData={showtimeData?.cinemas || []}
+                contentId={effectiveId}
+                type={type}
+                selectedFormat={selectedFormat}
+                selectedLanguage={selectedLanguage}
+              />
+            </>
+          )}
         </View>
       </ScrollView>
     </View>
@@ -210,9 +270,28 @@ export default function ViewDetails() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.bgDeep },
-  infoContent: { paddingHorizontal: 20, marginTop: -75 },
+  infoContent: { paddingHorizontal: 20, marginTop: -75, paddingBottom: 48 },
   heroContainer: { width: '100%', aspectRatio: 16 / 9, position: 'relative' },
   bannerImage: { width: '100%', height: '100%' },
+  upcomingBox: {
+    backgroundColor: 'rgba(123, 26, 130, 0.18)',
+    borderWidth: 1,
+    borderColor: 'rgba(244, 180, 0, 0.3)',
+    borderRadius: 16,
+    padding: 18,
+    marginTop: 8,
+    gap: 12,
+  },
+  upcomingTitle: {
+    color: COLORS.textMain,
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  upcomingSub: {
+    color: COLORS.textGray,
+    fontSize: 13,
+    lineHeight: 19,
+  },
   placeholderHero: {
     width: '100%',
     height: '100%',

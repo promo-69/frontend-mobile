@@ -1,8 +1,10 @@
 import { useRouter } from 'expo-router';
 import {
   Award,
+  CalendarClock,
   ChevronLeft,
   ChevronRight,
+  ClipboardList,
   LogOut,
   ShieldCheck,
   User,
@@ -87,7 +89,7 @@ export default function ProfileScreen() {
           onPress={() => router.back()}
           style={styles.backButton}
         >
-          <ChevronLeft size={28} color={theme.colors.border} />
+          <ChevronLeft size={28} color={theme.colors.primary} />
         </TouchableOpacity>
         <AppText variant="h2" style={styles.headerTitle}>
           Mi Perfil
@@ -129,6 +131,16 @@ export default function ProfileScreen() {
             icon: Award,
             title: 'CinePuntos',
             onPress: () => router.push('/profile/loyalty-program'),
+          })}
+          {renderMenuItem({
+            icon: CalendarClock,
+            title: 'Alquilar una sala',
+            onPress: () => router.push('/cinemas/rental'),
+          })}
+          {renderMenuItem({
+            icon: ClipboardList,
+            title: 'Mis solicitudes de alquiler',
+            onPress: () => router.push('/profile/rental-requests'),
           })}
           {renderMenuItem({
             icon: ShieldCheck,

@@ -1,13 +1,8 @@
-import { ChevronRight } from 'lucide-react-native';
-import {
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import ContentSkeleton from '../showtimes/ContentSkeleton';
 import MovieCard from '../showtimes/MovieCard';
+import SectionHeader from '../ui/SectionHeader';
+import {theme} from '../../constants'
 
 export default function MovieCarousel({
   title,
@@ -18,15 +13,7 @@ export default function MovieCarousel({
 }) {
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.sectionTitle}>{title}</Text>
-        {onSeeMore && (
-          <TouchableOpacity style={styles.seeMoreBtn} onPress={onSeeMore}>
-            <Text style={styles.seeMoreText}>Ver Todo</Text>
-            <ChevronRight size={14} color="#f4b400" />
-          </TouchableOpacity>
-        )}
-      </View>
+      <SectionHeader title={title} onSeeMore={onSeeMore} />
 
       <ScrollView
         horizontal
@@ -49,26 +36,6 @@ export default function MovieCarousel({
 }
 
 const styles = StyleSheet.create({
-  container: { marginVertical: 15 },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    marginBottom: 12,
-  },
-  sectionTitle: {
-    color: '#f4b400',
-    fontSize: 17,
-    fontWeight: '900',
-    textTransform: 'uppercase',
-  },
-  seeMoreBtn: { flexDirection: 'row', alignItems: 'center' },
-  seeMoreText: {
-    color: '#B0A8C5',
-    fontSize: 13,
-    marginRight: 4,
-    fontWeight: '600',
-  },
-  scrollContent: { paddingHorizontal: 16 },
+  container: { marginVertical: theme.spacing.s15 ?? 15 },
+  scrollContent: { paddingHorizontal: theme.spacing.s16 },
 });

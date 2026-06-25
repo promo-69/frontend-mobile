@@ -14,8 +14,6 @@ const { colors, spacing, borderRadius } = theme;
 /**
  * Botón de "Recibir alerta de estreno" para películas en estado Próximamente.
  * Solo debe renderizarse cuando el usuario está autenticado y la película
- * está en lifecycle_state "Próximamente" (la condición la decide el padre).
- *
  * @param {Object} props
  * @param {number|string} props.movieId
  */

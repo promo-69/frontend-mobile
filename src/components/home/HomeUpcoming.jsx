@@ -24,7 +24,7 @@ export default function HomeUpcoming({ movies = [] }) {
         <Text style={styles.sectionTitle}>Próximos Estrenos</Text>
         <TouchableOpacity
           style={styles.seeMoreBtn}
-          onPress={() => router.push('/content/upcoming')}
+          onPress={() => router.push('/home/upcoming')}
         >
           <Text style={styles.seeMoreText}>Ver Todo</Text>
           <ChevronRight size={14} color="#f4b400" />
