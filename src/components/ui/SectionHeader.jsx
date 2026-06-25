@@ -1,8 +1,8 @@
-import React from 'react'
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native'
-import MaskedView from '@react-native-masked-view/masked-view'
-import { LinearGradient } from 'expo-linear-gradient'
-import { theme } from '../../constants'
+import React from 'react';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import MaskedView from '@react-native-masked-view/masked-view';
+import { LinearGradient } from 'expo-linear-gradient';
+import { theme } from '../../constants';
 
 export default function SectionHeader({ title, onSeeMore }) {
   return (
@@ -23,7 +23,7 @@ export default function SectionHeader({ title, onSeeMore }) {
         </TouchableOpacity>
       ) : null}
     </View>
-  )
+  );
 }
 
 const styles = StyleSheet.create({
@@ -56,4 +56,4 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.size.s12,
     fontFamily: theme.typography.family.primary.bold,
   },
-})
+});
