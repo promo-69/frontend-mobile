@@ -141,7 +141,7 @@ export default function OrderDetailScreen() {
   useEffect(() => {
     async function loadOrder() {
       try {
-        const result = await usersService.getMyOrders({ limit: 100 });
+        const result = await usersService.getMyOrders({ limit: 50 });
         const rows = result?.rows || result || [];
         const found = rows.find((o) => String(o.id) === String(orderId));
         if (!found) setError('Orden no encontrada.');
