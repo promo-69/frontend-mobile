@@ -19,7 +19,7 @@ export default function HomeReleases({ movies = [] }) {
         <Text style={styles.sectionTitle}>En Cartelera</Text>
         <TouchableOpacity
           style={styles.seeMoreBtn}
-          onPress={() => router.push('/movies/releases')}
+          onPress={() => router.push('/home/releases')}
         >
           <Text style={styles.seeMoreText}>Ver Todo</Text>
           <ChevronRight size={14} color="#f4b400" />
