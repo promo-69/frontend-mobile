@@ -39,13 +39,26 @@ export async function getSocket() {
   }
 
   socket = io(baseUrl, {
-    transports: ['websocket'],
+    transports: ['websocket', 'polling'],
     autoConnect: true,
     reconnection: true,
     reconnectionAttempts: 5,
     reconnectionDelay: 1000,
     timeout: 10000,
     auth: { token },
+  });
+
+  // Antes de cada (re)intento de conexión, refrescamos el token en el handshake.
+  // Si el access token expiró, una reconexión con el token viejo autenticaría
+  // de forma anónima en el backend (userId nulo) y los bloqueos no podrían
+  // liberarse. Releer el token vigente evita ese caso.
+  socket.io.on('reconnect_attempt', async () => {
+    try {
+      const fresh = await storageHelper.getAccessToken();
+      socket.auth = { token: fresh };
+    } catch {
+      // Si falla, se reintenta con el token actual.
+    }
   });
 
   // Logs de diagnóstico (solo en desarrollo)

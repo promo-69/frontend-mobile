@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  AppState,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -143,6 +144,28 @@ export default function SelectSeats() {
     });
     return unsubscribe;
   }, [navigation, leave, clearCart]);
+
+  // En móvil, cerrar la app o mandarla a segundo plano NO dispara 'beforeRemove',
+  // así que los asientos quedarían retenidos. Al pasar a segundo plano liberamos
+  // los bloqueos y cancelamos la sesión de compra (cancelSession es lo que el
+  // backend usa para soltar los asientos del usuario), salvo que estemos
+  // avanzando en el flujo de compra.
+  //
+  // IMPORTANTE: solo reaccionamos a 'background' (app realmente en segundo plano),
+  // NO a 'inactive': en iOS 'inactive' se emite en transiciones momentáneas
+  // (abrir un Alert, el selector de apps, una llamada), y cancelar ahí rompería
+  // el flujo de compra en curso.
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (state) => {
+      if (advancingRef.current) return;
+      if (state === 'background') {
+        leave();
+        cancelSession().catch(() => {});
+        clearCart();
+      }
+    });
+    return () => sub.remove();
+  }, [leave, clearCart]);
 
   useEffect(() => {
     async function loadData() {
@@ -477,7 +500,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     paddingHorizontal: 16,
     paddingTop: 12,
-    paddingBottom: 100, // Espacio libre para que la última fila no se oculte detrás del footer
+    paddingBottom: 100,
   },
   gridCard: {
     flex: 1,
@@ -497,7 +520,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(23, 14, 43, 0.95)',
     paddingHorizontal: 20,
     paddingTop: 15,
-    paddingBottom: 30, // Espacio para el safe area inferior
+    paddingBottom: 30,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     alignItems: 'center',

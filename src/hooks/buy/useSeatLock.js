@@ -223,12 +223,38 @@ export function useSeatLock(showtimeId, handlers = {}, enabled = true) {
   /**
    * Abandona la función liberando todos los bloqueos del usuario en el backend.
    * Llamar solo al cancelar/volver atrás, NO al avanzar en el flujo de compra.
+   *
+   * Robustez: si el socket no está conectado en el momento de salir (caso común
+   * en móvil al cerrar pantalla o reconectar), intentamos (re)conectar y emitir
+   * en cuanto haya conexión, para no perder la liberación de los asientos.
    */
   const leave = useCallback(() => {
+    const sid = Number(showtimeId);
+    if (!sid) return;
+
     const socket = socketRef.current;
-    if (socket && socket.connected && showtimeId) {
-      socket.emit('leave_showtime', { showtimeId: Number(showtimeId) });
+    if (socket && socket.connected) {
+      socket.emit('leave_showtime', { showtimeId: sid });
+      return;
     }
+
+    // Socket caído o reconectando: aseguramos la emisión al reconectar.
+    (async () => {
+      try {
+        const s = await getSocket();
+        socketRef.current = s;
+        if (s.connected) {
+          s.emit('leave_showtime', { showtimeId: sid });
+        } else {
+          // Emitir una sola vez cuando se restablezca la conexión.
+          s.once('connect', () => {
+            s.emit('leave_showtime', { showtimeId: sid });
+          });
+        }
+      } catch {
+        // Si no se logra, el backend liberará por expiración de TTL/sesión.
+      }
+    })();
   }, [showtimeId]);
 
   return {
