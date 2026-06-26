@@ -1,11 +1,6 @@
 import api from './api';
 
-export const getMovies = async () => {
-  const response = await api.get('/movies');
-  return response.data.data;
-};
-
-// /movies/showtimes Retrieve a paginated list of movies that currently have scheduled showtimes (cartelera).
+// Obtener peliculas paginadas con funciones programadas (cartelera)
 export const getMoviesWithShowtimes = async (page = 1, limit = 10) => {
   const response = await api.get(
     `/movies/showtimes?page=${page}&limit=${limit}`
@@ -13,12 +8,13 @@ export const getMoviesWithShowtimes = async (page = 1, limit = 10) => {
   return response.data.data;
 };
 
+// Obtener datos de una pelicula por su id
 export const getMovieById = async (id) => {
   const response = await api.get(`/movies/${id}`);
   return response.data.data;
 };
 
-// Endpoint para peliculas en cartelera regular, estreno y ultimos dias
+// Obtener películas paginadas en cartelera (regular, estreno y ultimos dias)
 export const getMoviesBillboard = async (page = 1, limit = 10) => {
   try {
     // Usamos el nuevo endpoint de cartelera completa
@@ -45,7 +41,7 @@ export const getMoviesBillboard = async (page = 1, limit = 10) => {
   }
 };
 
-// Endpoint para proximos estrenos
+// Obtener películas con estado proximamente 
 export const getUpcomingMovies = async (page = 1, limit = 10) => {
   try {
     const response = await api.get(
@@ -68,7 +64,7 @@ export const getUpcomingMovies = async (page = 1, limit = 10) => {
   }
 };
 
-// De un peliculas, obtengo las sucursales y funciones disponibles
+// Obtener funciones programadas en cada sucursal de una película en específico
 export const getCinemaShowtimebyDateMovies = async (movieId, date) => {
   const response = await api.get(`/showtimes/by-content/movie/${movieId}/`, {
     params: { date },
@@ -76,7 +72,7 @@ export const getCinemaShowtimebyDateMovies = async (movieId, date) => {
   return response.data.data;
 };
 
-// Endpoint para obtener las películas en cartelera (estreno) - Mary
+// Obtener las películas en cartelera (estreno)
 export const getMoviesNowPlaying = async (genre) => {
   const response = await api.get('/movies/now-playing', {
     params: { genre },
@@ -84,9 +80,14 @@ export const getMoviesNowPlaying = async (genre) => {
   return response.data?.data || [];
 };
 
-// Endpoint de peliculas activas 
+// Obtener películas activas
 export const getActiveMovies = async () => {
   const response = await api.get('/movies/active')
   return response.data?.data || []
 }
 
+// Obtener generos que me gustan de las películas
+export const getMoviesGenres = async () => {
+  const response = await api.get('/users/me/movie-genres')
+  return response.data?.data || []
+}
