@@ -1,6 +1,6 @@
 import { ScrollView, StyleSheet, View } from 'react-native';
 import ContentSkeleton from '../showtimes/ContentSkeleton';
-import MovieCard from '../showtimes/MovieCard';
+import MovieCard from '../movies/MovieCard';
 import SectionHeader from '../ui/SectionHeader';
 import {theme} from '../../constants'
 

@@ -3,24 +3,24 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Film, Trash2 } from 'lucide-react-native';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  ActivityIndicator,
-  Alert,
-  ScrollView,
-  StyleSheet,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Alert,
+    ScrollView,
+    StyleSheet,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { AppText } from '../../../components/AppText';
-import { useCart } from '../../../context/CartContext';
-import {
-  createQuote,
-  processCheckout,
-  cancelSession,
-  getSessionState,
-} from '../../../services/orders.service';
-import { storageHelper } from '../../../helper/storage.helper';
+import { AppText } from '../../../components/ui/AppText';
 import { theme } from '../../../constants';
+import { useCart } from '../../../context/CartContext';
+import { storageHelper } from '../../../helper/storage.helper';
+import {
+    cancelSession,
+    createQuote,
+    getSessionState,
+    processCheckout,
+} from '../../../services/orders.service';
 
 const { colors, spacing, borderRadius } = theme;
 

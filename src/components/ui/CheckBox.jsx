@@ -1,8 +1,7 @@
-import React from 'react';
-import { TouchableOpacity, View, StyleSheet } from 'react-native';
 import { Check } from 'lucide-react-native';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { theme } from '../../constants';
-import { AppText } from '../AppText';
+import { AppText } from './AppText';
 
 export const Checkbox = ({ label, value, onChange, error, children }) => {
   return (

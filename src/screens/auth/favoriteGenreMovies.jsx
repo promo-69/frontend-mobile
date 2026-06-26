@@ -1,5 +1,5 @@
 import { StyleSheet, View } from 'react-native';
-import { AppText } from '../../components/AppText';
+import { AppText } from '../../components/ui/AppText';
 import { GenreChip } from '../../components/ui/GenreChip';
 import { theme } from '../../constants';
 

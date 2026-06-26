@@ -3,22 +3,22 @@ import { ChevronLeft } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import {
-  ScrollView,
-  StyleSheet,
-  TouchableOpacity,
-  View,
-  ActivityIndicator,
+    ActivityIndicator,
+    ScrollView,
+    StyleSheet,
+    TouchableOpacity,
+    View,
 } from 'react-native';
-import { AppText } from '../../../components/AppText';
-import { ScreenWrapper } from '../../../components/ScreenWrapper';
-import { SuccessModal } from '../../../components/SuccessModal';
+import { AppText } from '../../../components/ui/AppText';
 import { CustomButton } from '../../../components/ui/CustomButton';
 import { Input } from '../../../components/ui/Input';
+import { ScreenWrapper } from '../../../components/ui/ScreenWrapper';
+import { SuccessModal } from '../../../components/ui/SuccessModal';
 import { theme } from '../../../constants';
 import { useProfile } from '../../../hooks/profile/useProfile';
 import {
-  validateNames,
-  validatePhoneNumberVE,
+    validateNames,
+    validatePhoneNumberVE,
 } from '../../../utils/validators';
 
 export default function PersonalDataScreen() {

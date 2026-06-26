@@ -1,9 +1,16 @@
-import { useState } from 'react';
-import { View, StyleSheet, Dimensions, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
-import Carousel from 'react-native-reanimated-carousel';
 import { useRouter } from 'expo-router';
-import { useMovieCarousel } from '../../hooks/home/useMovieCarousel';
-import { Film, AlertTriangle } from 'lucide-react-native';
+import { AlertTriangle, Film } from 'lucide-react-native';
+import { useState } from 'react';
+import {
+  ActivityIndicator,
+  Dimensions,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import Carousel from 'react-native-reanimated-carousel';
+import { useMovieCarousel } from '../../hooks/movies/useMovieCarousel';
 import MovieCard from '../movies/MovieCard';
 import Banner from './Banner';
 
@@ -43,7 +50,9 @@ export default function MainCarousel() {
     return (
       <View style={[styles.container, styles.center]}>
         <Film size={40} color="#B0A8C5" />
-        <Text style={styles.infoText}>No hay funciones programadas para hoy.</Text>
+        <Text style={styles.infoText}>
+          No hay funciones programadas para hoy.
+        </Text>
       </View>
     );
   }
@@ -52,7 +61,7 @@ export default function MainCarousel() {
 
   return (
     <View style={styles.container}>
-      <Banner bannerUrl={activeMovie?.bannerUrl} />
+      <Banner bannerUrl={activeMovie?.bannerUrl || activeMovie?.banner_url} />
 
       <View style={styles.carouselWrapper}>
         <Carousel
@@ -74,7 +83,7 @@ export default function MainCarousel() {
             <View style={styles.itemContainer}>
               <MovieCard
                 title={item.title}
-                posterUrl={item.posterUrl}
+                posterUrl={item.posterUrl || item.poster_url || item.poster}
                 onPress={() => router.push(`/content/${item.id}`)}
                 style={{ width: CARD_WIDTH }}
               />
@@ -89,7 +98,7 @@ export default function MainCarousel() {
 const styles = StyleSheet.create({
   container: {
     width: '100%',
-    height: 420,
+    height: 400,
     position: 'relative',
     justifyContent: 'center',
     alignItems: 'center',

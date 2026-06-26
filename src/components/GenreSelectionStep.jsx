@@ -1,7 +1,7 @@
-import { View, StyleSheet } from 'react-native';
-import { GenreChip } from './ui/GenreChip';
-import { AppText } from './AppText';
+import { StyleSheet, View } from 'react-native';
 import { theme } from '../constants';
+import { AppText } from './ui/AppText';
+import { GenreChip } from './ui/GenreChip';
 
 /**
  * @param {string[]} selectedGenres - Array de géneros elegidos.

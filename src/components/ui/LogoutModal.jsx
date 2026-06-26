@@ -1,7 +1,7 @@
 import { Modal, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { theme } from '../../constants';
-import { AppText } from '../AppText';
 import { CustomButton } from './CustomButton';
+import { AppText } from './AppText';
 
 export const LogoutModal = ({ visible, onConfirm, onCancel, onClose }) => {
   const handleCancel = onCancel ?? onClose;

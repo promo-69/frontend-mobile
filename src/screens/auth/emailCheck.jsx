@@ -1,20 +1,20 @@
 import { useRouter } from 'expo-router';
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
-  StyleSheet,
-  Text,
-  View,
-  TouchableOpacity,
-  ActivityIndicator,
-  Alert,
+    ActivityIndicator,
+    Alert,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from 'react-native';
-import { storageHelper } from '../../helper/storage.helper';
-import { ScreenWrapper } from '../../components/ScreenWrapper';
 import { CustomButton } from '../../components/ui/CustomButton';
-import { OTPInput } from '../../components/OTPInput';
-import { useAuth } from '../../context/AuthContext';
-import { SuccessScreen } from '../shared/SuccessScreen';
+import { OTPInput } from '../../components/ui/OTPInput';
+import { ScreenWrapper } from '../../components/ui/ScreenWrapper';
 import { theme } from '../../constants';
+import { useAuth } from '../../context/AuthContext';
+import { storageHelper } from '../../helper/storage.helper';
+import { SuccessScreen } from '../shared/SuccessScreen';
 
 export default function EmailCheck() {
   const router = useRouter();

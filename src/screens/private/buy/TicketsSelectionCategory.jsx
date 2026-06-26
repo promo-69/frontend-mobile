@@ -3,18 +3,18 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ticket } from 'lucide-react-native';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  ActivityIndicator,
-  Alert,
-  ScrollView,
-  StyleSheet,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Alert,
+    ScrollView,
+    StyleSheet,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { AppText } from '../../../components/AppText';
+import { AppText } from '../../../components/ui/AppText';
+import { theme } from '../../../constants';
 import { useCart } from '../../../context/CartContext';
 import { getShowtimeSeats } from '../../../services/showtimes.service';
-import { theme } from '../../../constants';
 
 const { colors, spacing, borderRadius } = theme;
 

@@ -1,26 +1,26 @@
 import { useRouter } from 'expo-router';
 import {
-  Calendar,
-  ChevronDown,
-  ChevronLeft,
-  Clapperboard,
-  Hash,
+    Calendar,
+    ChevronDown,
+    ChevronLeft,
+    Clapperboard,
+    Hash,
 } from 'lucide-react-native';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  ActivityIndicator,
-  Animated,
-  FlatList,
-  LayoutAnimation,
-  Platform,
-  RefreshControl,
-  StyleSheet,
-  TouchableOpacity,
-  UIManager,
-  View,
+    ActivityIndicator,
+    Animated,
+    FlatList,
+    LayoutAnimation,
+    Platform,
+    RefreshControl,
+    StyleSheet,
+    TouchableOpacity,
+    UIManager,
+    View,
 } from 'react-native';
-import { AppText } from '../../../components/AppText';
-import { ScreenWrapper } from '../../../components/ScreenWrapper';
+import { AppText } from '../../../components/ui/AppText';
+import { ScreenWrapper } from '../../../components/ui/ScreenWrapper';
 import { theme } from '../../../constants';
 import { getMyRentalRequests } from '../../../services/info.service';
 

@@ -1,8 +1,7 @@
-import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ChevronLeft } from 'lucide-react-native';
-import { AppText } from '../AppText';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
+import { AppText } from './AppText';
 
 export const CustomHeader = ({ title, rightComponent, onPressAction }) => {
   const router = useRouter();

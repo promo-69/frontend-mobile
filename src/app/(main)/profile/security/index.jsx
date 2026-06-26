@@ -3,10 +3,10 @@ import { ChevronLeft } from 'lucide-react-native';
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
-import { AppText } from '../../../../components/AppText';
-import { ScreenWrapper } from '../../../../components/ScreenWrapper';
+import { AppText } from '../../../../components/ui/AppText';
 import { CustomButton } from '../../../../components/ui/CustomButton';
 import { Input } from '../../../../components/ui/Input';
+import { ScreenWrapper } from '../../../../components/ui/ScreenWrapper';
 import { theme } from '../../../../constants';
 import { useProfile } from '../../../../hooks/profile/useProfile';
 

@@ -2,7 +2,7 @@ import { Controller, useForm } from 'react-hook-form';
 import { Modal, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { theme } from '.././constants';
 import { validatePassword } from '../utils/validators';
-import { AppText } from './AppText';
+import { AppText } from './ui/AppText';
 import { CustomButton } from './ui/CustomButton';
 import { Input } from './ui/Input';
 

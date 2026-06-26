@@ -1,7 +1,7 @@
 import { CheckCircle2 } from 'lucide-react-native';
 import { useEffect, useRef } from 'react';
 import { Animated, BackHandler, StyleSheet, View } from 'react-native';
-import { AppText } from '../../components/AppText';
+import { AppText } from '../../components/ui/AppText';
 import { CustomButton } from '../../components/ui/CustomButton';
 import { theme } from '../../constants';
 

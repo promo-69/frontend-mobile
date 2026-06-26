@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import MovieCarousel from '../../components/home/MovieCarousel';
+import MainCarousel from '../../components/home/MainCarousel';
 import { theme } from '../../constants';
 import { useAuth } from '../../context/AuthContext';
 import { getEvents } from '../../services/events.service';
@@ -102,6 +103,9 @@ export default function HomeScreen() {
 
       {/* Contenido Principal */}
       <ScrollView contentContainerStyle={styles.scrollContent}>
+
+        <MainCarousel/>
+
         <MovieCarousel
           title="En Cartelera"
           movies={releases}

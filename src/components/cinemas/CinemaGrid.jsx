@@ -1,12 +1,11 @@
 import {
-  ActivityIndicator,
-  FlatList,
-  StyleSheet,
-  View,
-  Text,
+    ActivityIndicator,
+    FlatList,
+    StyleSheet,
+    Text,
+    View,
 } from 'react-native';
-import { AppText } from '../../components/AppText';
-import { theme } from '../../constants';
+import { AppText } from '../../components/ui/AppText';
 import CinemaCard from './CinemaCard';
 
 export default function CinemaGrid({

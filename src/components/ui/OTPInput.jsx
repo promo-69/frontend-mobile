@@ -1,7 +1,7 @@
 import { useRef } from 'react';
-import { View, TextInput, Pressable, StyleSheet } from 'react-native';
-import { AppText } from './AppText';
+import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { theme } from '../../constants';
+import { AppText } from './AppText';
 
 export const OTPInput = ({ code, setCode, maxLength = 4 }) => {
   const inputRef = useRef(null);

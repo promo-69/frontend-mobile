@@ -1,26 +1,26 @@
 import { useRouter } from 'expo-router';
 import {
-  Award,
-  CalendarClock,
-  ChevronLeft,
-  ChevronRight,
-  ClipboardList,
-  LogOut,
-  ShieldCheck,
-  User,
+    Award,
+    CalendarClock,
+    ChevronLeft,
+    ChevronRight,
+    ClipboardList,
+    LogOut,
+    ShieldCheck,
+    User,
 } from 'lucide-react-native';
 import { useState } from 'react';
 import {
-  ActivityIndicator,
-  ScrollView,
-  StyleSheet,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    ScrollView,
+    StyleSheet,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 
-import { AppText } from '../../../components/AppText';
-import { ScreenWrapper } from '../../../components/ScreenWrapper';
+import { AppText } from '../../../components/ui/AppText';
 import { LogoutModal } from '../../../components/ui/LogoutModal';
+import { ScreenWrapper } from '../../../components/ui/ScreenWrapper';
 import { theme } from '../../../constants';
 import { useAuth } from '../../../context/AuthContext';
 import { useProfile } from '../../../hooks/profile/useProfile';

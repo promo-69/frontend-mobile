@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
-import { AppText } from '../AppText';
 import { theme } from '../../constants';
+import { AppText } from '../ui/AppText';
 
 const COLORS = {
   textMain: '#FFFFFF',
