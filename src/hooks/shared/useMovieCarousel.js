@@ -15,7 +15,8 @@ export const useMovieCarousel = () => {
         const normalized = data.map((item) => {
           const m = item.movie || item;
           return {
-            ...m,
+            id: m.id,
+            title: m.title,
             synopsis: m.synopsis || `Disfruta de "${m.title}"...`,
             poster: m.poster_url,
             banner: m.banner_url || m.poster_url,
@@ -25,7 +26,7 @@ export const useMovieCarousel = () => {
         });
         setMovies(normalized);
       } catch (err) {
-        console.error('Error:', err);
+        console.error('Error en peliculas en carousel:', err);
       } finally {
         setLoading(false);
       }
