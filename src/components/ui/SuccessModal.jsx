@@ -1,7 +1,7 @@
 import { Modal, StyleSheet, View } from 'react-native';
-import { theme } from '.././constants';
+import { theme } from '../../constants';
 import { AppText } from './AppText';
-import { CustomButton } from './ui/CustomButton';
+import { CustomButton } from './CustomButton';
 
 export const SuccessModal = ({ visible, onClose }) => (
   <Modal visible={visible} transparent animationType="fade">

@@ -1,16 +1,17 @@
 import { View, StyleSheet, Text } from 'react-native';
 import { Image } from 'expo-image';
 
-export const Banner = ({ movie }) => {
-  if (!movie) return null;
+export const Banner = ({ bannerUrl }) => {
+  if (!bannerUrl) return null;
   
   return (
     <View style={StyleSheet.absoluteFill}>
       <Image
-        source={{ uri: movie.banner }}
+        source={{ uri: bannerUrl }}
         style={StyleSheet.absoluteFill}
         contentFit="cover"
-        blurRadius={20} 
+        blurRadius={15}
+        transition={400}
       />
       <View style={styles.overlay} />
     </View>
