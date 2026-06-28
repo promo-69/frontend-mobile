@@ -7,6 +7,7 @@ import {
     ClipboardList,
     LogOut,
     ShieldCheck,
+    Film,
     User,
 } from 'lucide-react-native';
 import { useState } from 'react';
@@ -118,9 +119,6 @@ export default function ProfileScreen() {
         </View>
 
         {/* --- CONFIGURACIÓN DE CUENTA --- */}
-        <AppText variant="small" style={styles.categoryTitle}>
-          Account Settings
-        </AppText>
         <View style={styles.menuGroup}>
           {renderMenuItem({
             icon: User,
@@ -143,13 +141,18 @@ export default function ProfileScreen() {
             onPress: () => router.push('/profile/rental-requests'),
           })}
           {renderMenuItem({
+            icon: Film,
+            title: 'Mis películas favoritas',
+            onPress: () => router.push('/profile/my-genres'),
+          })}
+          {renderMenuItem({
             icon: ShieldCheck,
             title: 'Seguridad',
-            onPress: () => router.push({ pathname: '/profile/security' }),
+            onPress: () => router.push( '/profile/security' ),
           })}
           {renderMenuItem({
             icon: LogOut,
-            title: 'Logout',
+            title: 'Cerrar sesión',
             onPress: () => setIsLogoutModalVisible(true),
           })}
         </View>
