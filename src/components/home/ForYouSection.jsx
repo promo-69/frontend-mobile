@@ -1,4 +1,4 @@
-import { useNavigation } from '@react-navigation/native';
+import { useRouter } from 'expo-router';
 import { ChevronLeft, ChevronRight, Film } from 'lucide-react-native';
 import { useEffect, useRef, useState } from 'react';
 import {
@@ -19,6 +19,7 @@ import {
     getMoviesGenres,
 } from '../../services/movies.service';
 import MovieCard from '../movies/MovieCard';
+import MovieCarousel from './MovieCarousel';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const BANNER_WIDTH = SCREEN_WIDTH - theme.spacing.s16 * 2; // Ancho responsivo restando paddings laterales
@@ -27,7 +28,7 @@ const GENRES_IMG = require('../../assets/images/genres.webp');
 const ROOM_RENT_IMG = require('../../assets/images/room-rent.webp');
 
 export default function ForYouSection() {
-  const navigation = useNavigation();
+  const router = useRouter();
   const { isAuthenticated } = useAuth();
   const { showBottomSheet } = useBottomSheet();
 
@@ -93,7 +94,7 @@ export default function ForYouSection() {
             : 'Para consultar la disponibilidad, tarifas y realizar el alquiler de nuestras salas privadas de cine, debes iniciar sesión primero.',
         primaryButton: {
           text: 'Iniciar Sesión',
-          onPress: () => navigation.navigate('Login'),
+          onPress: () => router.push('/(auth)/login'),
         },
         secondaryButton: {
           text: 'Volver',
@@ -101,27 +102,11 @@ export default function ForYouSection() {
         },
       });
     } else {
-      navigation.navigate(type === 'genres' ? 'MyGenres' : 'RoomRent');
+      router.push(type === 'genres' ? '/(main)/profile/my-genres' : '/(main)/profile/room-rent');
     }
   };
 
-  // Desplazamiento manual del carrusel de películas (Por índice, sin romper layouts)
-  const handleMoviesScroll = (direction) => {
-    if (recommendedMovies.length === 0) return;
 
-    let nextIndex =
-      direction === 'left'
-        ? currentMovieIndexRef.current - 1
-        : currentMovieIndexRef.current + 1;
-
-    if (nextIndex >= 0 && nextIndex < recommendedMovies.length) {
-      currentMovieIndexRef.current = nextIndex;
-      moviesListRef.current?.scrollToIndex({
-        index: nextIndex,
-        animated: true,
-      });
-    }
-  };
 
   if (loading) {
     return (
@@ -216,67 +201,28 @@ export default function ForYouSection() {
   }
 
   // ================= SCENARIO B: FEED PREMIUM "PARA TI" =================
+  const genresText = genres.map((g) => g.description || g.name).join(', ');
+  const customSubtitle = `Basado en tus géneros: ${genresText}`;
   return (
     <View style={styles.container}>
-      {/* Encabezado Mobile Estructurado */}
-      <View style={styles.headerContainer}>
-        <View style={styles.headerTextGroup}>
-          <View style={styles.titleRow}>
-            <Film size={22} color={theme.colors.accent} />
-            <Text style={styles.sectionTitle}>Para ti</Text>
-          </View>
-          <Text style={styles.sectionSubtitle} numberOfLines={1}>
-            Basado en tus géneros:{' '}
-            {genres.map((g) => g.description || g.name).join(', ')}
-          </Text>
-        </View>
-
-        {/* Controles de navegación táctiles laterales */}
-        <View style={styles.controlsRow}>
-          <Pressable
-            onPress={() => handleMoviesScroll('left')}
-            style={styles.arrowButton}
-          >
-            <ChevronLeft size={20} color={theme.colors.textSecondary} />
-          </Pressable>
-          <Pressable
-            onPress={() => handleMoviesScroll('right')}
-            style={styles.arrowButton}
-          >
-            <ChevronRight size={20} color={theme.colors.textSecondary} />
-          </Pressable>
-          <Pressable
-            onPress={() => navigation.navigate('MyGenres')}
-            style={styles.seeMoreButton}
-          >
-            <Text style={styles.seeMoreText}>Ver más</Text>
-          </Pressable>
-        </View>
-      </View>
-
+    
       {/* Lista Horizontal de Recomendaciones */}
       {recommendedMovies.length === 0 ? (
-        <Text style={styles.emptyText}>
-          No hay películas disponibles en este momento.
-        </Text>
+        <View style={{ paddingHorizontal: theme.spacing.s16 }}>
+          <Text style={styles.emptyText}>
+            No hay películas disponibles en este momento.
+          </Text>
+        </View>
       ) : (
-        <FlatList
-          ref={moviesListRef}
-          data={recommendedMovies}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          keyExtractor={(item, index) => `foru-movie-${item.id}-${index}`}
-          contentContainerStyle={styles.moviesListContent}
-          getItemLayout={(data, index) => ({
-            length: 150, // Ancho estimado del MovieCard + margin
-            offset: 150 * index,
-            index,
-          })}
-          renderItem={({ item }) => (
-            <View style={styles.movieCardContainer}>
-              <MovieCard movie={item} />
-            </View>
-          )}
+        <MovieCarousel
+          title="Para ti"
+          subtitle={customSubtitle}
+          movies={recommendedMovies}
+          loading={loading}
+          onSeeMore={() => router.push('/(main)/profile/my-genres')}
+          onCardPress={(movie) =>
+            router.push(`/content/${movie.id}?type=${movie.contentType || 'movie'}`)
+          }
         />
       )}
     </View>
@@ -347,27 +293,6 @@ const styles = StyleSheet.create({
     width: 6,
     backgroundColor: 'rgba(255, 255, 255, 0.3)',
   },
-  // --- Estilos del Feed Premium ---
-  headerContainer: {
-    borderBottomWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.05)',
-    paddingBottom: theme.spacing.s12,
-    marginBottom: theme.spacing.s16,
-  },
-  headerTextGroup: {
-    marginBottom: theme.spacing.s12,
-  },
-  titleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing.s8,
-  },
-  sectionTitle: {
-    ...theme.typography.variants.subtitle,
-    color: theme.colors.accent,
-    fontFamily: theme.typography.family.primary.bold,
-    textTransform: 'uppercase',
-  },
   sectionSubtitle: {
     ...theme.typography.variants.caption,
     color: theme.colors.textDisabled,
@@ -400,7 +325,7 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   moviesListContent: {
-    gap: theme.spacing.s12,
+    gap: theme.spacing.s24,
   },
   movieCardContainer: {
     width: 138, // Ajuste responsivo de ancho de cartelera en Mobile
