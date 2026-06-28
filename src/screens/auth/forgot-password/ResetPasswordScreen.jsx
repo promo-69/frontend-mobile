@@ -43,7 +43,7 @@ export const ResetPasswordScreen = () => {
       //
       console.log('Cambiando clave para:', email);
       console.log('Nueva clave:', data.password);
-      router.replace('/success-reset');
+      router.replace('/(auth)/success-reset');
     } catch (error) {
       // Manejar error de servidor
       console.error('Error en el servidor:', error);

@@ -36,7 +36,7 @@ export default function ForgotPasswordScreen() {
       // await api.post('/auth/forgot-password', { email: cleanEmail });
       console.log('Login intent (sanitized):', cleanEmail);
       router.push({
-        pathname: '/verify-code',
+        pathname: '/(auth)/verify-code',
         params: { email: cleanEmail },
       });
     } catch (error) {
