@@ -82,7 +82,7 @@ export default function PersonalDataScreen() {
 
   return (
     <ScreenWrapper>
-      {/* Header */}
+      {/* Header 
       <View style={styles.header}>
         <TouchableOpacity
           onPress={() => router.back()}
@@ -93,7 +93,7 @@ export default function PersonalDataScreen() {
         <AppText variant="h2" style={styles.headerTitle}>
           Datos Personales
         </AppText>
-      </View>
+      </View>*/}
 
       <ScrollView
         contentContainerStyle={styles.scrollContent}

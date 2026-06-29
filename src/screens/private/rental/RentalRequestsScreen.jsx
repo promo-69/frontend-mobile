@@ -210,6 +210,7 @@ export default function RentalRequestsScreen() {
 
   return (
     <ScreenWrapper>
+      {/**
       <View style={styles.header}>
         <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
           <ChevronLeft size={26} color={colors.primary} />
@@ -217,6 +218,7 @@ export default function RentalRequestsScreen() {
         <AppText style={styles.headerTitle}>Mis solicitudes</AppText>
         <View style={{ width: 34 }} />
       </View>
+       */}
 
       {loading ? (
         <View style={styles.centered}>

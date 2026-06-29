@@ -84,19 +84,6 @@ export default function ProfileScreen() {
 
   return (
     <ScreenWrapper>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => router.back()}
-          style={styles.backButton}
-        >
-          <ChevronLeft size={28} color={theme.colors.primary} />
-        </TouchableOpacity>
-        <AppText variant="h2" style={styles.headerTitle}>
-          Mi Perfil
-        </AppText>
-      </View>
-
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
@@ -209,10 +196,8 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: theme.spacing.s24,
-    paddingBottom: theme.spacing.s40,
+    paddingBottom: theme.spacing.s24,
   },
-
-  // Tarjeta superior del usuario
   userCard: {
     flexDirection: 'row',
     alignItems: 'center',

@@ -8,7 +8,7 @@ import {
   Pressable,
   ActivityIndicator
 } from 'react-native';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { Sliders, Calendar } from 'lucide-react-native';
 import { theme } from '../../../constants'; 
 import MovieCard from '../../../components/movies/MovieCard';
@@ -82,9 +82,10 @@ export default function MyGenres() {
 
   return (
    <SafeAreaProvider style={{ backgroundColor: '#231640' }}>
+    <SafeAreaView style={styles.safeArea}>
       <View style={styles.mainContainer}>
         
-        {/* CABECERA DE LA PANTALLA */}
+        {/* CABECERA DE LA PANTALLA 
         <View style={styles.headerContainer}>
           <View style={styles.titleBorderGroup}>
             <Text style={styles.headerTitle}>
@@ -101,6 +102,21 @@ export default function MyGenres() {
             style={({ pressed }) => [styles.adjustButton, pressed && styles.buttonPressed]}
           >
             <Sliders size={14} color="#231640" strokeWidth={3} />
+            <Text style={styles.adjustButtonText}>Ajustar mis géneros</Text>
+          </Pressable>
+        </View>*/}
+        
+        {/* 2. TEXTO INFORMATIVO (SUBHEADER REESTRUCTURADO) */}
+        <View style={styles.subHeaderContainer}>
+          <Text style={styles.headerSubtitle}>
+            Explora el catálogo de películas seleccionadas minuciosamente basándonos en tus preferencias cinematográficas.
+          </Text>
+
+          <Pressable 
+            onPress={() => setShowGenresModal(true)} 
+            style={({ pressed }) => [styles.adjustButton, pressed && styles.buttonPressed]}
+          >
+            <Sliders size={14} color="#231640" strokeWidth={2.5} />
             <Text style={styles.adjustButtonText}>Ajustar mis géneros</Text>
           </Pressable>
         </View>
@@ -152,6 +168,7 @@ export default function MyGenres() {
           }}
         />
       </View>
+      </SafeAreaView>
    </SafeAreaProvider>
   );
 }
@@ -160,6 +177,10 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: '#231640', 
+  },  
+  subHeaderContainer: {
+    marginBottom: theme.spacing.s8,
+    gap: theme.spacing.s16,
   },
   mainContainer: {
     flex: 1,
@@ -201,8 +222,8 @@ const styles = StyleSheet.create({
     color: theme.colors.textAccent.gold,
   },
   headerSubtitle: {
-    ...theme.typography.variants.caption,
-    color: theme.colors.textDisabled,
+    ...theme.typography.variants.body,
+    color: '#FFFF',
     marginTop: theme.spacing.s8,
     lineHeight: 16,
   },
