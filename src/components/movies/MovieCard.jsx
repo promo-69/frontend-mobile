@@ -3,14 +3,14 @@ import { Film } from 'lucide-react-native';
 import { useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
-export default function MovieCard({ title, posterUrl, onPress }) {
+export default function MovieCard({ title, posterUrl, onPress, style }) {
   const [imageError, setImageError] = useState(false);
 
   const displayPlaceholder = !posterUrl || imageError;
 
   return (
     <TouchableOpacity
-      style={styles.cardContainer}
+      style={[styles.cardContainer, style]}
       onPress={onPress}
       activeOpacity={0.7}
     >

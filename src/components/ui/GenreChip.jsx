@@ -1,6 +1,6 @@
-import { TouchableOpacity, StyleSheet } from 'react-native';
-import { AppText } from '../AppText';
+import { StyleSheet, TouchableOpacity } from 'react-native';
 import { theme } from '../../constants';
+import { AppText } from './AppText';
 
 /**
  * GenreChip Component

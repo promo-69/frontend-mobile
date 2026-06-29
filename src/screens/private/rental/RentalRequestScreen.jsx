@@ -1,32 +1,32 @@
 import { useRouter } from 'expo-router';
 import {
-  Calendar,
-  ChevronDown,
-  ChevronLeft,
-  Clock,
-  Info,
-  MapPin,
-  Users,
+    Calendar,
+    ChevronDown,
+    ChevronLeft,
+    Clock,
+    Info,
+    MapPin,
+    Users,
 } from 'lucide-react-native';
 import { useCallback, useEffect, useState } from 'react';
 import {
-  ActivityIndicator,
-  Modal,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  TextInput,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Modal,
+    Pressable,
+    ScrollView,
+    StyleSheet,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from 'react-native';
-import { AppText } from '../../../components/AppText';
-import { ScreenWrapper } from '../../../components/ScreenWrapper';
+import { AppText } from '../../../components/ui/AppText';
+import { ScreenWrapper } from '../../../components/ui/ScreenWrapper';
 import { theme } from '../../../constants';
 import {
-  createRoomRentalRequest,
-  getCinemasList,
-  getEventTypes,
-  getRoomsByCinema,
+    createRoomRentalRequest,
+    getCinemasList,
+    getEventTypes,
+    getRoomsByCinema,
 } from '../../../services/info.service';
 
 const { colors, spacing, borderRadius } = theme;
@@ -61,10 +61,7 @@ function SelectField({
           <ActivityIndicator size="small" color={colors.primary} />
         ) : (
           <AppText
-            style={[
-              styles.selectText,
-              !selected && styles.selectPlaceholder,
-            ]}
+            style={[styles.selectText, !selected && styles.selectPlaceholder]}
             numberOfLines={1}
           >
             {selected ? selected.label : placeholder}
@@ -196,7 +193,8 @@ export default function RentalRequestScreen() {
 
   // Validación de fecha (YYYY-MM-DD) y mínimo de anticipación
   const validateDate = (dateStr) => {
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return 'Usa el formato AAAA-MM-DD.';
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr))
+      return 'Usa el formato AAAA-MM-DD.';
     const date = new Date(`${dateStr}T00:00:00`);
     if (isNaN(date.getTime())) return 'La fecha no es válida.';
     const today = new Date();
@@ -222,8 +220,10 @@ export default function RentalRequestScreen() {
     const dateError = validateDate(eventDate);
     if (dateError) return alertMsg(dateError);
 
-    if (!validateTime(startTime)) return alertMsg('Ingresa una hora de inicio válida (HH:MM).');
-    if (!validateTime(endTime)) return alertMsg('Ingresa una hora de fin válida (HH:MM).');
+    if (!validateTime(startTime))
+      return alertMsg('Ingresa una hora de inicio válida (HH:MM).');
+    if (!validateTime(endTime))
+      return alertMsg('Ingresa una hora de fin válida (HH:MM).');
 
     // Construimos los datetime ISO combinando fecha + hora
     const startISO = new Date(`${eventDate}T${startTime}:00`).toISOString();
@@ -466,7 +466,10 @@ export default function RentalRequestScreen() {
             <AppText
               style={[
                 styles.alertTitle,
-                { color: alert?.type === 'success' ? colors.success : colors.error },
+                {
+                  color:
+                    alert?.type === 'success' ? colors.success : colors.error,
+                },
               ]}
             >
               {alert?.type === 'success' ? '¡Solicitud enviada!' : 'Atención'}
@@ -661,4 +664,4 @@ const styles = StyleSheet.create({
     color: colors.textBlack,
     fontFamily: theme.typography.family.primary.bold,
   },
-})
+});

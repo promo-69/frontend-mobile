@@ -1,11 +1,12 @@
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View, Text } from 'react-native';
 import ContentSkeleton from '../showtimes/ContentSkeleton';
-import MovieCard from '../showtimes/MovieCard';
+import MovieCard from '../movies/MovieCard';
 import SectionHeader from '../ui/SectionHeader';
 import {theme} from '../../constants'
 
 export default function MovieCarousel({
   title,
+  subtitle,
   movies = [],
   loading = false,
   onSeeMore,
@@ -13,8 +14,15 @@ export default function MovieCarousel({
 }) {
   return (
     <View style={styles.container}>
-      <SectionHeader title={title} onSeeMore={onSeeMore} />
-
+     {/* Cabecera del Carrusel */}
+      <View style={styles.headerWrapper}>
+        <SectionHeader title={title} onSeeMore={onSeeMore} />
+        {subtitle && (
+          <Text style={styles.sectionSubtitle} numberOfLines={1}>
+            {subtitle}
+          </Text>
+        )}
+      </View>
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -36,6 +44,22 @@ export default function MovieCarousel({
 }
 
 const styles = StyleSheet.create({
-  container: { marginVertical: theme.spacing.s15 ?? 15 },
-  scrollContent: { paddingHorizontal: theme.spacing.s16 },
+  container: { 
+    marginVertical: theme.spacing.s16,
+  },
+  headerWrapper: {
+    paddingHorizontal: theme.spacing.s16,
+    marginBottom: theme.spacing.s12,
+  },
+  sectionSubtitle: {
+    ...theme.typography.variants.caption,
+    color: theme.colors.textDisabled,
+    fontFamily: theme.typography.family.primary.medium,
+    marginTop: -theme.spacing.s4, // Ajuste sutil para pegarlo al SectionHeader
+  },
+  scrollContent: { 
+    paddingHorizontal: theme.spacing.s16,
+    gap: theme.spacing.s12, // Mantiene separación limpia entre MovieCards
+  },
+
 });

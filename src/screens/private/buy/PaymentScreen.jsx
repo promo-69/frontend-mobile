@@ -1,27 +1,27 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
-  ActivityIndicator,
-  Alert,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  TextInput,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Alert,
+    KeyboardAvoidingView,
+    Platform,
+    ScrollView,
+    StyleSheet,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { AppText } from '../../../components/AppText';
+import { AppText } from '../../../components/ui/AppText';
+import { theme } from '../../../constants';
 import { useCart } from '../../../context/CartContext';
 import {
-  registerPayment,
-  getSessionState,
-  getSessionDetails,
+    getSessionDetails,
+    getSessionState,
+    registerPayment,
 } from '../../../services/orders.service';
 import { usersService } from '../../../services/users.service';
-import { theme } from '../../../constants';
 
 const { colors, spacing, borderRadius } = theme;
 

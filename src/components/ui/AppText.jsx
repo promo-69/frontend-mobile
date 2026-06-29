@@ -1,5 +1,5 @@
 import { StyleSheet, Text } from 'react-native';
-import { theme } from '../constants/index';
+import { theme } from '../../constants/index';
 
 export const AppText = ({ variant = 'body', style, children, ...props }) => {
   // Obtiene el estilo del tema basado en el variant

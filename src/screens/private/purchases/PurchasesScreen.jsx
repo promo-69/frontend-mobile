@@ -1,18 +1,18 @@
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import {
-  ActivityIndicator,
-  FlatList,
-  Image,
-  RefreshControl,
-  StyleSheet,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    FlatList,
+    Image,
+    RefreshControl,
+    StyleSheet,
+    TouchableOpacity,
+    View,
 } from 'react-native';
-import { AppText } from '../../../components/AppText';
-import { ScreenWrapper } from '../../../components/ScreenWrapper';
-import { usersService } from '../../../services/users.service';
+import { AppText } from '../../../components/ui/AppText';
+import { ScreenWrapper } from '../../../components/ui/ScreenWrapper';
 import { theme } from '../../../constants';
+import { usersService } from '../../../services/users.service';
 
 const { colors, spacing, borderRadius } = theme;
 

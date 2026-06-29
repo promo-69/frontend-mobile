@@ -9,7 +9,7 @@ export default function MovieGridCard({ movie, isEventsPage, upcoming, onPress }
   if (!movie) return null;
 
 
-  const title = movie.title || movie.name || '';
+  const title = movie.title || '';
   const posterUrl = movie.poster_url || movie.posterUrl || movie.banner_url || movie.bannerUrl;
   const dateText = movie.release_date || movie.date;
 

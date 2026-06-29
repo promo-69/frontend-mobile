@@ -1,22 +1,16 @@
 import { ChevronDown } from 'lucide-react-native';
 import { useState } from 'react';
 import { Controller } from 'react-hook-form';
-import {
-  StyleSheet,
-  TouchableOpacity,
-  View,
-  Modal,
-  TouchableWithoutFeedback,
-} from 'react-native';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { theme } from '../constants';
+import { AppText } from './ui/AppText';
 import {
-  validateDate,
-  validateDocumentNoType,
-  validateEmail,
-  validateNames,
-  validatePassword,
+    validateDate,
+    validateDocumentNoType,
+    validateEmail,
+    validateNames,
+    validatePassword,
 } from '../utils/validators';
-import { AppText } from './AppText';
 import { Checkbox } from './ui/CheckBox';
 import { DateInput } from './ui/DateInput';
 import { Input } from './ui/Input';

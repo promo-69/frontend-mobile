@@ -3,18 +3,18 @@ import { ChevronLeft } from 'lucide-react-native';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import {
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  TouchableOpacity,
-  View,
+    KeyboardAvoidingView,
+    Platform,
+    ScrollView,
+    StyleSheet,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 
-import { AppText } from '../../components/AppText';
 import { PersonalInfoSteps } from '../../components/PersonalInfoSteps';
-import { ScreenWrapper } from '../../components/ScreenWrapper';
+import { AppText } from '../../components/ui/AppText';
 import { CustomButton } from '../../components/ui/CustomButton';
+import { ScreenWrapper } from '../../components/ui/ScreenWrapper';
 import { StepIndicator } from '../../components/ui/StepIndicator';
 import { theme } from '../../constants';
 import { useAuth } from '../../context/AuthContext';

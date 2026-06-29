@@ -1,26 +1,27 @@
 import { useRouter } from 'expo-router';
 import {
-  Award,
-  CalendarClock,
-  ChevronLeft,
-  ChevronRight,
-  ClipboardList,
-  LogOut,
-  ShieldCheck,
-  User,
+    Award,
+    CalendarClock,
+    ChevronLeft,
+    ChevronRight,
+    ClipboardList,
+    LogOut,
+    ShieldCheck,
+    Film,
+    User,
 } from 'lucide-react-native';
 import { useState } from 'react';
 import {
-  ActivityIndicator,
-  ScrollView,
-  StyleSheet,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    ScrollView,
+    StyleSheet,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 
-import { AppText } from '../../../components/AppText';
-import { ScreenWrapper } from '../../../components/ScreenWrapper';
+import { AppText } from '../../../components/ui/AppText';
 import { LogoutModal } from '../../../components/ui/LogoutModal';
+import { ScreenWrapper } from '../../../components/ui/ScreenWrapper';
 import { theme } from '../../../constants';
 import { useAuth } from '../../../context/AuthContext';
 import { useProfile } from '../../../hooks/profile/useProfile';
@@ -83,19 +84,6 @@ export default function ProfileScreen() {
 
   return (
     <ScreenWrapper>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => router.back()}
-          style={styles.backButton}
-        >
-          <ChevronLeft size={28} color={theme.colors.primary} />
-        </TouchableOpacity>
-        <AppText variant="h2" style={styles.headerTitle}>
-          Mi Perfil
-        </AppText>
-      </View>
-
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
@@ -118,9 +106,6 @@ export default function ProfileScreen() {
         </View>
 
         {/* --- CONFIGURACIÓN DE CUENTA --- */}
-        <AppText variant="small" style={styles.categoryTitle}>
-          Account Settings
-        </AppText>
         <View style={styles.menuGroup}>
           {renderMenuItem({
             icon: User,
@@ -143,13 +128,18 @@ export default function ProfileScreen() {
             onPress: () => router.push('/profile/rental-requests'),
           })}
           {renderMenuItem({
+            icon: Film,
+            title: 'Mis películas favoritas',
+            onPress: () => router.push('/profile/my-genres'),
+          })}
+          {renderMenuItem({
             icon: ShieldCheck,
             title: 'Seguridad',
-            onPress: () => router.push({ pathname: '/profile/security' }),
+            onPress: () => router.push( '/profile/security' ),
           })}
           {renderMenuItem({
             icon: LogOut,
-            title: 'Logout',
+            title: 'Cerrar sesión',
             onPress: () => setIsLogoutModalVisible(true),
           })}
         </View>
@@ -206,10 +196,8 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: theme.spacing.s24,
-    paddingBottom: theme.spacing.s40,
+    paddingBottom: theme.spacing.s24,
   },
-
-  // Tarjeta superior del usuario
   userCard: {
     flexDirection: 'row',
     alignItems: 'center',

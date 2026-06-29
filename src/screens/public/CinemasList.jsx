@@ -1,9 +1,9 @@
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
-import { AppText } from '../../components/AppText';
 import CinemaGrid from '../../components/cinemas/CinemaGrid';
-import { ScreenWrapper } from '../../components/ScreenWrapper';
+import { AppText } from '../../components/ui/AppText';
+import { ScreenWrapper } from '../../components/ui/ScreenWrapper';
 import { theme } from '../../constants';
 import { getCinemas } from '../../services/cinemas.service';
 
