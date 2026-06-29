@@ -222,7 +222,7 @@ const styles = StyleSheet.create({
     color: theme.colors.textAccent.gold,
   },
   headerSubtitle: {
-    ...theme.typography.variants.body,
+    ...theme.typography.variants.smallText,
     color: '#FFFF',
     marginTop: theme.spacing.s8,
     lineHeight: 16,

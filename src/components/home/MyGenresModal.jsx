@@ -8,7 +8,6 @@ import {
   FlatList,
   ActivityIndicator
 } from 'react-native';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { X, Check, Film } from 'lucide-react-native';
 import { theme } from '../../constants';
 import {
@@ -95,7 +94,7 @@ export default function MyGenresModal({ open, onClose }) {
           onPress={() => !saving && onClose(false)} 
         />
 
-        <SafeAreaProvider style={styles.modalContainer}>
+        <View style={styles.modalContainer}>
           
           {/* ENCABEZADO FIJO */}
           <View style={styles.modalHeader}>
@@ -103,9 +102,13 @@ export default function MyGenresModal({ open, onClose }) {
               <View style={styles.iconContainer}>
                 <Film size={18} color={theme.colors.textAccent.gold} />
               </View>
-              <View>
-                <Text style={styles.modalTitle}>Mis Preferencias</Text>
-                <Text style={styles.modalSubtitle}>Selecciona tus géneros favoritos para personalizar tu cartelera</Text>
+              <View style={styles.textContainer}>
+                <Text numberOfLines={1} style={styles.modalTitle}>
+                  Mis Preferencias
+                </Text>
+                <Text numberOfLines={2} style={styles.modalSubtitle}>
+                  Selecciona tus géneros favoritos para personalizar tu cartelera
+                </Text>
               </View>
             </View>
             
@@ -187,7 +190,7 @@ export default function MyGenresModal({ open, onClose }) {
             </View>
           </View>
 
-        </SafeAreaProvider>
+        </View>
       </View>
     </Modal>
   );
@@ -210,13 +213,14 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 255, 255, 0.08)',
     maxHeight: '85%',
   },
-  modalHeader: {
+modalHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: theme.spacing.s16,
     borderBottomWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.05)',
+    gap: theme.spacing.s12,
   },
   headerTitleGroup: {
     flexDirection: 'row',
@@ -231,6 +235,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(219, 152, 47, 0.15)',
   },
+  textContainer: {
+    flex: 1, 
+  },
   modalTitle: {
     ...theme.typography.variants.subtitle,
     color: '#FFFFFF',
@@ -241,13 +248,14 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: theme.colors.textDisabled,
     fontFamily: theme.typography.family.primary.medium,
-    marginTop: 2,
-    paddingRight: theme.spacing.s16,
+    marginTop: 2
   },
   closeButton: {
     padding: theme.spacing.s4,
     backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderRadius: theme.borderRadius.s8,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   bodyContainer: {
     padding: theme.spacing.s16,
