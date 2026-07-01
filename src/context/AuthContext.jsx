@@ -111,6 +111,41 @@ export const AuthProvider = ({ children }) => {
       };
     }
   };
+
+  /**
+   * Inicio de sesión de empleados (portero/staff). Usa el endpoint /auth/login/admin.
+   * Persiste la sesión igual que el login de cliente; el `user` resultante trae roleCode.
+   */
+  const loginEmployee = async (credentials) => {
+    try {
+      const response = await authService.loginAdmin(credentials);
+
+      if (!response?.success) {
+        return {
+          success: false,
+          code: response?.code,
+          message: getErrorMessage(response?.code),
+        };
+      }
+
+      const { user, tokens } = response.data;
+      const { accessToken, refreshToken } = tokens;
+
+      await storageHelper.saveSession(accessToken, refreshToken, user);
+      setUser(user);
+
+      return { success: true, user };
+    } catch (error) {
+      const backendCode = error.response?.data?.code;
+      return {
+        success: false,
+        message: getErrorMessage(backendCode),
+        code: backendCode || null,
+        status: error.response?.status ?? null,
+      };
+    }
+  };
+
   /**
    * Maneja el registro
    */
@@ -254,6 +289,8 @@ export const AuthProvider = ({ children }) => {
         user,
         isLoading,
         login,
+        loginEmployee,
+        roleCode: user?.roleCode ?? null,
         register,
         logout,
         isAuthenticated: !!user && Object.keys(user).length > 0,
