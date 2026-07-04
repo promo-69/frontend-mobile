@@ -1,13 +1,6 @@
 import { StyleSheet, Text, View } from 'react-native';
+import { theme } from '../../constants';
 import { formatHumanDate } from '../../utils/dateUtils';
-
-const COLORS = {
-  textMain: '#FFFFFF',
-  textGray: '#B0A8C5',
-  infoSheetBg: 'rgba(35, 22, 64, 0.7)',
-  border: 'rgba(255, 255, 255, 0.1)',
-  accent: '#f4b400',
-};
 
 const formatGenres = (genres) => {
   if (!Array.isArray(genres) || genres.length === 0) return 'Especial';
@@ -50,7 +43,7 @@ export default function ContentInfoSheet({ contentInfo, type }) {
         </View>
         <View style={[styles.infoItem, styles.infoBorderLeft]}>
           <Text style={styles.infoLabel}>ESTADO</Text>
-          <Text style={[styles.infoValue, { color: COLORS.accent }]}>
+          <Text style={[styles.infoValue, { color: theme.colors.textAccent.gold }]}>
             {contentInfo.lifecycle_state?.description || 'Activo'}
           </Text>
         </View>
@@ -72,16 +65,14 @@ export default function ContentInfoSheet({ contentInfo, type }) {
 }
 
 const styles = StyleSheet.create({
-  // Contenedor principal de la ficha
   infoSheet: {
-    backgroundColor: COLORS.infoSheetBg,
-    borderRadius: 16,
+    backgroundColor: 'rgba(35, 22, 64, 0.7)',
+    borderRadius: theme.borderRadius.s16,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
     marginBottom: 25,
     overflow: 'hidden',
   },
-  // Estructuras de filas y columnas
   infoRow: {
     flexDirection: 'row',
   },
@@ -93,24 +84,22 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 15,
   },
-  // Bordes divisores internos
   infoBorderLeft: {
     borderLeftWidth: 1,
-    borderLeftColor: COLORS.border,
+    borderLeftColor: 'rgba(255, 255, 255, 0.1)',
   },
   infoBorderTop: {
     borderTopWidth: 1,
-    borderTopColor: COLORS.border,
+    borderTopColor: 'rgba(255, 255, 255, 0.1)',
   },
-  // Tipografías y etiquetas
   infoLabel: {
-    color: COLORS.textGray,
+    color: theme.colors.textDisabled,
     fontSize: 10,
     fontWeight: 'bold',
     marginBottom: 4,
   },
   infoValue: {
-    color: COLORS.textMain,
+    color: theme.colors.textPrimary,
     fontSize: 13,
     fontWeight: '600',
   },

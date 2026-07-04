@@ -6,16 +6,18 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { theme } from '../../constants';
 
 const SEAT_SIZE = 30;
 const SEAT_GAP = 6;
 const LABEL_SIZE = 22;
 
-const COLORS = {
-  available: '#713182', // Morado (igual que la leyenda)
-  selected: '#F6AD38', // Dorado
-  occupied: '#4b5563', // Gris
-  label: '#E9E3F5', // Letras/números de ejes: claros y legibles
+// Colores específicos del mapa de asientos (no son tokens generales del tema)
+const SEAT_COLORS = {
+  available: '#713182',
+  selected: '#F6AD38',
+  occupied: '#4b5563',
+  label: '#E9E3F5',
 };
 
 export default function SeatMap({
@@ -154,9 +156,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  // Etiquetas de ejes (filas y columnas): claras, SIEMPRE legibles
   axisLabel: {
-    color: COLORS.label,
+    color: SEAT_COLORS.label,
     fontWeight: '700',
     fontSize: 12,
   },
@@ -166,7 +167,7 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     marginHorizontal: SEAT_GAP / 2,
   },
-  seatAvailable: { backgroundColor: COLORS.available },
-  seatSelected: { backgroundColor: COLORS.selected },
-  seatOccupied: { backgroundColor: COLORS.occupied },
+  seatAvailable: { backgroundColor: SEAT_COLORS.available },
+  seatSelected: { backgroundColor: SEAT_COLORS.selected },
+  seatOccupied: { backgroundColor: SEAT_COLORS.occupied },
 });

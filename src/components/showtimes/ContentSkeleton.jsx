@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { Animated, Dimensions, StyleSheet, View } from 'react-native';
+import { theme } from '../../constants';
 
 const { width } = Dimensions.get('window');
 
@@ -50,7 +51,7 @@ export default function ContentSkeleton({ variant = 'details' }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#231640' },
+  container: { flex: 1, backgroundColor: theme.colors.background.accent },
   hero: {
     width: '100%',
     height: width * 1.1,

@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { theme } from '../../constants';
 import { useAuth } from '../../context/AuthContext';
 import { useBottomSheet } from '../../context/BottomSheetContext';
 import { formatTime12hrs } from '../../utils/TimeUtils';
@@ -108,7 +109,7 @@ export default function ShowtimeCard({ showtime, contentId, type, cinemaId }) {
         <Ionicons
           name={isSoldOut ? 'close-circle-outline' : 'film-outline'}
           size={14}
-          color={isSoldOut ? '#EF4444' : '#B0A8C5'}
+          color={isSoldOut ? theme.colors.error : theme.colors.textDisabled}
         />
         <Text style={[styles.roomText, isSoldOut && styles.roomSoldOutText]}>
           {isSoldOut ? 'AGOTADO' : roomName}
@@ -138,12 +139,12 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   hourText: {
-    color: '#f4b400',
+    color: theme.colors.textAccent.gold,
     fontSize: 26,
     fontWeight: 'bold',
   },
   ampmText: {
-    color: '#B0A8C5',
+    color: theme.colors.textDisabled,
     fontSize: 14,
     marginTop: 2,
   },
@@ -172,12 +173,12 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.05)',
   },
   formatText: {
-    color: '#FFFFFF',
+    color: theme.colors.textPrimary,
     fontSize: 10,
     fontWeight: 'bold',
   },
   langText: {
-    color: '#B0A8C5',
+    color: theme.colors.textDisabled,
     fontSize: 11,
     fontWeight: '500',
     flex: 1,
@@ -188,12 +189,12 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   roomText: {
-    color: '#B0A8C5',
+    color: theme.colors.textDisabled,
     fontSize: 11,
     fontWeight: '600',
   },
   roomSoldOutText: {
-    color: '#EF4444',
+    color: theme.colors.error,
     fontWeight: 'bold',
   },
 });

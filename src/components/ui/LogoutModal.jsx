@@ -55,7 +55,7 @@ const styles = StyleSheet.create({
     padding: theme.spacing.s32,
   },
   modalTitle: {
-    color: '#ff4444',
+    color: theme.colors.error,
     textAlign: 'center',
     marginBottom: theme.spacing.s12,
   },
@@ -66,7 +66,7 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   modalActions: { gap: theme.spacing.s12 },
-  btnConfirm: { backgroundColor: '#ff4444' },
+  btnConfirm: { backgroundColor: theme.colors.error },
   btnCancel: { padding: theme.spacing.s12, alignItems: 'center' },
   btnTextCancel: { color: theme.colors.textPrimary, opacity: 0.5 },
 });
