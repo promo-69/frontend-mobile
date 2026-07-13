@@ -185,22 +185,6 @@ export default function LoyaltyScreen() {
 
           <TouchableOpacity
             style={styles.linkRow}
-            onPress={() => router.push('/profile/loyalty-program/catalog')}
-            activeOpacity={0.8}
-          >
-            <View style={styles.linkIconWrap}>
-              <Gift size={18} color={colors.primary} />
-            </View>
-            <View style={styles.linkTexts}>
-              <AppText style={styles.linkTitle}>Premios canjeables</AppText>
-              <AppText style={styles.linkSub}>
-                Canjea tus CinePuntos por premios y boletos
-              </AppText>
-            </View>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.linkRow}
             onPress={() => router.push('/profile/loyalty-program/rewards')}
             activeOpacity={0.8}
           >
@@ -217,8 +201,8 @@ export default function LoyaltyScreen() {
 
           <View style={styles.infoNote}>
             <AppText style={styles.infoNoteText}>
-              💡 Puedes canjear tus CinePuntos como método de pago al comprar
-              boletos o confitería.
+              🎁 Encuentra los premios canjeables por CinePuntos en la pestaña
+              "Premios" del menú principal.
             </AppText>
           </View>
         </ScrollView>

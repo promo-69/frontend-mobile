@@ -1,5 +1,5 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Armchair, ChevronLeft, Ticket } from 'lucide-react-native';
+import { Armchair, ChevronLeft, Gift, Ticket } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import {
     ActivityIndicator,
@@ -12,7 +12,7 @@ import QRCode from 'react-native-qrcode-svg';
 import { AppText } from '../../../components/ui/AppText';
 import { ScreenWrapper } from '../../../components/ui/ScreenWrapper';
 import { theme } from '../../../constants';
-import { usersService } from '../../../services/users.service';
+import { getOrderById } from '../../../services/orders.service';
 
 const { colors, spacing, borderRadius } = theme;
 
@@ -77,7 +77,7 @@ function Divider() {
 }
 
 // ─── QR ─────────────────────────────────────────────────────────────────────
-function QrSection({ qrCode, ticketsValidated, concessionsValidated }) {
+function QrSection({ qrCode, ticketsValidated, concessionsValidated, hint }) {
   if (!qrCode) return null;
 
   return (
@@ -93,7 +93,7 @@ function QrSection({ qrCode, ticketsValidated, concessionsValidated }) {
           />
         </View>
         <AppText variant="caption" style={styles.qrHint}>
-          Presenta este código en taquilla y confitería
+          {hint || 'Presenta este código en taquilla y confitería'}
         </AppText>
 
         {/* Indicadores de uso */}
@@ -130,6 +130,71 @@ function ValidationPill({ label, used, date }) {
   );
 }
 
+const VOUCHER_STATUS_LABEL = {
+  ISSUED: 'Vigente',
+  REDEEMED: 'Usado',
+  EXPIRED: 'Vencido',
+  REVERSED: 'Anulado',
+};
+
+// ─── Sección: premio canjeado (boleto en blanco / 2x1) ──────────────────────
+function RewardSection({ redemption, vouchers }) {
+  if (!redemption) return null;
+
+  return (
+    <Section title="TU PREMIO">
+      <DetailRow label="Premio canjeado" value={redemption.reward_name || '—'} />
+      <Divider />
+      <DetailRow
+        label="CinePuntos usados"
+        value={`-${Number(redemption.points_spent || 0).toLocaleString('es-VE')} pts`}
+      />
+
+      {vouchers.length > 0 && (
+        <>
+          <Divider />
+          {vouchers.map((v, i) => (
+            <View key={v.code || i} style={styles.voucherBlock}>
+              <View style={styles.voucherHeaderRow}>
+                <Gift size={16} color={colors.primary} />
+                <AppText variant="smallText" style={styles.voucherCode}>
+                  {v.code}
+                </AppText>
+                <View
+                  style={[
+                    styles.voucherStatusPill,
+                    v.status === 'ISSUED' && styles.voucherStatusIssued,
+                  ]}
+                >
+                  <AppText variant="caption" style={styles.voucherStatusText}>
+                    {VOUCHER_STATUS_LABEL[v.status] || v.status}
+                  </AppText>
+                </View>
+              </View>
+
+              <View style={styles.voucherQrBox}>
+                <QRCode
+                  value={v.code}
+                  size={140}
+                  backgroundColor="white"
+                  color="#231640"
+                  quietZone={8}
+                />
+              </View>
+
+              {v.expires_at && (
+                <AppText variant="caption" style={styles.voucherExpiry}>
+                  Válido hasta {formatDate(v.expires_at)}
+                </AppText>
+              )}
+            </View>
+          ))}
+        </>
+      )}
+    </Section>
+  );
+}
+
 // ─── Pantalla principal ───────────────────────────────────────────────────────
 export default function OrderDetailScreen() {
   const router = useRouter();
@@ -141,9 +206,7 @@ export default function OrderDetailScreen() {
   useEffect(() => {
     async function loadOrder() {
       try {
-        const result = await usersService.getMyOrders({ limit: 50 });
-        const rows = result?.rows || result || [];
-        const found = rows.find((o) => String(o.id) === String(orderId));
+        const found = await getOrderById(orderId);
         if (!found) setError('Orden no encontrada.');
         else setOrder(found);
       } catch (err) {
@@ -184,6 +247,10 @@ export default function OrderDetailScreen() {
   const tickets = order._Tickets || [];
   const lines = order._OrderLines || [];
   const payments = order._OrderPayments || [];
+  const redemption = order.redemption || null;
+  const vouchers = order.vouchers || [];
+  const isProductRedemption =
+    redemption && (redemption.reward_type === 'PRODUCT' || redemption.reward_type === 'COMBO');
 
   const firstBooking = tickets[0]?._RoomBookings;
   const showtime = firstBooking?._Showtimes;
@@ -233,7 +300,15 @@ export default function OrderDetailScreen() {
           qrCode={order.qr_code}
           ticketsValidated={order.tickets_validated_at}
           concessionsValidated={order.concessions_validated_at}
+          hint={
+            isProductRedemption
+              ? 'Presenta este código en taquilla para retirar tu premio'
+              : undefined
+          }
         />
+
+        {/* ── Premio canjeado (boleto en blanco / 2x1) ── */}
+        <RewardSection redemption={redemption} vouchers={vouchers} />
 
         {/* ── Info de la función ── */}
         {(movieTitle || showtime || cinemaName) && (
@@ -562,4 +637,40 @@ const styles = StyleSheet.create({
     fontFamily: theme.typography.family.primary.bold,
     fontSize: 18,
   },
+
+  // ── Premio canjeado / vales ──
+  voucherBlock: {
+    alignItems: 'center',
+    gap: spacing.s8,
+    paddingTop: spacing.s8,
+  },
+  voucherHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.s8,
+  },
+  voucherCode: {
+    color: colors.textPrimary,
+    fontFamily: theme.typography.family.primary.bold,
+    letterSpacing: 1,
+  },
+  voucherStatusPill: {
+    borderWidth: 1,
+    borderColor: colors.midnight[600],
+    backgroundColor: colors.midnight[900],
+    borderRadius: borderRadius.sFull,
+    paddingHorizontal: spacing.s8,
+    paddingVertical: 2,
+  },
+  voucherStatusIssued: {
+    borderColor: colors.green[500],
+    backgroundColor: `${colors.green[500]}22`,
+  },
+  voucherStatusText: { color: colors.textSecondary, fontSize: 10 },
+  voucherQrBox: {
+    padding: spacing.s8,
+    backgroundColor: 'white',
+    borderRadius: borderRadius.s8,
+  },
+  voucherExpiry: { color: colors.textSecondary },
 });
