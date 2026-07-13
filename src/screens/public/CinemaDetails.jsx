@@ -1,22 +1,22 @@
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
-  ActivityIndicator,
-  ScrollView,
-  StyleSheet,
-  View,
-  TouchableOpacity,
+    ActivityIndicator,
+    ScrollView,
+    StyleSheet,
+    TouchableOpacity,
+    View,
 } from 'react-native';
-import { AppText } from '../../components/AppText';
-import { ScreenWrapper } from '../../components/ScreenWrapper';
+import { AppText } from '../../components/ui/AppText';
+import { ScreenWrapper } from '../../components/ui/ScreenWrapper';
 import { theme } from '../../constants';
-import { generateNextDays } from '../../utils/dateUtils';
 import {
-  getCinemaById,
-  getCinemaBillboard,
+    getCinemaBillboard,
+    getCinemaById,
 } from '../../services/cinemas.service';
+import { generateNextDays } from '../../utils/dateUtils';
 
 export default function CinemaDetails() {
   const { cinemaId } = useLocalSearchParams();

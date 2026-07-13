@@ -2,16 +2,16 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useRef } from 'react';
 import {
-  Animated,
-  ScrollView,
-  Share,
-  StyleSheet,
-  TouchableOpacity,
-  View,
+    Animated,
+    ScrollView,
+    Share,
+    StyleSheet,
+    TouchableOpacity,
+    View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import QRCode from 'react-native-qrcode-svg';
-import { AppText } from '../../../components/AppText';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { AppText } from '../../../components/ui/AppText';
 import { theme } from '../../../constants';
 
 const { colors, spacing, borderRadius } = theme;

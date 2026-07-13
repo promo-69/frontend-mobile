@@ -4,29 +4,29 @@ import { ChevronLeft } from 'lucide-react-native';
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import {
-  Dimensions,
-  ImageBackground,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  TouchableOpacity,
-  View,
+    Dimensions,
+    ImageBackground,
+    KeyboardAvoidingView,
+    Platform,
+    ScrollView,
+    StyleSheet,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 import Animated, { FadeInUp, FadeOutDown } from 'react-native-reanimated';
-import { AppText } from '../../components/AppText';
+import { AppText } from '../../components/ui/AppText';
 import { CustomButton } from '../../components/ui/CustomButton';
 import Logo from '../../components/ui/Icons/Logo';
 import { Input } from '../../components/ui/Input';
-import { ScreenWrapper } from '../../components/ScreenWrapper';
+import { ScreenWrapper } from '../../components/ui/ScreenWrapper';
 import { theme } from '../../constants';
 import { AUTH_ERRORS, getErrorMessage } from '../../constants/errorMessages';
 import { useAuth } from '../../context/AuthContext';
 import { storageHelper } from '../../helper/storage.helper';
 import {
-  sanitizeInput,
-  validateEmail,
-  validatePassword,
+    sanitizeInput,
+    validateEmail,
+    validatePassword,
 } from '../../utils/validators';
 
 const { width } = Dimensions.get('window');
@@ -255,16 +255,6 @@ export default function LoginScreen() {
               </AppText>
             </TouchableOpacity>
           </View>
-
-          <TouchableOpacity
-            onPress={() => router.push('/(staff)/login')}
-            activeOpacity={0.7}
-            style={styles.staffLinkWrapper}
-          >
-            <AppText variant="label" style={styles.staffLink}>
-              Acceso empleados
-            </AppText>
-          </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>
     </ScreenWrapper>
@@ -378,14 +368,6 @@ const styles = StyleSheet.create({
     color: theme.colors.primary,
     textDecorationLine: 'underline',
     fontWeight: 'bold',
-  },
-  staffLinkWrapper: {
-    alignItems: 'center',
-    marginBottom: theme.spacing.s24,
-  },
-  staffLink: {
-    color: theme.colors.itemInactive,
-    textDecorationLine: 'underline',
   },
 
   backButton: {

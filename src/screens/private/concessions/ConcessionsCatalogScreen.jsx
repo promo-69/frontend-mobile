@@ -1,30 +1,30 @@
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Search, ShoppingCart, X } from 'lucide-react-native';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  ActivityIndicator,
-  Alert,
-  FlatList,
-  Image,
-  Modal,
-  RefreshControl,
-  ScrollView,
-  StyleSheet,
-  TextInput,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Alert,
+    FlatList,
+    Image,
+    Modal,
+    RefreshControl,
+    ScrollView,
+    StyleSheet,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { AppText } from '../../../components/AppText';
-import { ScreenWrapper } from '../../../components/ScreenWrapper';
+import { AppText } from '../../../components/ui/AppText';
+import { ScreenWrapper } from '../../../components/ui/ScreenWrapper';
+import { theme } from '../../../constants';
 import { useAuth } from '../../../context/AuthContext';
 import { useCart } from '../../../context/CartContext';
-import {
-  getAvailableCombos,
-  getAvailableProducts,
-} from '../../../services/concessions.service';
 import { getCinemas } from '../../../services/cinemas.service';
-import { theme } from '../../../constants';
+import {
+    getAvailableCombos,
+    getAvailableProducts,
+} from '../../../services/concessions.service';
 
 const { colors, spacing, borderRadius } = theme;
 

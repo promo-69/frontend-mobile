@@ -2,8 +2,8 @@ import { ChevronDown } from 'lucide-react-native';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { theme } from '../../constants';
 import { useSelector } from '../../hooks/shared/useSelector';
-import { AppText } from '../AppText';
 import { Input } from './Input';
+import { AppText } from './AppText';
 
 export const SelectorInput = ({
   value,

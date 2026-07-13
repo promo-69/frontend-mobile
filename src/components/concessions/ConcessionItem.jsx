@@ -1,6 +1,6 @@
 import { Image, StyleSheet, TouchableOpacity, View } from 'react-native';
-import { AppText } from '../AppText';
 import { theme } from '../../constants';
+import { AppText } from './ui/AppText';
 
 const { colors, spacing, borderRadius } = theme;
 

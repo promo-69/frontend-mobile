@@ -1,12 +1,12 @@
 import {
-  ActivityIndicator,
-  FlatList,
-  StyleSheet,
-  View,
-  Text,
+    ActivityIndicator,
+    FlatList,
+    StyleSheet,
+    Text,
+    View,
 } from 'react-native';
-import { AppText } from '../../components/AppText';
 import { theme } from '../../constants';
+import { AppText } from '../../components/ui/AppText';
 import CinemaCard from './CinemaCard';
 
 export default function CinemaGrid({
@@ -29,7 +29,7 @@ export default function CinemaGrid({
     if (!loadingMore) return null;
     return (
       <View style={styles.footerLoader}>
-        <ActivityIndicator size="small" color="theme.colors.primary" />
+        <ActivityIndicator size="small" color={theme.colors.primary} />
       </View>
     );
   };
@@ -78,7 +78,7 @@ const styles = StyleSheet.create({
   },
   borderIndicator: {
     borderLeftWidth: 4,
-    borderLeftColor: '#F6AD38',
+    borderLeftColor: theme.colors.textAccent.gold,
     paddingLeft: 16,
     alignItems: 'flex-start',
   },
@@ -87,15 +87,15 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textTransform: 'uppercase',
     lineHeight: 24,
-    color: '#FFFFFF',
+    color: theme.colors.textPrimary,
   },
   highlightedText: {
     fontSize: 28,
-    color: '#F6AD38',
+    color: theme.colors.textAccent.gold,
   },
   subtitle: {
     fontSize: 14,
-    color: '#B0A8C5',
+    color: theme.colors.textDisabled,
     textTransform: 'uppercase',
     letterSpacing: 1,
     fontWeight: 'semibold',
@@ -107,7 +107,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   emptyText: {
-    color: '#B0A8C5',
+    color: theme.colors.textDisabled,
     fontSize: 16,
     textAlign: 'center',
   },

@@ -2,17 +2,17 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Armchair, ChevronLeft, Ticket } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import {
-  ActivityIndicator,
-  ScrollView,
-  StyleSheet,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    ScrollView,
+    StyleSheet,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
-import { AppText } from '../../../components/AppText';
-import { ScreenWrapper } from '../../../components/ScreenWrapper';
-import { usersService } from '../../../services/users.service';
+import { AppText } from '../../../components/ui/AppText';
+import { ScreenWrapper } from '../../../components/ui/ScreenWrapper';
 import { theme } from '../../../constants';
+import { usersService } from '../../../services/users.service';
 
 const { colors, spacing, borderRadius } = theme;
 

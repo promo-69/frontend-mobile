@@ -1,7 +1,7 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { theme } from '../constants/index';
+import { theme } from '../../constants/index';
 
 export const ScreenWrapper = ({ children, style, disableSafeArea = false }) => {
   const Container = disableSafeArea ? View : SafeAreaView;

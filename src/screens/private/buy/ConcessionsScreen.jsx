@@ -2,25 +2,25 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  ActivityIndicator,
-  Alert,
-  FlatList,
-  Image,
-  Modal,
-  SectionList,
-  StyleSheet,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Alert,
+    FlatList,
+    Image,
+    Modal,
+    SectionList,
+    StyleSheet,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { AppText } from '../../../components/AppText';
-import { useCart } from '../../../context/CartContext';
-import {
-  getAvailableCombos,
-  getAvailableProducts,
-} from '../../../services/concessions.service';
-import { getCinemas, getCinemaById } from '../../../services/cinemas.service';
+import { AppText } from '../../../components/ui/AppText';
 import { theme } from '../../../constants';
+import { useCart } from '../../../context/CartContext';
+import { getCinemaById, getCinemas } from '../../../services/cinemas.service';
+import {
+    getAvailableCombos,
+    getAvailableProducts,
+} from '../../../services/concessions.service';
 
 const { colors, spacing, borderRadius } = theme;
 
@@ -219,7 +219,9 @@ function GridSection({ items, lineType, getQuantity, onAdd, onRemove }) {
               />
             </View>
           ))}
-          {row.length === 1 && <View key={`spacer-${lineType}-${ri}`} style={gridStyles.cell} />}
+          {row.length === 1 && (
+            <View key={`spacer-${lineType}-${ri}`} style={gridStyles.cell} />
+          )}
         </View>
       ))}
     </View>
@@ -299,7 +301,11 @@ export default function ConcessionsScreen() {
       .then((data) => {
         const cinema = data?.data ?? data;
         if (!cancelled && cinema?.name) {
-          setSelectedCinema((prev) => ({ ...prev, ...cinema, id: resolvedCinemaId }));
+          setSelectedCinema((prev) => ({
+            ...prev,
+            ...cinema,
+            id: resolvedCinemaId,
+          }));
         }
       })
       .catch(() => {});
@@ -524,7 +530,9 @@ export default function ConcessionsScreen() {
 
       <SectionList
         sections={sections}
-        keyExtractor={(item, i) => `${item.comboId ? 'combo' : 'prod'}-${item.id}-${i}`}
+        keyExtractor={(item, i) =>
+          `${item.comboId ? 'combo' : 'prod'}-${item.id}-${i}`
+        }
         contentContainerStyle={[
           styles.listContent,
           { paddingBottom: bottomPad + (itemCount > 0 ? 36 : 0) },

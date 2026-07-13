@@ -2,20 +2,20 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ChevronLeft } from 'lucide-react-native';
 import { Controller, useForm } from 'react-hook-form';
 import {
-  KeyboardAvoidingView,
-  Platform,
-  StyleSheet,
-  TouchableOpacity,
-  View,
+    KeyboardAvoidingView,
+    Platform,
+    StyleSheet,
+    TouchableOpacity,
+    View,
 } from 'react-native';
-import { AppText } from '../../../components/AppText';
-import { ScreenWrapper } from '../../../components/ScreenWrapper';
+import { AppText } from '../../../components/ui/AppText';
 import { CustomButton } from '../../../components/ui/CustomButton';
 import { Input } from '../../../components/ui/Input';
+import { ScreenWrapper } from '../../../components/ui/ScreenWrapper';
 import { theme } from '../../../constants';
 import {
-  validatePassword,
-  validatePasswordMatch,
+    validatePassword,
+    validatePasswordMatch,
 } from '../../../utils/validators';
 
 export const ResetPasswordScreen = () => {
@@ -43,7 +43,7 @@ export const ResetPasswordScreen = () => {
       //
       console.log('Cambiando clave para:', email);
       console.log('Nueva clave:', data.password);
-      router.replace('/success-reset');
+      router.replace('/(auth)/success-reset');
     } catch (error) {
       // Manejar error de servidor
       console.error('Error en el servidor:', error);

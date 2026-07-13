@@ -1,15 +1,8 @@
 import { View, StyleSheet, Text } from 'react-native';
 import { MapPin, CalendarX } from 'lucide-react-native';
+import { theme } from '../../constants';
 import ShowtimeCard from './ShowtimeCard';
 import { normalizeFormat } from './ShowtimeFilters';
-
-const COLORS = {
-  textMain: '#FFFFFF',
-  textGray: '#B0A8C5',
-  accent: '#f4b400',
-  cardBg: 'rgba(255, 255, 255, 0.04)',
-  border: 'rgba(255, 255, 255, 0.08)',
-};
 
 export default function ShowtimesList({
   cinemasData,
@@ -40,7 +33,7 @@ export default function ShowtimesList({
     const hasFilters = selectedFormat || selectedLanguage;
     return (
       <View style={styles.emptyContainer}>
-        <CalendarX size={44} color={COLORS.textGray} strokeWidth={1.5} />
+        <CalendarX size={44} color={theme.colors.textDisabled} strokeWidth={1.5} />
         <Text style={styles.emptyText}>
           {hasFilters
             ? 'No hay funciones que coincidan con los filtros seleccionados.'
@@ -56,7 +49,7 @@ export default function ShowtimesList({
         <View key={cinemaGroup.cinema.id} style={styles.cinemaCard}>
           {/* Renderizado de la información del Cinema */}
           <View style={styles.cinemaHeader}>
-            <MapPin size={18} color={COLORS.accent} />
+            <MapPin size={18} color={theme.colors.textAccent.gold} />
             <Text style={styles.cinemaName}>{cinemaGroup.cinema.name}</Text>
           </View>
 
@@ -81,11 +74,11 @@ export default function ShowtimesList({
 const styles = StyleSheet.create({
   listContainer: { width: '100%', marginBottom: 30 },
   cinemaCard: {
-    backgroundColor: COLORS.cardBg,
-    borderRadius: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.04)',
+    borderRadius: theme.borderRadius.s16,
     borderWidth: 1,
-    borderColor: COLORS.border,
-    padding: 16,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+    padding: theme.spacing.s16,
     marginBottom: 16,
   },
   cinemaHeader: {
@@ -94,10 +87,10 @@ const styles = StyleSheet.create({
     gap: 8,
     marginBottom: 16,
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
+    borderBottomColor: 'rgba(255, 255, 255, 0.08)',
     paddingBottom: 8,
   },
-  cinemaName: { color: COLORS.textMain, fontSize: 15, fontWeight: '700' },
+  cinemaName: { color: theme.colors.textPrimary, fontSize: 15, fontWeight: '700' },
   hoursGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -109,17 +102,17 @@ const styles = StyleSheet.create({
     paddingVertical: 40,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: COLORS.cardBg,
-    borderRadius: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.04)',
+    borderRadius: theme.borderRadius.s16,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
     borderStyle: 'dashed',
     marginBottom: 30,
     gap: 12,
   },
   emptyText: {
-    color: COLORS.textGray,
-    fontSize: 14,
+    color: theme.colors.textDisabled,
+    fontSize: theme.typography.size.s14,
     fontWeight: '500',
     textAlign: 'center',
     paddingHorizontal: 20,

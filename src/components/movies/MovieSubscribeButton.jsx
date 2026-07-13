@@ -1,13 +1,13 @@
-import {
-  ActivityIndicator,
-  Alert,
-  StyleSheet,
-  TouchableOpacity,
-} from 'react-native';
 import { Bell, BellRing } from 'lucide-react-native';
-import { AppText } from '../AppText';
-import { useMovieSubscription } from '../../hooks/movies/useMovieSubscription';
+import {
+    ActivityIndicator,
+    Alert,
+    StyleSheet,
+    TouchableOpacity,
+} from 'react-native';
 import { theme } from '../../constants';
+import { useMovieSubscription } from '../../hooks/movies/useMovieSubscription';
+import { AppText } from '../ui/AppText';
 
 const { colors, spacing, borderRadius } = theme;
 

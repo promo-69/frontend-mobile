@@ -1,6 +1,6 @@
-import { TouchableOpacity, StyleSheet } from 'react-native';
-import { AppText } from '../AppText';
+import { StyleSheet, TouchableOpacity } from 'react-native';
 import { theme } from '../../constants';
+import { AppText } from './AppText';
 
 /**
  * GenreChip Component
@@ -39,9 +39,9 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.lila[300],
   },
   label: {
-    color: 'white',
-    fontSize: 14,
-    fontWeight: '500',
+    color: theme.colors.textPrimary,
+    fontSize: theme.typography.size.s14,
+    fontFamily: theme.typography.family.primary.medium,
   },
   labelSelected: {
     color: theme.colors.midnight[500],

@@ -1,14 +1,7 @@
 import { useMemo } from 'react';
 import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
-import { AppText } from '../AppText';
 import { theme } from '../../constants';
-
-const COLORS = {
-  textMain: '#FFFFFF',
-  textGray: '#B0A8C5',
-  accent: '#f4b400',
-  border: 'rgba(255, 255, 255, 0.12)',
-};
+import { AppText } from '../ui/AppText';
 
 /**
  * Normaliza el texto de un tipo de proyección a "2D" o "3D".
@@ -133,7 +126,7 @@ const styles = StyleSheet.create({
   container: { marginBottom: 16, gap: 12 },
   group: { gap: 8 },
   groupLabel: {
-    color: COLORS.accent,
+    color: theme.colors.textAccent.gold,
     fontSize: 11,
     fontFamily: theme.typography.family.primary.bold,
     letterSpacing: 0.6,
@@ -144,16 +137,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     borderRadius: 20,
     borderWidth: 1.5,
-    borderColor: COLORS.border,
+    borderColor: 'rgba(255, 255, 255, 0.12)',
     backgroundColor: 'transparent',
   },
   chipActive: {
-    borderColor: COLORS.accent,
+    borderColor: theme.colors.textAccent.gold,
     backgroundColor: 'rgba(244, 180, 0, 0.16)',
   },
-  chipText: { color: COLORS.textGray, fontSize: 13 },
+  chipText: { color: theme.colors.textDisabled, fontSize: 13 },
   chipTextActive: {
-    color: COLORS.accent,
+    color: theme.colors.textAccent.gold,
     fontFamily: theme.typography.family.primary.bold,
   },
 });

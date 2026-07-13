@@ -2,16 +2,16 @@ import { useRouter } from 'expo-router';
 import { ChevronLeft } from 'lucide-react-native';
 import { Controller, useForm } from 'react-hook-form';
 import {
-  KeyboardAvoidingView,
-  Platform,
-  StyleSheet,
-  TouchableOpacity,
-  View,
+    KeyboardAvoidingView,
+    Platform,
+    StyleSheet,
+    TouchableOpacity,
+    View,
 } from 'react-native';
-import { AppText } from '../../../components/AppText';
-import { ScreenWrapper } from '../../../components/ScreenWrapper';
+import { AppText } from '../../../components/ui/AppText';
 import { CustomButton } from '../../../components/ui/CustomButton';
 import { Input } from '../../../components/ui/Input';
+import { ScreenWrapper } from '../../../components/ui/ScreenWrapper';
 import { theme } from '../../../constants';
 import { sanitizeInput, validateEmail } from '../../../utils/validators';
 
@@ -36,7 +36,7 @@ export default function ForgotPasswordScreen() {
       // await api.post('/auth/forgot-password', { email: cleanEmail });
       console.log('Login intent (sanitized):', cleanEmail);
       router.push({
-        pathname: '/verify-code',
+        pathname: '/(auth)/verify-code',
         params: { email: cleanEmail },
       });
     } catch (error) {

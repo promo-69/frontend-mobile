@@ -1,7 +1,7 @@
-import { StyleSheet, View } from 'react-native';
 import { Award } from 'lucide-react-native';
-import { AppText } from '../AppText';
+import { StyleSheet, View } from 'react-native';
 import { theme } from '../../constants';
+import { AppText } from './ui/AppText';
 
 const { colors, spacing, borderRadius } = theme;
 

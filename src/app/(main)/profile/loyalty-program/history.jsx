@@ -1,7 +1,7 @@
+import { useFocusEffect } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
 import { ArrowDownLeft, ArrowUpRight, ChevronLeft } from 'lucide-react-native';
 import { useCallback, useState } from 'react';
-import { useFocusEffect } from '@react-navigation/native';
 import {
   ActivityIndicator,
   FlatList,
@@ -9,8 +9,8 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { AppText } from '../../../../components/AppText';
-import { ScreenWrapper } from '../../../../components/ScreenWrapper';
+import { AppText } from '../../../../components/ui/AppText';
+import { ScreenWrapper } from '../../../../components/ui/ScreenWrapper';
 import { theme } from '../../../../constants';
 import { usersService } from '../../../../services/users.service';
 
