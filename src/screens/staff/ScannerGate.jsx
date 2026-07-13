@@ -1,6 +1,6 @@
 import { Redirect, useRouter } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
-import { AppText } from '../../components/AppText';
+import { AppText } from '../../components/ui/AppText';
 import { CustomButton } from '../../components/ui/CustomButton';
 import { theme } from '../../constants';
 import { useAuth } from '../../context/AuthContext';

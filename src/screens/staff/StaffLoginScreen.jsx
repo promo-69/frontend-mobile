@@ -11,10 +11,10 @@ import {
   View,
 } from 'react-native';
 import Animated, { FadeInUp, FadeOutDown } from 'react-native-reanimated';
-import { AppText } from '../../components/AppText';
+import { AppText } from '../../components/ui/AppText';
 import { CustomButton } from '../../components/ui/CustomButton';
 import { Input } from '../../components/ui/Input';
-import { ScreenWrapper } from '../../components/ScreenWrapper';
+import { ScreenWrapper } from '../../components/ui/ScreenWrapper';
 import { theme } from '../../constants';
 import { useAuth } from '../../context/AuthContext';
 import { canAccessScanner } from '../../helper/roles.helper';
