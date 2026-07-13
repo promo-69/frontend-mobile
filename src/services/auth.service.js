@@ -19,6 +19,15 @@ export const authService = {
   },
 
   /**
+   * Devuelve los códigos de permiso del empleado autenticado
+   * (ej. 'VIEW:ACCESS:QR'). Requiere sesión activa.
+   */
+  getPermissions: async () => {
+    const response = await api.get('/auth/permissions');
+    return response.data?.data?.permissions ?? [];
+  },
+
+  /**
    * Petición de registro
    */
   signUp: async (userData) => {

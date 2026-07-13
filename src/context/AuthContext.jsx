@@ -131,10 +131,22 @@ export const AuthProvider = ({ children }) => {
       const { user, tokens } = response.data;
       const { accessToken, refreshToken } = tokens;
 
+      // Guardamos primero para que el interceptor de `api` tenga el token,
+      // luego pedimos los permisos y los fusionamos en el user.
       await storageHelper.saveSession(accessToken, refreshToken, user);
-      setUser(user);
 
-      return { success: true, user };
+      let permissions = [];
+      try {
+        permissions = await authService.getPermissions();
+      } catch {
+        // Si falla, el user queda sin permisos y el gate lo bloquea (fail-safe).
+      }
+
+      const fullUser = { ...user, permissions };
+      await storageHelper.saveSession(accessToken, refreshToken, fullUser);
+      setUser(fullUser);
+
+      return { success: true, user: fullUser };
     } catch (error) {
       const backendCode = error.response?.data?.code;
       return {
@@ -305,7 +317,6 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
-// Hook personalizado para facilitar el uso en pantallas
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
