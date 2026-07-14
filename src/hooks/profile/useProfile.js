@@ -43,8 +43,7 @@ export const useProfile = () => {
       setProfile(normalized);
       setError(null);
     } catch (err) {
-      console.error('Error al cargar perfil:', err);
-      setError('No se pudieron cargar los datos del perfil');
+      setError(err?.message || 'No se pudieron cargar los datos del perfil');
     } finally {
       setLoading(false);
     }
@@ -71,11 +70,7 @@ export const useProfile = () => {
         message: result?.message || 'Error al actualizar datos personales',
       };
     } catch (err) {
-      console.error('Error en updateProfileData:', err);
-      const msg =
-        err?.response?.data?.message ||
-        err?.message ||
-        'Error inesperado al actualizar datos';
+      const msg = err?.message || 'Error inesperado al actualizar datos';
       return { success: false, message: msg };
     } finally {
       setIsUpdating(false);
@@ -98,11 +93,7 @@ export const useProfile = () => {
       const changeRes = await changeSecurity(changePayload);
       return changeRes;
     } catch (err) {
-      console.error('Error en updateSecurity:', err);
-      const msg =
-        err?.response?.data?.message ||
-        err?.message ||
-        'Error al actualizar credenciales';
+      const msg = err?.message || 'Error al actualizar credenciales';
       return { success: false, message: msg };
     } finally {
       setIsUpdating(false);
@@ -129,11 +120,7 @@ export const useProfile = () => {
 
       return { success: true, token };
     } catch (err) {
-      console.error('Error en verifySecurity:', err);
-      const msg =
-        err?.response?.data?.message ||
-        err?.message ||
-        'Error al verificar contraseña';
+      const msg = err?.message || 'Error al verificar contraseña';
       return { success: false, message: msg };
     } finally {
       setIsUpdating(false);
@@ -166,11 +153,7 @@ export const useProfile = () => {
         'Error al actualizar credenciales';
       return { success: false, message: msg };
     } catch (err) {
-      console.error('Error en changeSecurity:', err);
-      const msg =
-        err?.response?.data?.message ||
-        err?.message ||
-        'Error al aplicar cambio de seguridad';
+      const msg = err?.message || 'Error al aplicar cambio de seguridad';
       return { success: false, message: msg };
     } finally {
       setIsUpdating(false);

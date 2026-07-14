@@ -1,8 +1,7 @@
 import { useRouter } from 'expo-router';
-import { ChevronLeft } from 'lucide-react-native';
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { AppText } from '../../../../components/ui/AppText';
 import { CustomButton } from '../../../../components/ui/CustomButton';
 import { Input } from '../../../../components/ui/Input';
@@ -34,18 +33,6 @@ export default function SecurityVerifyScreen() {
 
   return (
     <ScreenWrapper>
-      <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => router.back()}
-          style={styles.backButton}
-        >
-          <ChevronLeft size={28} color={theme.colors.border} />
-        </TouchableOpacity>
-        <AppText variant="h2" style={styles.headerTitle}>
-          Verificar Identidad
-        </AppText>
-      </View>
-
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
@@ -97,22 +84,6 @@ export default function SecurityVerifyScreen() {
 }
 
 const styles = StyleSheet.create({
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: theme.spacing.s16,
-    paddingTop: theme.spacing.s8,
-    marginBottom: theme.spacing.s16,
-  },
-  backButton: { width: 40, height: 40, justifyContent: 'center' },
-  headerTitle: {
-    color: theme.colors.primary,
-    flex: 1,
-    fontSize: 20,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    marginRight: 40,
-  },
   scrollContent: {
     paddingHorizontal: theme.spacing.s24,
     paddingBottom: theme.spacing.s32,

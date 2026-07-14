@@ -163,7 +163,7 @@ export const COLORS = {
     //Gradiante de background de las pantallas (Vertical)
     bgColor: {
       colors: [palette.midnight[950], '#7B1A82', palette.midnight[950]],
-      locations: [0.29, 0.64, 0.83],
+      locations: [0, 0.5, 1],
       start: { x: 0.5, y: 0 },
       end: { x: 0.5, y: 1 },
     },

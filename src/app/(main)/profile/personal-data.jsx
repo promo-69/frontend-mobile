@@ -1,75 +1,95 @@
 import { useRouter } from 'expo-router';
-import { ChevronLeft } from 'lucide-react-native';
-import { useEffect, useState } from 'react';
-import { Controller, useForm } from 'react-hook-form';
+import { useState } from 'react';
 import {
     ActivityIndicator,
     ScrollView,
     StyleSheet,
-    TouchableOpacity,
-    View,
 } from 'react-native';
 import { AppText } from '../../../components/ui/AppText';
-import { CustomButton } from '../../../components/ui/CustomButton';
-import { Input } from '../../../components/ui/Input';
 import { ScreenWrapper } from '../../../components/ui/ScreenWrapper';
 import { SuccessModal } from '../../../components/ui/SuccessModal';
+import { FormEditProfile } from '../../../components/profile/FormEditProfile';
+import { PasswordVerifyModal } from '../../../components/profile/PasswordVerifyModal';
 import { theme } from '../../../constants';
 import { useProfile } from '../../../hooks/profile/useProfile';
-import {
-    validateNames,
-    validatePhoneNumberVE,
-} from '../../../utils/validators';
 
 export default function PersonalDataScreen() {
   const router = useRouter();
-  const { profile, loading, isUpdating, updateProfileData } = useProfile();
+  const {
+    profile,
+    loading,
+    isUpdating,
+    updateProfileData,
+    verifySecurity,
+    changeSecurity,
+  } = useProfile();
+
+  const [step, setStep] = useState('view');
+  const [securityToken, setSecurityToken] = useState(null);
   const [isSuccessVisible, setIsSuccessVisible] = useState(false);
 
-  const {
-    control,
-    handleSubmit,
-    getValues,
-    reset,
-    formState: { isDirty, dirtyFields },
-  } = useForm({
-    defaultValues: {
-      firstName: '',
-      lastName: '',
-      phoneNumber: '',
-      personalEmail: '',
-    },
-  });
-
-  useEffect(() => {
-    if (profile) {
-      reset({
-        firstName: profile.firstName || '',
-        lastName: profile.lastName || '',
-        phoneNumber: profile.phoneNumber || '',
-        personalEmail: profile.personalEmail || '',
-      });
-    }
-  }, [profile, reset]);
-
-  const onSave = async () => {
-    const formValues = getValues();
-    const patchPayload = {};
-
-    // Construcción dinámica del PATCH (Sólo lo modificado)
-    Object.keys(dirtyFields).forEach((key) => {
-      if (dirtyFields[key]) {
-        patchPayload[key] = formValues[key];
-      }
-    });
-
-    const result = await updateProfileData(patchPayload);
-
-    if (result.success) {
-      setIsSuccessVisible(true);
+  // Verify identity → get security token → enable editing
+  const handleVerifyIdentity = async (password) => {
+    const res = await verifySecurity(password);
+    if (res.success && res.token) {
+      setSecurityToken(res.token);
+      setStep('editing');
     } else {
-      alert(result.message);
+      throw new Error(res.message || 'Contraseña incorrecta');
     }
+  };
+
+  // Save changes: security (email/password) + profile (phone)
+  const handleSave = async (updatedData) => {
+    if (!securityToken) {
+      setStep('view');
+      return;
+    }
+
+    const currentEmail = (
+      profile?.personalEmail ||
+      profile?.email ||
+      ''
+    ).trim().toLowerCase();
+    const targetEmail = updatedData.email.trim().toLowerCase();
+    const hasEmailChanged = targetEmail !== currentEmail;
+    const hasPasswordChanged = !!updatedData.password;
+
+    // Aplicar cambios en la contraseña 
+    if (hasEmailChanged || hasPasswordChanged) {
+      const securityPayload = { securityChangeToken: securityToken };
+      if (hasEmailChanged) securityPayload.newEmail = updatedData.email.trim();
+      if (hasPasswordChanged) securityPayload.newPassword = updatedData.password;
+
+      const secRes = await changeSecurity(securityPayload);
+      if (!secRes.success) {
+        alert(secRes.message || 'Error al actualizar credenciales');
+        return;
+      }
+    }
+
+    // Aplicar cambios (numero de telefono) 
+    const currentPhone = (profile?.phoneNumber || '').trim();
+    const targetPhone = updatedData.cellphone.trim();
+    const hasPhoneChanged = targetPhone !== currentPhone;
+
+    if (hasPhoneChanged) {
+      const profileRes = await updateProfileData({ phoneNumber: targetPhone });
+      if (!profileRes.success) {
+        alert(profileRes.message || 'Error al actualizar teléfono');
+        return;
+      }
+    }
+
+    // Success
+    setSecurityToken(null);
+    setStep('view');
+    setIsSuccessVisible(true);
+  };
+
+  const handleCancelEdit = () => {
+    setSecurityToken(null);
+    setStep('view');
   };
 
   if (loading) {
@@ -82,124 +102,36 @@ export default function PersonalDataScreen() {
 
   return (
     <ScreenWrapper>
-      {/* Header 
-      <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => router.back()}
-          style={styles.backButton}
-        >
-          <ChevronLeft size={28} color={theme.colors.border} />
-        </TouchableOpacity>
-        <AppText variant="h2" style={styles.headerTitle}>
-          Datos Personales
-        </AppText>
-      </View>*/}
-
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
         <AppText variant="body" style={styles.description}>
-          Mantén actualizada tu información de contacto. Estos datos no son
-          públicos y se usan solo para la gestión de tus entradas.
+          Gestiona tu información personal
         </AppText>
 
-        <View style={styles.inputsGroup}>
-          <Controller
-            control={control}
-            name="firstName"
-            rules={{
-              required: 'El nombre es obligatorio',
-              validate: validateNames,
-            }}
-            render={({
-              field: { onChange, onBlur, value },
-              fieldState: { error },
-            }) => (
-              <Input
-                label="Nombres"
-                value={value}
-                onBlur={onBlur}
-                onChangeText={onChange}
-                error={error?.message}
-                autoCapitalize="words"
-              />
-            )}
-          />
-
-          <Controller
-            control={control}
-            name="lastName"
-            rules={{
-              required: 'El apellido es obligatorio',
-              validate: validateNames,
-            }}
-            render={({
-              field: { onChange, onBlur, value },
-              fieldState: { error },
-            }) => (
-              <Input
-                label="Apellidos"
-                value={value}
-                onBlur={onBlur}
-                onChangeText={onChange}
-                error={error?.message}
-                autoCapitalize="words"
-              />
-            )}
-          />
-
-          <Controller
-            control={control}
-            name="phoneNumber"
-            rules={{ validate: validatePhoneNumberVE }}
-            render={({
-              field: { onChange, onBlur, value },
-              fieldState: { error },
-            }) => (
-              <Input
-                label="Teléfono Móvil"
-                value={value}
-                onBlur={onBlur}
-                onChangeText={onChange}
-                error={error?.message}
-                keyboardType="phone-pad"
-              />
-            )}
-          />
-
-          <Controller
-            control={control}
-            name="personalEmail"
-            render={({
-              field: { onChange, onBlur, value },
-              fieldState: { error },
-            }) => (
-              <Input
-                label="Correo Alternativo"
-                value={value}
-                onBlur={onBlur}
-                onChangeText={onChange}
-                error={error?.message}
-                keyboardType="email-address"
-                autoCapitalize="none"
-              />
-            )}
-          />
-        </View>
+        <FormEditProfile
+          profile={profile}
+          step={step}
+          onEdit={() => setStep('confirming')}
+          onSave={handleSave}
+          onCancel={handleCancelEdit}
+          loading={isUpdating}
+        />
       </ScrollView>
 
-      {/* Footer Fijo */}
-      <View style={styles.footer}>
-        <CustomButton
-          title="Guardar"
-          onPress={handleSubmit(onSave)}
-          disabled={!isDirty || isUpdating}
-        />
-      </View>
+      {/* Modal de verificaciond e contraseña */}
+      <PasswordVerifyModal
+        visible={step === 'confirming'}
+        onConfirm={handleVerifyIdentity}
+        onCancel={() => setStep('view')}
+        loading={isUpdating}
+      />
 
+      {/* Success modal */}
       <SuccessModal
         visible={isSuccessVisible}
+        message="Tu información de perfil ha sido actualizada con éxito."
         onClose={() => {
           setIsSuccessVisible(false);
           router.back();
@@ -210,22 +142,10 @@ export default function PersonalDataScreen() {
 }
 
 const styles = StyleSheet.create({
-  centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: theme.spacing.s16,
-    paddingTop: theme.spacing.s8,
-    marginBottom: theme.spacing.s16,
-  },
-  backButton: { width: 40, height: 40, justifyContent: 'center' },
-  headerTitle: {
-    color: theme.colors.primary,
+  centered: {
     flex: 1,
-    fontSize: 20,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    marginRight: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   scrollContent: {
     paddingHorizontal: theme.spacing.s24,
@@ -236,13 +156,7 @@ const styles = StyleSheet.create({
     opacity: 0.6,
     fontSize: 14,
     lineHeight: 20,
-    marginBottom: theme.spacing.s32,
+    textAlign: 'center',
+    marginBottom: theme.spacing.s24,
   },
-  inputsGroup: { gap: theme.spacing.s24 },
-  dividerZone: {
-    height: 1,
-    backgroundColor: 'rgba(255,255,255,0.08)',
-    marginVertical: theme.spacing.s8,
-  },
-  footer: { padding: theme.spacing.s24, backgroundColor: 'transparent' },
 });
