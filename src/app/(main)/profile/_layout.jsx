@@ -51,15 +51,23 @@ export default function ProfileLayout() {
       <Stack.Screen
         name="personal-data"
         options={{
-          title: 'Configuración de datos',
+          title: 'Datos Personales',
           gestureEnabled: true,
         }}
       />
 
-      {/* Pantalla de cambio de credenciales / seguridad */}
-      <Stack.Screen name="security/index" 
-      options={{
-          title: 'Cambio de Contraseña'
+      {/* Pantalla de verificación de identidad (seguridad) */}
+      <Stack.Screen name="security/index"
+        options={{
+          title: 'Verificar Identidad',
+        }}
+      />
+
+      {/* Pantalla de cambio de credenciales */}
+      <Stack.Screen name="security/change"
+        options={{
+          title: 'Cambiar Credenciales',
+          gestureEnabled: true,
         }}
       />
 
