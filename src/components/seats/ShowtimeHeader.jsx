@@ -1,11 +1,6 @@
 import { StyleSheet, Text, View } from 'react-native';
+import { theme } from '../../constants';
 import { formatTime12hrs } from '../../utils/TimeUtils';
-
-const COLORS = {
-  textMain: '#FFFFFF',
-  textGray: '#B0A8C5',
-  accent: '#f4b400',
-};
 
 export default function ShowtimeHeader({ movie, showtime }) {
   if (!movie || !showtime) return null;
@@ -53,18 +48,18 @@ const styles = StyleSheet.create({
   movieTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: COLORS.textMain,
+    color: theme.colors.textPrimary,
     marginBottom: 5,
     textAlign: 'center',
     alignSelf: 'center',
     flexShrink: 1,
   },
   detailsRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 5 },
-  detailText: { fontSize: 13, color: COLORS.textGray },
+  detailText: { fontSize: 13, color: theme.colors.textDisabled },
   detailSeparator: {
     fontSize: 13,
-    color: COLORS.textGray,
+    color: theme.colors.textDisabled,
     marginHorizontal: 5,
   },
-  timeText: { fontSize: 16, fontWeight: 'bold', color: COLORS.accent },
+  timeText: { fontSize: 16, fontWeight: 'bold', color: theme.colors.textAccent.gold },
 });

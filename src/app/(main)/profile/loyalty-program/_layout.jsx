@@ -1,7 +1,7 @@
 import { Stack } from 'expo-router';
 import { theme } from '../../../../constants';
 
-export default function ProfileLayout() {
+export default function LoyaltyProgramLayout() {
   return (
     <Stack
       screenOptions={{
@@ -9,26 +9,17 @@ export default function ProfileLayout() {
         contentStyle: {
           backgroundColor: theme.colors.background,
         },
-        animation: 'slide_from_bottom',
+        animation: 'slide_from_right',
       }}
     >
-      {/* Index es el menú principal con las tarjetas de opciones */}
-      <Stack.Screen name="index" options={{ title: 'Mi Perfil' }} />
-
-      {/* Pantalla de formulario de datos personales */}
-      <Stack.Screen
-        name="personal-data"
-        options={{
-          title: 'Datos Personales',
-          gestureEnabled: true,
-        }}
-      />
-
-      {/* Pantalla de cambio de credenciales / seguridad */}
-      <Stack.Screen name="security/index" />
-
-      {/* Módulo de fidelidad (CinePuntos): dashboard, historial y niveles */}
-      <Stack.Screen name="loyalty-program" options={{ gestureEnabled: true }} />
+      {/* Dashboard de CinePuntos (saldo + progreso + accesos) */}
+      <Stack.Screen name="index" />
+      {/* Catálogo de premios canjeables */}
+      <Stack.Screen name="catalog" options={{ gestureEnabled: true }} />
+      {/* Historial de movimientos de puntos */}
+      <Stack.Screen name="history" options={{ gestureEnabled: true }} />
+      {/* Niveles del programa */}
+      <Stack.Screen name="rewards" options={{ gestureEnabled: true }} />
     </Stack>
   );
 }

@@ -2,6 +2,7 @@ import { StyleSheet, Text, View, Pressable } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MapPin, Phone, Clock, Building2 } from 'lucide-react-native';
+import { theme } from '../../constants';
 
 export default function CinemaCard({ cinema, onPress }) {
   return (
@@ -39,21 +40,21 @@ export default function CinemaCard({ cinema, onPress }) {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#231640',
-    borderRadius: 16,
+    backgroundColor: theme.colors.midnight[900],
+    borderRadius: theme.borderRadius.s16,
     marginBottom: 16,
     borderWidth: 1,
     borderColor: 'rgba(255, 200, 100, 0.08)',
     overflow: 'hidden',
     elevation: 4,
-    shadowColor: '#000',
+    shadowColor: theme.colors.midnight[950],
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.3,
     shadowRadius: 4,
   },
   imageContainer: {
     width: '100%',
-    aspectRatio: 16 / 9, // Mantiene la consistencia panorámica tipo cine
+    aspectRatio: 16 / 9,
     position: 'relative',
     backgroundColor: 'rgba(255, 255, 255, 0.05)',
   },
@@ -69,8 +70,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(35, 22, 64, 0.4)',
   },
   name: {
-    color: '#FFC864',
-    fontSize: 18,
+    color: theme.colors.textAccent.gold,
+    fontSize: theme.typography.size.s18,
     fontWeight: 'bold',
     letterSpacing: 0.5,
   },

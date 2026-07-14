@@ -49,6 +49,7 @@ function NavigationGuard() {
       {/* Registramos el grupo de películas y el flujo de compra */}
       <Stack.Screen name="content" />
       <Stack.Screen name="(buy)" />
+      <Stack.Screen name="(staff)" options={{ animation: 'slide_from_bottom' }} />
       <Stack.Screen name="index" options={{ href: null }} />
     </Stack>
   );

@@ -255,6 +255,21 @@ export default function LoginScreen() {
               </AppText>
             </TouchableOpacity>
           </View>
+
+          {/* Acceso del personal: el empleado inicia sesión aparte y, si su rol
+              tiene VIEW:ACCESS:QR, entra a la sección de staff (escáner). */}
+          <TouchableOpacity
+            onPress={() => router.push('/(staff)/login')}
+            activeOpacity={0.7}
+            style={{ alignSelf: 'center', marginTop: 14, padding: 6 }}
+          >
+            <AppText variant="label" style={styles.footerText}>
+              ¿Eres personal del cine?{' '}
+              <AppText variant="label" style={styles.registerLink}>
+                Accede aquí
+              </AppText>
+            </AppText>
+          </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>
     </ScreenWrapper>

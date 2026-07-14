@@ -111,6 +111,53 @@ export const AuthProvider = ({ children }) => {
       };
     }
   };
+
+  /**
+   * Inicio de sesión de empleados (portero/staff). Usa el endpoint /auth/login/admin.
+   * Persiste la sesión igual que el login de cliente; el `user` resultante trae roleCode.
+   */
+  const loginEmployee = async (credentials) => {
+    try {
+      const response = await authService.loginAdmin(credentials);
+
+      if (!response?.success) {
+        return {
+          success: false,
+          code: response?.code,
+          message: getErrorMessage(response?.code),
+        };
+      }
+
+      const { user, tokens } = response.data;
+      const { accessToken, refreshToken } = tokens;
+
+      // Guardamos primero para que el interceptor de `api` tenga el token,
+      // luego pedimos los permisos y los fusionamos en el user.
+      await storageHelper.saveSession(accessToken, refreshToken, user);
+
+      let permissions = [];
+      try {
+        permissions = await authService.getPermissions();
+      } catch {
+        // Si falla, el user queda sin permisos y el gate lo bloquea (fail-safe).
+      }
+
+      const fullUser = { ...user, permissions };
+      await storageHelper.saveSession(accessToken, refreshToken, fullUser);
+      setUser(fullUser);
+
+      return { success: true, user: fullUser };
+    } catch (error) {
+      const backendCode = error.response?.data?.code;
+      return {
+        success: false,
+        message: getErrorMessage(backendCode),
+        code: backendCode || null,
+        status: error.response?.status ?? null,
+      };
+    }
+  };
+
   /**
    * Maneja el registro
    */
@@ -254,6 +301,8 @@ export const AuthProvider = ({ children }) => {
         user,
         isLoading,
         login,
+        loginEmployee,
+        roleCode: user?.roleCode ?? null,
         register,
         logout,
         isAuthenticated: !!user && Object.keys(user).length > 0,
@@ -268,7 +317,6 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
-// Hook personalizado para facilitar el uso en pantallas
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {

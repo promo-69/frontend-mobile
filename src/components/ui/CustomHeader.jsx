@@ -1,6 +1,7 @@
 import { useRouter } from 'expo-router';
 import { ChevronLeft } from 'lucide-react-native';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
+import { theme } from '../../constants';
 import { AppText } from './AppText';
 
 export const CustomHeader = ({ title, rightComponent, onPressAction }) => {
@@ -22,7 +23,7 @@ export const CustomHeader = ({ title, rightComponent, onPressAction }) => {
         onPress={onPressAction || handleDefaultBack}
         activeOpacity={0.7}
       >
-        <ChevronLeft size={28} color="#FFFFFF" />
+        <ChevronLeft size={28} color={theme.colors.textPrimary} />
       </TouchableOpacity>
 
       {/* Título de la pantalla */}
@@ -43,9 +44,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#442F6B',
+    backgroundColor: theme.colors.midnight[800],
     height: 56,
-    paddingHorizontal: 16,
+    paddingHorizontal: theme.spacing.s16,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255, 255, 255, 0.1)',
   },
@@ -58,8 +59,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   headerTitle: {
-    color: '#FFFFFF',
-    fontSize: 18,
+    color: theme.colors.textPrimary,
+    fontSize: theme.typography.size.s18,
     fontWeight: 'bold',
   },
   rightContainer: {

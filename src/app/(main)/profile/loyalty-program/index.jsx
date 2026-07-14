@@ -201,8 +201,8 @@ export default function LoyaltyScreen() {
 
           <View style={styles.infoNote}>
             <AppText style={styles.infoNoteText}>
-              💡 Puedes canjear tus CinePuntos como método de pago al comprar
-              boletos o confitería.
+              🎁 Encuentra los premios canjeables por CinePuntos en la pestaña
+              "Premios" del menú principal.
             </AppText>
           </View>
         </ScrollView>

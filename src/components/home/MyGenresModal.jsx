@@ -152,7 +152,7 @@ export default function MyGenresModal({ open, onClose }) {
                       </Text>
                       
                       <View style={[styles.checkbox, isSelected ? styles.checkboxSelected : styles.checkboxUnselected]}>
-                        {isSelected && <Check size={10} color="#231640" strokeWidth={4} />}
+                        {isSelected && <Check size={10} color={theme.colors.textBlack} strokeWidth={4} />}
                       </View>
                     </Pressable>
                   );
@@ -182,7 +182,7 @@ export default function MyGenresModal({ open, onClose }) {
                 style={[styles.saveButton, (loading || saving) && styles.disabledButton]}
               >
                 {saving ? (
-                  <ActivityIndicator size="small" color="#231640" />
+                  <ActivityIndicator size="small" color={theme.colors.textBlack} />
                 ) : (
                   <Text style={styles.saveButtonText}>Guardar</Text>
                 )}
@@ -206,7 +206,7 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
   },
   modalContainer: {
-    backgroundColor: '#1c1035',
+    backgroundColor: theme.colors.midnight[950],
     borderTopLeftRadius: theme.borderRadius.s24,
     borderTopRightRadius: theme.borderRadius.s24,
     borderWidth: 1,
@@ -240,7 +240,7 @@ modalHeader: {
   },
   modalTitle: {
     ...theme.typography.variants.subtitle,
-    color: '#FFFFFF',
+    color: theme.colors.textPrimary,
     fontFamily: theme.typography.family.primary.bold,
     textTransform: 'uppercase',
   },
@@ -292,7 +292,7 @@ modalHeader: {
   },
   genreCardSelected: {
     backgroundColor: 'rgba(123, 26, 130, 0.2)',
-    borderColor: '#7B1A82',
+    borderColor: theme.colors.borders.accent,
   },
   genreLabel: {
     ...theme.typography.variants.body,
@@ -303,7 +303,7 @@ modalHeader: {
     marginRight: theme.spacing.s4,
   },
   genreLabelSelected: {
-    color: '#FFFFFF',
+    color: theme.colors.textPrimary,
   },
   checkbox: {
     height: 18,
@@ -360,7 +360,7 @@ modalHeader: {
   },
   saveButtonText: {
     ...theme.typography.variants.label,
-    color: '#231640',
+    color: theme.colors.textBlack,
     fontFamily: theme.typography.family.primary.bold,
   },
   disabledButton: {
