@@ -11,7 +11,6 @@ export default function ProfileLayout() {
       screenOptions={{
 
         headerStyle: {
-          marginTop: 12,
           backgroundColor: '#231640',
         },
         headerTintColor: theme.colors.accent,
@@ -21,7 +20,6 @@ export default function ProfileLayout() {
           textTransform: 'uppercase',
         },
         headerShadowVisible: false,
-        headerStatusBarHeight: 35,
         headerTitleAlign: 'center',
 
         headerLeft: () => (
