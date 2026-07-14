@@ -9,10 +9,10 @@ export default function ProfileLayout() {
   return (
     <Stack
       screenOptions={{
-        
-        headerStyle: { 
+
+        headerStyle: {
           marginTop: 12,
-          backgroundColor: '#231640', 
+          backgroundColor: '#231640',
         },
         headerTintColor: theme.colors.accent,
         headerTitleStyle: {
@@ -23,21 +23,21 @@ export default function ProfileLayout() {
         headerShadowVisible: false,
         headerStatusBarHeight: 35,
         headerTitleAlign: 'center',
-        
+
         headerLeft: () => (
-          <Pressable 
+          <Pressable
             onPress={() => {
               if (router.canGoBack()) {
-                router.back(); 
+                router.back();
               } else {
-                router.replace('/(main)/home'); 
+                router.replace('/(main)/home');
               }
-            }} 
+            }}
             style={({ pressed }) => [
               styles.backButton,
               pressed && styles.buttonPressed
             ]}
-            hitSlop={15} 
+            hitSlop={15}
           >
             <ArrowLeft size={22} color={theme.colors.accent} strokeWidth={2.5} />
           </Pressable>
@@ -56,29 +56,27 @@ export default function ProfileLayout() {
         }}
       />
 
-      {/* Pantalla de verificación de identidad (seguridad) */}
+      {/* Pantalla de cambio de credenciales / seguridad */}
       <Stack.Screen name="security/index"
-        options={{
-          title: 'Verificar Identidad',
+      options={{
+          title: 'Cambio de Contraseña'
         }}
       />
 
-      {/* Pantalla de cambio de credenciales */}
-      <Stack.Screen name="security/change"
-        options={{
-          title: 'Cambiar Credenciales',
-          gestureEnabled: true,
-        }}
-      />
 
-      
 
       {/* Mis solicitudes de alquiler de salas */}
-      <Stack.Screen name="rental-requests" options={{ 
+      <Stack.Screen name="rental-requests" options={{
         gestureEnabled: true }} />
-      
-      <Stack.Screen 
-      name="my-genres" 
+
+      {/* Módulo de fidelidad: sus pantallas traen encabezado propio */}
+      <Stack.Screen
+        name="loyalty-program"
+        options={{ headerShown: false, gestureEnabled: true }}
+      />
+
+      <Stack.Screen
+      name="my-genres"
        options={{
           title: 'Películas por género'
         }}

@@ -43,7 +43,13 @@
       "expo-font",
       "@react-native-community/datetimepicker",
       "expo-web-browser",
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Permite el acceso a la cámara para escanear los códigos QR de los clientes en el control de entradas y confitería."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

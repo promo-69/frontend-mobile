@@ -6,6 +6,7 @@ import {
   Store,
   User,
   ShoppingCart,
+  Gift,
 } from 'lucide-react-native';
 import { Tabs } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -44,6 +45,13 @@ export default function MainLayout() {
         options={{
           title: 'Tienda',
           tabBarIcon: ({ color }) => <PopcornIcon color={color} size={24} />,
+        }}
+      />
+      <Tabs.Screen
+        name="rewards"
+        options={{
+          title: 'Premios',
+          tabBarIcon: ({ color }) => <Gift color={color} size={24} />,
         }}
       />
       <Tabs.Screen

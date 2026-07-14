@@ -10,6 +10,24 @@ export const authService = {
   },
 
   /**
+   * Inicio de sesión de empleados (portero, cajero, gerentes).
+   * Endpoint exclusivo para user_type = empleado.
+   */
+  loginAdmin: async (credentials) => {
+    const response = await api.post('/auth/login/admin', credentials);
+    return response.data;
+  },
+
+  /**
+   * Devuelve los códigos de permiso del empleado autenticado
+   * (ej. 'VIEW:ACCESS:QR'). Requiere sesión activa.
+   */
+  getPermissions: async () => {
+    const response = await api.get('/auth/permissions');
+    return response.data?.data?.permissions ?? [];
+  },
+
+  /**
    * Petición de registro
    */
   signUp: async (userData) => {

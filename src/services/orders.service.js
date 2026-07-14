@@ -55,3 +55,14 @@ export const cancelSession = async () => {
   const response = await api.delete('/orders/session');
   return response.data.data;
 };
+
+/**
+ * Detalle de una orden puntual (GET /orders/:id).
+ * Si la orden viene de un canje de CinePuntos, el backend adjunta
+ * `redemption` (premio canjeado) y `vouchers` (boleto en blanco / 2x1
+ * emitidos), para poder recuperarlos después desde "Mis Compras".
+ */
+export const getOrderById = async (orderId) => {
+  const response = await api.get(`/orders/${orderId}`);
+  return response.data.data;
+};
