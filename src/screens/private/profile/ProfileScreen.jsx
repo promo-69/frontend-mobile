@@ -32,6 +32,7 @@ export default function ProfileScreen() {
   const { profile, loading } = useProfile();
 
   const [isLogoutModalVisible, setIsLogoutModalVisible] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   if (loading) {
     return (
@@ -77,9 +78,14 @@ export default function ProfileScreen() {
   );
 
   const handleLogout = async () => {
-    setIsLogoutModalVisible(false);
-    await logout();
-    router.replace('/(main)/home');
+    setIsLoggingOut(true);
+    try {
+      await logout();
+      setIsLogoutModalVisible(false);
+      router.replace('/(main)/home');
+    } catch {
+      setIsLoggingOut(false);
+    }
   };
 
   return (
@@ -162,7 +168,8 @@ export default function ProfileScreen() {
       <LogoutModal
         visible={isLogoutModalVisible}
         onConfirm={handleLogout}
-        onCancel={() => setIsLogoutModalVisible(false)}
+        onCancel={() => !isLoggingOut && setIsLogoutModalVisible(false)}
+        loading={isLoggingOut}
       />
     </ScreenWrapper>
   );

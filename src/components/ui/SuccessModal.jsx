@@ -3,7 +3,7 @@ import { theme } from '../../constants';
 import { CustomButton } from './CustomButton';
 import { AppText } from './AppText';
 
-export const SuccessModal = ({ visible, onClose }) => (
+export const SuccessModal = ({ visible, onClose, message }) => (
   <Modal visible={visible} transparent animationType="fade">
     <View style={styles.overlay}>
       <View style={styles.modalCard}>
@@ -14,7 +14,7 @@ export const SuccessModal = ({ visible, onClose }) => (
           ¡Perfil Actualizado!
         </AppText>
         <AppText variant="body" style={styles.modalDesc}>
-          Tus cambios se han guardado con éxito en el sistema.
+          {message || 'Tus cambios se han guardado con éxito en el sistema.'}
         </AppText>
         <CustomButton title="ENTENDIDO" onPress={onClose} />
       </View>

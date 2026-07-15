@@ -12,6 +12,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import Logo from '../../assets/images/logo-cineflix-2.png';
 import MovieCarousel from '../../components/home/MovieCarousel';
 import MainCarousel from '../../components/home/MainCarousel';
 import ForYouSection from '../../components/home/ForYouSection';
@@ -173,7 +174,7 @@ const styles = StyleSheet.create({
     zIndex: 16,
   },
   logo: {
-    width: 140,
+    width: 120,
     height: 42,
     borderRadius: theme.borderRadius.s16,
     marginRight: theme.spacing.s12,

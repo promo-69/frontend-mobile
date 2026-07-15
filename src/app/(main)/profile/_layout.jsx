@@ -51,7 +51,7 @@ export default function ProfileLayout() {
       <Stack.Screen
         name="personal-data"
         options={{
-          title: 'Configuración de datos',
+          title: 'Datos Personales',
           gestureEnabled: true,
         }}
       />
