@@ -15,7 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Logo from '../../assets/images/logo-cineflix-2.png';
 import MovieCarousel from '../../components/home/MovieCarousel';
 import MainCarousel from '../../components/home/MainCarousel';
-import ForYouSection from '../../components/home/ForYouSection'
+import ForYouSection from '../../components/home/ForYouSection';
 import { theme } from '../../constants';
 import { useAuth } from '../../context/AuthContext';
 import { getEvents } from '../../services/events.service';
@@ -23,6 +23,7 @@ import {
   getMoviesBillboard,
   getUpcomingMovies,
 } from '../../services/movies.service';
+import ChatAssistant from '../../components/assistant/ChatAssistant';
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -142,6 +143,8 @@ export default function HomeScreen() {
           }
         />
       </ScrollView>
+
+      <ChatAssistant />
     </SafeAreaView>
   );
 }
