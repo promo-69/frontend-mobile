@@ -14,14 +14,16 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import MovieCarousel from '../../components/home/MovieCarousel';
 import MainCarousel from '../../components/home/MainCarousel';
-import ForYouSection from '../../components/home/ForYouSection'
+import ForYouSection from '../../components/home/ForYouSection';
 import { theme } from '../../constants';
+import Logo from '../../assets/images/logo-cineflix-2.png';
 import { useAuth } from '../../context/AuthContext';
 import { getEvents } from '../../services/events.service';
 import {
   getMoviesBillboard,
   getUpcomingMovies,
 } from '../../services/movies.service';
+import ChatAssistant from '../../components/assistant/ChatAssistant';
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -67,8 +69,9 @@ export default function HomeScreen() {
       {/* Header */}
       <View style={styles.header}>
         <Image
-          source={require('../../assets/images/android-icon-foreground.png')}
+          source={Logo}
           style={styles.logo}
+          contentFit="fill"
         />
 
         {/* Botón Ingresar */}
@@ -140,6 +143,8 @@ export default function HomeScreen() {
           }
         />
       </ScrollView>
+
+      <ChatAssistant />
     </SafeAreaView>
   );
 }
@@ -168,8 +173,8 @@ const styles = StyleSheet.create({
     zIndex: 16,
   },
   logo: {
-    width: 50,
-    height: 50,
+    width: 140,
+    height: 42,
     borderRadius: theme.borderRadius.s16,
     marginRight: theme.spacing.s12,
   },
