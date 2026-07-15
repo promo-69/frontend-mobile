@@ -2,7 +2,7 @@ import api from './api';
 
 /**
  *
- * @returns {Promise<Array>} métodos de pago con sus cuentas destino.
+ * @returns {Promise<Array>}
  */
 export const getPaymentOptions = async () => {
   const response = await api.get('/payments/options');
@@ -10,12 +10,10 @@ export const getPaymentOptions = async () => {
 };
 
 /**
- * Extrae, de la respuesta de getPaymentOptions, las cuentas destino asociadas
- * a un método de pago concreto (por su ID numérico).
- *
- * @param {Array} options - respuesta de getPaymentOptions()
- * @param {number} paymentMethodId - ID del método (PAYMENT_METHOD del backend)
- * @returns {Array} cuentas destino ({ id, bank, currency, payment_details, ... })
+
+ * @param {Array} options
+ * @param {number} paymentMethodId
+ * @returns {Array}
  */
 export const getAccountsForMethod = (options, paymentMethodId) => {
   if (!Array.isArray(options)) return [];
