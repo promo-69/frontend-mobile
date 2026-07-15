@@ -17,7 +17,6 @@ import MovieCarousel from '../../components/home/MovieCarousel';
 import MainCarousel from '../../components/home/MainCarousel';
 import ForYouSection from '../../components/home/ForYouSection';
 import { theme } from '../../constants';
-import Logo from '../../assets/images/logo-cineflix-2.png';
 import { useAuth } from '../../context/AuthContext';
 import { getEvents } from '../../services/events.service';
 import {
