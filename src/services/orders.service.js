@@ -4,7 +4,7 @@ import api from './api';
  * Paso 1 del flujo de compra.
  * Abre una sesión de compra en Redis (TTL 10 min).
  * Debe llamarse antes de checkout.
- * @param {number} cinemaId  - ID de la sucursal
+ * @param {number} cinemaId
  */
 export const createQuote = async (cinemaId) => {
   const response = await api.post('/orders/quote', { cinema: cinemaId });
@@ -26,15 +26,21 @@ export const processCheckout = async (tickets, concessions) => {
 };
 
 /**
- * Paso 3 del flujo de compra.
- * Registra el pago de la orden activa en sesión.
- * El backend genera el QR JWT y emite payment_success por Socket.io.
+ * Paso 3 del flujo de compra (arquitectura ASÍNCRONA).
  *
- * @param {{ payment_method, amount, currency?, reference_number? }} paymentData
- * @returns {Object} orderData con qr_code y order_status
+ * El endpoint recibe un ARREGLO de pagos (permite pagos divididos, ej. mitad
+ * en Cinepuntos y mitad en transferencia). El backend hace validaciones
+ * estructurales, ENCOLA el pago en un worker y responde de inmediato con un
+ * mensaje ("Se está procesando el pago" o "Se está realizando el pago" cuando
+ * hay un POS involucrado).
+ *
+ * @param {Array<object>|object} payments - Arreglo de pagos (o un solo pago;
+ *   se normaliza a arreglo). Se recomienda siempre enviar arreglo.
+ * @returns {{ message: string }} Confirmación de que el pago se está procesando.
  */
-export const registerPayment = async (paymentData) => {
-  const response = await api.post('/orders/payments', paymentData);
+export const registerPayment = async (payments) => {
+  const body = Array.isArray(payments) ? payments : [payments];
+  const response = await api.post('/orders/payments', body);
   return response.data.data;
 };
 
