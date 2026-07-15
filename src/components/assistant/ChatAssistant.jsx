@@ -13,7 +13,6 @@ import {
   Dimensions,
 } from 'react-native';
 import { X, Mic, Send } from 'lucide-react-native';
-import * as ExpoSpeechRecognition from 'expo-speech-recognition';
 import { sendAssistantMessage } from '../../services/assistant.service';
 import { getCinemasList } from '../../services/info.service';
 import robotAvatar from '../../assets/images/robotIA.png';
@@ -44,6 +43,7 @@ export default function ChatAssistant() {
   const scrollViewRef = useRef(null);
   const bounceAnim = useRef(new Animated.Value(0)).current;
   const pulseAnim = useRef(new Animated.Value(1)).current;
+  const speechRef = useRef(null);
 
   // Auto-scroll al final
   useEffect(() => {
@@ -106,9 +106,12 @@ export default function ChatAssistant() {
   useEffect(() => {
     const checkVoice = async () => {
       try {
-        const available = await ExpoSpeechRecognition.isAvailable();
+        const module = await import('expo-speech-recognition');
+        speechRef.current = module;
+        const available = await module.isAvailable();
         setVoiceAvailable(available);
       } catch {
+        speechRef.current = null;
         setVoiceAvailable(false);
       }
     };
@@ -124,7 +127,10 @@ export default function ChatAssistant() {
           setDbCinemas(data);
         }
       } catch (error) {
-        console.error('No se pudieron cargar los cines para el asistente:', error);
+        console.error(
+          'No se pudieron cargar los cines para el asistente:',
+          error
+        );
       }
     };
     fetchCinemas();
@@ -171,13 +177,21 @@ export default function ChatAssistant() {
 
   const handleVoiceInput = async () => {
     if (isListening) {
-      ExpoSpeechRecognition.stopListening();
+      speechRef.current?.stopListening();
       setIsListening(false);
       return;
     }
 
+    if (!speechRef.current) {
+      Alert.alert(
+        'Voz no disponible',
+        'El reconocimiento de voz no está disponible en este entorno. Puedes escribir tu mensaje.'
+      );
+      return;
+    }
+
     try {
-      const permission = await ExpoSpeechRecognition.requestPermissionsAsync();
+      const permission = await speechRef.current.requestPermissionsAsync();
       if (!permission.granted) {
         Alert.alert(
           'Permiso requerido',
@@ -188,19 +202,19 @@ export default function ChatAssistant() {
 
       setIsListening(true);
 
-      ExpoSpeechRecognition.addListener('result', (event) => {
+      speechRef.current.addListener('result', (event) => {
         const transcript = event.results[0]?.transcript;
         if (transcript) {
           setInput((prev) => (prev ? `${prev} ${transcript}` : transcript));
         }
       });
 
-      ExpoSpeechRecognition.addListener('end', () => {
+      speechRef.current.addListener('end', () => {
         setIsListening(false);
       });
 
-      ExpoSpeechRecognition.startListening({
-        lang: 'es-VE',
+      speechRef.current.startListening({
+        lang: 'es-ES',
         interimResults: false,
         maxAlternatives: 1,
       });
@@ -333,7 +347,9 @@ export default function ChatAssistant() {
                     {dbCinemas.map((cinema) => (
                       <TouchableOpacity
                         key={cinema.id}
-                        onPress={() => handleSelectCinema(cinema.id, cinema.name)}
+                        onPress={() =>
+                          handleSelectCinema(cinema.id, cinema.name)
+                        }
                         style={styles.cinemaButton}
                       >
                         <Text style={styles.cinemaButtonText}>
@@ -439,9 +455,7 @@ export default function ChatAssistant() {
       {/* Burbuja "Hola!" */}
       {showBubble && !isOpen && (
         <Animated.View style={styles.bubble}>
-          <Text style={styles.bubbleText}>
-            ¡Hola! ¿Te ayudo con tu compra?
-          </Text>
+          <Text style={styles.bubbleText}>¡Hola! ¿Te ayudo con tu compra?</Text>
         </Animated.View>
       )}
 
