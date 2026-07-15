@@ -1,91 +1,169 @@
-# Welcome to your Expo app 👋
+# Cineflix - Frontend Mobile
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+App movil de Cineflix desarrollada con Expo SDK 54 y React Native.
 
-## Node version
+## Stack
 
- ```bash
-   v22.22.0
+| Tecnologia | Version |
+|-----------|---------|
+| Expo SDK | 54 |
+| React Native | 0.81.5 |
+| React | 19.1.0 |
+| Expo Router | 6 (file-based routing) |
+| Node.js | v22.22.0 |
+| Yarn | 4.13.0 |
+
+## Requisitos previos
+
+- Node.js v22.22.0
+- Yarn 4.13.0 (se instala automaticamente via corepack)
+- Cuenta de Expo (para EAS builds)
+
+## Inicio rapido
+
+1. Clonar y entrar a la carpeta
+
+   ```bash
+   git clone <URL_DEL_REPOSITORIO>
+   cd frontend-mobile
    ```
 
-## Get started
-
-1. Install dependencies
+2. Instalar dependencias
 
    ```bash
    yarn install
    ```
 
-2. Start the app
+3. Configurar variables de entorno
+
+   ```bash
+   cp .env.example .env
+   ```
+
+   Editar `.env` con las URLs del backend (ver [Variables de entorno](#variables-de-entorno)).
+
+4. Levantar el servidor de desarrollo
 
    ```bash
    yarn start
    ```
 
-In the output, you'll find options to open the app in a
+   Se abrira el servidor de Metro y mostrara un QR code.
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+## Variables de entorno
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+| Variable | Descripcion |
+|----------|-------------|
+| `EXPO_PUBLIC_DEV_URL` | URL base del backend en desarrollo |
+| `EXPO_PUBLIC_PROD_URL` | URL base del backend en produccion |
 
-## Get a fresh project
+La app selecciona automaticamente la URL segun el modo:
 
-When you're ready, run:
+- `yarn start` usa `EXPO_PUBLIC_DEV_URL` (`__DEV__ = true`)
+- EAS build (preview/production) usa `EXPO_PUBLIC_PROD_URL` (`__DEV__ = false`)
 
-```bash
-npm run reset-project
+Los sockets derivan la URL del mismo `API_URL`, extrayendo solo el host.
+
+## Ejecutar la app: Expo Go vs Development Build
+
+`yarn start` levanta el bundler de Metro. Puedes escanear el QR con **Expo Go** o con un **development build** - ambos se conectan al mismo servidor.
+
+### Con Expo Go (rapido, para pruebas basicas)
+
+1. Instalar [Expo Go](https://expo.dev/go) en tu celular
+2. Ejecutar `yarn start`
+3. Escanear el QR con Expo Go
+
+**Disponible:** Login, navegacion, peliculas, cines, chat del asistente, compras.
+
+**No disponible:** Reconocimiento de voz del asistente (el boton de microfono no se mostrara).
+
+### Con Development Build (recomendado, funcionalidad completa)
+
+1. Tener una cuenta de Expo y estar logueado
+2. Instalar EAS CLI: `npm i -g eas-cli`
+3. Habilitar corepack: `corepack enable`
+4. Generar el build:
+
+   ```bash
+   eas build --profile development --platform android
+   ```
+
+5. Instalar el `.apk` resultante en tu celular
+6. Ejecutar `yarn start`
+7. Escanear el QR con la app del development build
+
+**Disponible:** Todo incluyendo reconocimiento de voz.
+
+### Cuando usar cada uno
+
+| Situacion | Usa |
+|-----------|-----|
+| Probar un feature rapido, login, UI | Expo Go |
+| Usar reconocimiento de voz, camara, notificaciones push | Development build |
+| Compartir APK con el equipo para testing | `eas build --profile preview` |
+| Build para produccion | `eas build --profile production` |
+
+## Estructura del proyecto
+
+```
+src/
+├── app/                  # Rutas (Expo Router file-based)
+│   ├── (main)/           # Tabs: home, concessions, rewards, purchases, profile, cinemas
+│   ├── (auth)/           # Login, register, forgot-password
+│   ├── (buy)/            # Flujo de compra: tickets, seats, checkout, payment
+│   ├── (staff)/          # Scanner de empleados
+│   └── content/          # Detalle de peliculas/eventos
+├── components/           # Componentes reutilizables
+├── screens/              # Pantallas
+├── services/             # Servicios API (Axios)
+├── context/              # Context providers (Auth, Cart)
+├── hooks/                # Custom hooks
+├── constants/            # Config, storage keys, headers
+├── helper/               # Utilidades (storage, etc.)
+├── utils/                # Funciones auxiliares
+└── assets/               # Imagenes, fuentes, iconos
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## Convenciones
 
-## Learn more
+### Nombres de archivos
 
-To learn more about developing your project with Expo, look at the following resources:
+- **Paginas/rutas**: `camelCase` - `homeScreen.jsx`, `loginScreen.jsx`
+- **Componentes**: `PascalCase` - `MainCarousel.jsx`, `ChatAssistant.jsx`
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+### Imports
 
-## Join the community
+Rutas relativas. No se usan alias (`@`).
 
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
-
-
-
-Commands git
-Clonar el repositorio en la rama development 
-```bash
-git clone <URL_DEL_REPOSITORIO>
-```
-Entrar a la carpeta 
-```bash
-cd frontend-mobile
-```
-Moverse a la rama development para bajar cambios
-```bash
-git checkout development
-```
-Crear y moverse a la nueva rama para trabajar
-```bash
-git checkout -b feature/nombre-de-tu-feature
+```js
+import CustomButton from '../../components/CustomButton';
 ```
 
+## Flujo de trabajo con Git
 
-## Estandarizacion en nombre de archivos:
- 
-- camelCase -> paginas y rutas (minuscula)
-- PascalCase -> componentes (primera en mayuscula)
+1. Clonar en la rama `development`
 
-## Imports
+   ```bash
+   git checkout development
+   ```
 
-Se usarán rutas relativas para importar archivos.
+2. Crear rama feature
 
-Ejemplo:
-../../components/CustomButton
+   ```bash
+   git checkout -b feature/nombre-del-feature
+   ```
 
-No se usarán alias (@).
+3. Hacer push y crear PR contra `development`
+
+## Build con EAS
+
+Perfiles disponibles en `eas.json`:
+
+| Perfil | Comando | Uso |
+|--------|---------|-----|
+| `development` | `eas build --profile development --platform android` | Development build con dev client |
+| `preview` | `eas build --profile preview --platform android` | APK interno para testing |
+| `production` | `eas build --profile production --platform android` | Build para produccion |
+
+Requiere estar logueado: `eas login`
