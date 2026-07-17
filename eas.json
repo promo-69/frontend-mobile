@@ -8,17 +8,22 @@
       "developmentClient": true,
       "distribution": "internal",
       "channel": "development",
-      "corepack": true
+      "corepack": true,
+      "autoIncrement": true,
+      "environment": "development"
     },
     "preview": {
       "distribution": "internal",
       "channel": "preview",
-      "corepack": true
+      "corepack": true,
+      "autoIncrement": true,
+      "enviroment": "preview"
     },
     "production": {
       "autoIncrement": true,
       "channel": "production",
-      "corepack": true
+      "corepack": true,
+      "enviroment": "production"
     }
   },
   "submit": {
