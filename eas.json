@@ -8,17 +8,30 @@
       "developmentClient": true,
       "distribution": "internal",
       "channel": "development",
-      "corepack": true
+      "corepack": true,
+      "autoIncrement": true,
+      "env": {
+        "EXPO_PUBLIC_DEV_URL": "https://backend-jog6.onrender.com/api/v1/test",
+        "EXPO_PUBLIC_PROD_URL": "https://backend-jog6.onrender.com/api/v1"
+      }
     },
     "preview": {
       "distribution": "internal",
       "channel": "preview",
-      "corepack": true
+      "corepack": true,
+      "autoIncrement": true,
+      "env": {
+        "EXPO_PUBLIC_DEV_URL": "https://backend-jog6.onrender.com/api/v1/test",
+        "EXPO_PUBLIC_PROD_URL": "https://backend-jog6.onrender.com/api/v1"
+      }
     },
     "production": {
       "autoIncrement": true,
       "channel": "production",
-      "corepack": true
+      "corepack": true,
+      "env": {
+        "EXPO_PUBLIC_PROD_URL": "https://backend-jog6.onrender.com/api/v1"
+      }
     }
   },
   "submit": {
