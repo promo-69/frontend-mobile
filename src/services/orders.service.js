@@ -2,7 +2,7 @@ import api from './api';
 
 /**
  * Paso 1 del flujo de compra.
- * @param {number} cinemaId
+ * @param {number} cinemaId  - ID de la sucursal
  */
 export const createQuote = async (cinemaId) => {
   const response = await api.post('/orders/quote', { cinema: cinemaId });
@@ -22,6 +22,7 @@ export const processCheckout = async (tickets, concessions) => {
 
 /**
  * Paso 3 del flujo de compra (arquitectura ASÍNCRONA).
+ *
  * @param {Array<object>|object} payments
  * @returns {{ message: string }}
  */
@@ -31,9 +32,8 @@ export const registerPayment = async (payments) => {
   return response.data.data;
 };
 
-// Consulta el estado de la sesión de compra activa (para recuperación).
 export const getSessionState = async () => {
-  const response = await api.get('/orders/session');
+  const response = await api.get('/orders/session', { suppressErrorLog: true });
   return response.data.data;
 };
 
@@ -43,10 +43,16 @@ export const getSessionDetails = async () => {
   return response.data.data;
 };
 
-// Cancela la sesión de compra activa y libera los asientos bloqueados.
 export const cancelSession = async () => {
-  const response = await api.delete('/orders/session');
-  return response.data.data;
+  try {
+    const response = await api.delete('/orders/session', {
+      suppressErrorLog: true,
+    });
+    return response.data.data;
+  } catch (error) {
+    if (error?.response?.status === 404) return null;
+    throw error;
+  }
 };
 
 export const getOrderById = async (orderId) => {

@@ -1,7 +1,6 @@
 import axios from 'axios';
 import { ENV } from '../constants/config';
 import { storageHelper } from '../helper/storage.helper';
-// Crear la instancia base
 const api = axios.create({
   baseURL: ENV.API_URL,
   timeout: 30000,
@@ -11,7 +10,7 @@ const api = axios.create({
   },
 });
 
-//  Interceptor de Peticiones: Inyectar el Bearer Token
+//  Interceptor de Peticiones
 api.interceptors.request.use(
   async (config) => {
     const token = await storageHelper.getAccessToken();
@@ -23,9 +22,8 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Interceptor de Respuestas: Manejo de errores y refresh
 api.interceptors.response.use(
-  (response) => response, // Si la respuesta es exitosa, pasarla tal cual
+  (response) => response,
   async (error) => {
     const originalRequest = error.config;
 
@@ -37,7 +35,7 @@ api.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    if (error.response) {
+    if (error.response && !originalRequest?.suppressErrorLog) {
       console.error('[Axios Error Response]:', {
         url: error.config?.url,
         status: error.response.status,
@@ -45,7 +43,6 @@ api.interceptors.response.use(
       });
     }
 
-    // Si el error es 401 (No autorizado) y no hemos reintentado ya esta petición
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
@@ -56,8 +53,6 @@ api.interceptors.response.use(
           throw new Error('No refresh token available');
         }
 
-        // Intentar renovar el token usando el endpoint
-        // Nota: Usamos axios directamente para evitar bucles infinitos con la instancia 'api'
         const response = await axios.post(
           `${ENV.API_URL}/auth/refresh`,
           {},
@@ -66,7 +61,6 @@ api.interceptors.response.use(
           }
         );
 
-        // Extraer tokens de forma defensiva (varios formatos posibles)
         const res = response.data?.data ?? response.data ?? {};
 
         const accessToken = res?.tokens?.accessToken || null;
@@ -76,8 +70,6 @@ api.interceptors.response.use(
           throw new Error('Refresh response did not include an access token');
         }
 
-        // Persistir tokens y datos frescos del usuario (loyaltyPoints, etc.)
-        // `res` = response.data.data → { user, tokens: { accessToken, refreshToken } }
         const freshUser = res?.user ?? null;
         await storageHelper.saveSession(
           accessToken,
@@ -85,15 +77,12 @@ api.interceptors.response.use(
           freshUser
         );
 
-        // Actualizar el header de la petición original y reintentar
         originalRequest.headers = originalRequest.headers || {};
         originalRequest.headers.Authorization = `Bearer ${accessToken}`;
         return api(originalRequest);
       } catch (refreshError) {
-        // Si el refresh también falla, limpiar sesión y forzar logout
         console.error('Error al intentar refrescar el token:', refreshError);
         await storageHelper.clearSession();
-        // Aquí podrías disparar un evento global o redirección al login
         return Promise.reject(refreshError);
       }
     }
@@ -102,14 +91,13 @@ api.interceptors.response.use(
   }
 );
 
-// Function to check the health of the backend service
 export const checkHealth = async () => {
   try {
     const response = await axios.get(ENV.API_URL);
-    return response.data; // Return the response data if successful
+    return response.data;
   } catch (error) {
     console.error('Health check failed:', error);
-    throw error; // Re-throw the error for further handling
+    throw error;
   }
 };
 
