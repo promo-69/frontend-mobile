@@ -1,10 +1,11 @@
 import React from 'react';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { PurchaseSessionProvider } from '../../context/PurchaseSessionContext';
 
 export default function BuyLayout() {
   return (
-    <>
+    <PurchaseSessionProvider>
       <StatusBar style="light" />
       <Stack
         screenOptions={{
@@ -16,7 +17,8 @@ export default function BuyLayout() {
           animation: 'slide_from_right',
         }}
       >
-        <Stack.Screen name="tickets" options={{ title: ' Boletos ' }} />
+        {/* Orden del flujo: tipo de boleto → asientos → ... */}
+        <Stack.Screen name="tickets" options={{ title: 'Tipo de Boleto' }} />
         <Stack.Screen
           name="selectSeats"
           options={{ title: 'Selecciona tus Asientos' }}
@@ -39,6 +41,6 @@ export default function BuyLayout() {
           }}
         />
       </Stack>
-    </>
+    </PurchaseSessionProvider>
   );
 }

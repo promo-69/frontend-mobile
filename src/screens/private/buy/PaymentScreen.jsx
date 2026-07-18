@@ -25,6 +25,7 @@ import {
     getAccountsForMethod,
     getPaymentOptions,
 } from '../../../services/payments.service';
+import { usePurchaseSession } from '../../../context/PurchaseSessionContext';
 import { usePaymentEvents } from '../../../hooks/buy/usePaymentEvents';
 import { usersService } from '../../../services/users.service';
 
@@ -291,6 +292,9 @@ export default function PaymentScreen() {
     expiresAt: expiresAtParam,
   } = useLocalSearchParams();
   const { clearCart } = useCart();
+
+  const { endSession } = usePurchaseSession();
+
   const insets = useSafeAreaInsets();
 
   const totalVes = Number(total || 0);
@@ -496,6 +500,9 @@ export default function PaymentScreen() {
     if (settledRef.current) return;
     settledRef.current = true;
     stopProcessing();
+
+    endSession();
+
     await clearCart();
     const method = METHODS.find((m) => m.key === selectedMethod);
     router.replace({
