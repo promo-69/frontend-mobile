@@ -49,15 +49,20 @@ export default function TicketsQuantityScreen() {
   }, [cart.products.length, cart.cinemaId, cinemaId, clearProducts]);
 
   // 3. Traer la matriz de precios para listar las categorías de audiencia.
-  //    Esperamos a que quoteReady sea true para asegurar que el backend
-  //    tenga la sesión de compra activa y retorne los precios.
+  //    IMPORTANTE: el backend SOLO incluye 'pricing.pricing_matrix' en el
+  //    seat-map cuando existe una quote activa para el usuario. Por eso hay que
+  //    esperar a `quoteReady` antes de pedirlo (si no, llega vacío y sale
+  //    "No hay tarifas configuradas"). La web hace lo mismo: quote primero,
+  //    seat-map después.
   useEffect(() => {
     if (!showtimeId || !quoteReady) {
       if (showtimeId && !quoteReady) setLoading(true);
       return;
     }
+    if (!quoteReady) return; // esperamos a que la sesión de compra exista
     let cancelled = false;
     (async () => {
+      setLoading(true);
       try {
         const seatData = await getShowtimeSeats(showtimeId);
         const clean = Array.isArray(seatData) ? seatData[0] : seatData;
