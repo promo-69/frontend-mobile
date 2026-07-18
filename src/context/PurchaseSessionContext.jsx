@@ -25,12 +25,15 @@ export function PurchaseSessionProvider({ children }) {
   const initLockRef = useRef(false);
 
   const _openQuote = useCallback(async (cid) => {
-    // Limpieza robusta previa (equivalente a deleteOrderSessionWithRetries en web)
-    await cancelSessionWithRetries().catch(() => {});
     try {
+      // Intentamos crear directo. En un inicio limpio no hay sesión previa, así
+      // que NO llamamos a DELETE /orders/session (evita el 404 "No existe una
+      // sesión de compra activa" que ensuciaba la consola en rojo).
       await createQuote(cid);
     } catch (e) {
       const status = e?.response?.status;
+      // Solo si de verdad había una sesión colgada (409/400) la limpiamos y
+      // reintentamos una vez (equivalente al deleteOrderSessionWithRetries web).
       if (status === 409 || status === 400) {
         await cancelSessionWithRetries().catch(() => {});
         await new Promise((r) => setTimeout(r, 400));
@@ -41,6 +44,11 @@ export function PurchaseSessionProvider({ children }) {
     }
   }, []);
 
+  /**
+   * Inicializa (o reutiliza) la sesión de compra para una sucursal.
+   * Idempotente: si ya está lista para esa sucursal, no hace nada.
+   * Lo llama la PRIMERA pantalla del flujo (selección de boletos).
+   */
   const initSession = useCallback(
     async (cinemaId) => {
       const cid = Number(cinemaId);
@@ -83,6 +91,7 @@ export function PurchaseSessionProvider({ children }) {
     await cancelSessionWithRetries().catch(() => {});
   }, []);
 
+  // Al desmontar el provider (salir de todo el grupo (buy)) liberamos la sesión.
   useEffect(() => {
     return () => {
       cancelSessionWithRetries().catch(() => {});
