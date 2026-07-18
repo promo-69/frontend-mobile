@@ -17,13 +17,13 @@
       "channel": "preview",
       "corepack": true,
       "autoIncrement": true,
-      "enviroment": "preview"
+      "environment": "preview"
     },
     "production": {
       "autoIncrement": true,
       "channel": "production",
       "corepack": true,
-      "enviroment": "production"
+      "environment": "production"
     }
   },
   "submit": {

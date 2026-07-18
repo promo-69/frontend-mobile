@@ -49,9 +49,11 @@ export default function TicketsQuantityScreen() {
   }, [cart.products.length, cart.cinemaId, cinemaId, clearProducts]);
 
   // 3. Traer la matriz de precios para listar las categorías de audiencia.
+  //    Esperamos a que quoteReady sea true para asegurar que el backend
+  //    tenga la sesión de compra activa y retorne los precios.
   useEffect(() => {
-    if (!showtimeId) {
-      setLoading(false);
+    if (!showtimeId || !quoteReady) {
+      if (showtimeId && !quoteReady) setLoading(true);
       return;
     }
     let cancelled = false;
@@ -81,7 +83,7 @@ export default function TicketsQuantityScreen() {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [showtimeId]);
+  }, [showtimeId, quoteReady]);
 
   // Categorías de audiencia únicas + precio representativo (el precio final real
   // depende del asiento y se confirma en el checkout).
