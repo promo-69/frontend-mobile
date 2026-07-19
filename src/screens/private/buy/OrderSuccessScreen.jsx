@@ -98,8 +98,24 @@ function DetailRow({ icon, label, value }) {
 // ─── Pantalla ─────────────────────────────────────────────────────────────────
 export default function OrderSuccessScreen() {
   const router = useRouter();
-  const { qrCode, orderId, total, paymentMethod, isPoints, pointsUsed } =
-    useLocalSearchParams();
+  const {
+    qrCode,
+    orderId,
+    total,
+    paymentMethod,
+    isPoints,
+    pointsUsed,
+    paymentsSummary,
+  } = useLocalSearchParams();
+
+  // Desglose de métodos de pago (pago dividido o simple)
+  let paymentsBreakdown = [];
+  try {
+    paymentsBreakdown = paymentsSummary ? JSON.parse(paymentsSummary) : [];
+    if (!Array.isArray(paymentsBreakdown)) paymentsBreakdown = [];
+  } catch {
+    paymentsBreakdown = [];
+  }
   const totalAmount = Number(total || 0);
   const paidWithPoints = isPoints === '1';
   const pointsRedeemed = Number(pointsUsed || 0);
@@ -167,22 +183,45 @@ export default function OrderSuccessScreen() {
         <View style={styles.detailsCard}>
           <AppText style={styles.detailsTitle}>Detalle de compra</AppText>
 
-          <DetailRow
-            icon="💳"
-            label="Método de pago"
-            value={paymentMethod || '—'}
-          />
-          <View style={styles.divider} />
-          {paidWithPoints ? (
+          {paymentsBreakdown.length > 0 ? (
+            paymentsBreakdown.map((pago, index) => (
+              <View key={`${pago.label}-${index}`}>
+                <DetailRow
+                  icon={pago.icon || '💳'}
+                  label={
+                    paymentsBreakdown.length > 1
+                      ? `Método ${index + 1}: ${pago.label}`
+                      : `Método de pago: ${pago.label}`
+                  }
+                  value={
+                    pago.pts
+                      ? `${fmtPts(pago.pts)} · ${fmt(Number(pago.amountVes) || 0)}`
+                      : fmt(Number(pago.amountVes) || 0)
+                  }
+                />
+                <View style={styles.divider} />
+              </View>
+            ))
+          ) : (
             <>
               <DetailRow
-                icon="🎟️"
-                label="CinePuntos canjeados"
-                value={fmtPts(pointsRedeemed)}
+                icon="💳"
+                label="Método de pago"
+                value={paymentMethod || '—'}
               />
               <View style={styles.divider} />
+              {paidWithPoints ? (
+                <>
+                  <DetailRow
+                    icon="🎟️"
+                    label="CinePuntos canjeados"
+                    value={fmtPts(pointsRedeemed)}
+                  />
+                  <View style={styles.divider} />
+                </>
+              ) : null}
             </>
-          ) : null}
+          )}
           <DetailRow icon="💰" label="Total pagado" value={fmt(totalAmount)} />
           <View style={styles.divider} />
           <DetailRow
@@ -239,7 +278,6 @@ const styles = StyleSheet.create({
     paddingTop: spacing.s24,
     paddingBottom: spacing.s32,
     alignItems: 'center',
-    // gap simulado con marginBottom en cada sección
   },
 
   // Check
