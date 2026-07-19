@@ -121,7 +121,7 @@ export default function SelectSeats() {
       onSeatsReleased: handleSeatsReleased,
       onQuoteExpired: handleQuoteExpired,
     },
-    // Solo habilitamos el tiempo real cuando la quote está lista.
+    // Solo se habilita el tiempo real cuando la quote está lista.
     quoteReady
   );
 
@@ -147,6 +147,13 @@ export default function SelectSeats() {
     });
     return () => sub.remove();
   }, [leave]);
+
+  const cartPricingRef = useRef(cart.pricingMatrix);
+  cartPricingRef.current = cart.pricingMatrix;
+  const updateTicketsRef = useRef(updateTickets);
+  updateTicketsRef.current = updateTickets;
+  const updateCartDetailsRef = useRef(updateCartDetails);
+  updateCartDetailsRef.current = updateCartDetails;
 
   useEffect(() => {
     async function loadData() {
@@ -185,15 +192,15 @@ export default function SelectSeats() {
         const pricingMatrix =
           cleanSeatsObj?.pricing?.pricing_matrix ??
           cleanSeatsObj?.pricing?.matrix ??
-          cart.pricingMatrix ??
+          cartPricingRef.current ??
           [];
 
         setMovie(cleanMovie);
         setShowtime(cleanShowtime);
         setSeatsData(cleanSeatsObj?.seats || []);
-        updateTickets([]);
+        updateTicketsRef.current([]);
 
-        updateCartDetails(cleanMovie, cleanShowtime, {
+        updateCartDetailsRef.current(cleanMovie, cleanShowtime, {
           cinemaId: Number(cinemaId),
           booking: bookingId,
           pricingMatrix,
@@ -245,6 +252,8 @@ export default function SelectSeats() {
         try {
           await lockSeat(seatId);
         } catch (err) {
+          // Si la quote expiró en Redis, la recreamos y reintentamos UNA vez
+          // en lugar de dejar al usuario bloqueado sin poder continuar.
           const msg = err?.message || '';
           const sessionGone = /sesión de compra|expirad/i.test(msg);
           if (!sessionGone) throw err;
@@ -256,6 +265,8 @@ export default function SelectSeats() {
         toggleSeat(seatId, { ...seatData, booking: bookingId });
       } catch (err) {
         const msg = err?.message || '';
+        // Solo se marca el asiento como ocupado si el error es del asiento;
+        // un problema de sesión no significa que el asiento esté tomado.
         if (!/sesión de compra|expirad/i.test(msg)) {
           setLiveSeatStatus((prev) => ({ ...prev, [seatId]: 'occupied' }));
           Alert.alert(

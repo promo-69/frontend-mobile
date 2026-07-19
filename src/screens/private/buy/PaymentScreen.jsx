@@ -53,6 +53,9 @@ const PAYMENT_METHOD_ID = {
 };
 
 // ─── Formulario de métodos bancarios (Pago Móvil / Transferencia) ────────────
+// El backend exige que se indique a QUÉ cuenta destino de la empresa se pagó
+// (campo `bank` = ID del banco de esa cuenta) más el número de referencia.
+// Las cuentas destino se obtienen de GET /payments/options.
 function BankMethodForm({
   accounts,
   loadingAccounts,
@@ -126,7 +129,7 @@ function BankMethodForm({
         </View>
       )}
 
-      <AppText variant="caption" style={[styles.formLabel, { marginTop: 4 }]}>
+      <AppText variant="caption" style={[styles.formLabel, styles.formLabelSpaced]}>
         DETALLES DE LA OPERACIÓN
       </AppText>
       <FormField
@@ -326,7 +329,7 @@ export default function PaymentScreen() {
           setExchangeRates(rates);
           return;
         }
-      } catch (e) {
+      } catch {
         // Sin sesión activa: probamos el otro endpoint.
       }
       // 2. Respaldo con /orders/session/details
@@ -338,7 +341,7 @@ export default function PaymentScreen() {
         if (!cancelled && rates && rates[PTS_CURRENCY_ID]) {
           setExchangeRates(rates);
         }
-      } catch (e) {
+      } catch {
         // No es crítico: la UI maneja la ausencia de tasa.
       }
     })();
@@ -346,7 +349,7 @@ export default function PaymentScreen() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [exchangeRates]);
 
   const usdRate = exchangeRates?.[USD_CURRENCY_ID]?.rate;
   const totalUsd = usdRate ? totalVes / usdRate : null;
@@ -421,6 +424,8 @@ export default function PaymentScreen() {
   const [reference, setReference] = useState('');
   const [selectedAccountId, setSelectedAccountId] = useState(null);
 
+  // `submitting`: POST en vuelo. `processing`: ya se aceptó (HTTP 200) y estamos
+  // esperando el dictamen final por WebSocket (payment_completed/failed/...).
   const [submitting, setSubmitting] = useState(false);
   const [processing, setProcessing] = useState(false);
   const processingTimeoutRef = useRef(null);
@@ -447,7 +452,7 @@ export default function PaymentScreen() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [exchangeRates]);
 
   // Cuentas destino disponibles para el método bancario seleccionado.
   const accounts =
@@ -496,7 +501,8 @@ export default function PaymentScreen() {
     settledRef.current = true;
     stopProcessing();
 
-    // El pago se completó: el backend ya eliminó la sesión de compra en Redis
+    // El pago se completó: el backend ya eliminó la sesión de compra en Redis,
+    // así que no hace falta (ni tiene sentido) el DELETE /orders/session.
     endSession({ skipServerCancel: true });
 
     await clearCart();
@@ -589,7 +595,7 @@ export default function PaymentScreen() {
         );
         return false;
       }
-      // Validamos con la tasa de Cinepuntos del backend
+      // Validamos con la TASA REAL de Cinepuntos del backend (no asumimos 1:1).
       // Cada punto vale `ptsRate` Bs; los puntos deben cubrir el total.
       const ptsRate = Number(exchangeRates?.[PTS_CURRENCY_ID]?.rate) || 0;
       if (ptsRate <= 0) {
@@ -944,6 +950,9 @@ const styles = StyleSheet.create({
     fontFamily: theme.typography.family.primary.bold,
     letterSpacing: 0.8,
     marginTop: spacing.s4,
+  },
+  formLabelSpaced: {
+    marginTop: 4,
   },
   fieldWrapper: { gap: spacing.s4 },
   fieldLabel: { color: colors.textSecondary },

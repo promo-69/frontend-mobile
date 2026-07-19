@@ -12,12 +12,11 @@ import {
   Alert,
   Dimensions,
 } from 'react-native';
-import { X, Mic, Send } from 'lucide-react-native';
+import { X, Mic } from 'lucide-react-native';
 import { requireOptionalNativeModule } from 'expo-modules-core';
 import { sendAssistantMessage } from '../../services/assistant.service';
 import { getCinemasList } from '../../services/info.service';
 import robotAvatar from '../../assets/images/robotIA.png';
-import { theme } from '../../constants';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -79,7 +78,7 @@ export default function ChatAssistant() {
     } else {
       bounceAnim.setValue(0);
     }
-  }, [isLoading]);
+  }, [isLoading, bounceAnim]);
 
   // Animación de pulse para micrófono
   useEffect(() => {
@@ -101,11 +100,14 @@ export default function ChatAssistant() {
     } else {
       pulseAnim.setValue(1);
     }
-  }, [isListening]);
+  }, [isListening, pulseAnim]);
 
   // Verificar disponibilidad de voz
   useEffect(() => {
     const checkVoice = async () => {
+      // Si el módulo nativo no está compilado en este binario (Expo Go, o un dev
+      // build sin recompilar), NO importamos el paquete. Eso evita el error rojo:
+      // requireOptionalNativeModule devuelve null en vez de lanzar.
       const nativeVoice = requireOptionalNativeModule('ExpoSpeechRecognition');
       if (!nativeVoice) {
         speechRef.current = null;
@@ -387,10 +389,8 @@ export default function ChatAssistant() {
                 <Animated.View
                   style={[
                     styles.loadingDot,
-                    {
-                      transform: [{ translateY: bounceAnim }],
-                      marginHorizontal: 3,
-                    },
+                    styles.loadingDotMiddle,
+                    { transform: [{ translateY: bounceAnim }] },
                   ]}
                 />
                 <Animated.View
@@ -669,6 +669,9 @@ const styles = StyleSheet.create({
     height: 6,
     borderRadius: 3,
     backgroundColor: '#9CA3AF',
+  },
+  loadingDotMiddle: {
+    marginHorizontal: 3,
   },
   inputArea: {
     flexDirection: 'row',
