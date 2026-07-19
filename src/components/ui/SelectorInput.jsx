@@ -31,7 +31,7 @@ export const SelectorInput = ({
           <AppText variant="body" style={styles.triggerText}>
             {selectedValue}
           </AppText>
-          {/* Icono de Lucide con rotación si está abierto */}
+       
           <ChevronDown
             size={theme.spacing.s16}
             color={theme.colors.primary}
@@ -84,12 +84,13 @@ const styles = StyleSheet.create({
     width: 70,
     height: 48,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
+    borderColor: 'rgba(255, 255, 255, 0.6)',
     borderRadius: 8,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 4,
+    backgroundColor: 'transparent',
   },
   triggerText: {
     color: theme.colors.textPrimary,
@@ -112,7 +113,7 @@ const styles = StyleSheet.create({
     paddingVertical: theme.spacing.s12,
     alignItems: 'center',
     borderBottomWidth: 0.5,
-    borderBottomColor: theme.colors.border,
+    borderBottomColor: 'rgba(255, 255, 255, 0.6)',
   },
   optionText: {
     color: theme.colors.textPrimary,
