@@ -3,7 +3,6 @@ import api from './api';
 /**
  * Paso 1 del flujo de compra.
  * Abre una sesión de compra en Redis (TTL 10 min).
- * Debe llamarse antes de checkout.
  * @param {number} cinemaId  - ID de la sucursal
  */
 export const createQuote = async (cinemaId) => {
@@ -15,10 +14,6 @@ export const createQuote = async (cinemaId) => {
  * Paso 2 del flujo de compra.
  * Envía los tickets y concesiones al backend para calcular precios reales
  * (modificadores, impuestos, tipo de cambio) y crear la orden en BD.
- *
- * @param {Array} tickets
- * @param {Array} concessions
- * @returns {{ subtotal_base_currency, total_amount_base_currency }}
  */
 export const processCheckout = async (tickets, concessions) => {
   const response = await api.post('/orders/checkout', { tickets, concessions });
@@ -28,10 +23,6 @@ export const processCheckout = async (tickets, concessions) => {
 /**
  * Paso 3 del flujo de compra.
  * Registra el pago de la orden activa en sesión.
- * El backend genera el QR JWT y emite payment_success por Socket.io.
- *
- * @param {{ payment_method, amount, currency?, reference_number? }} paymentData
- * @returns {Object} orderData con qr_code y order_status
  */
 export const registerPayment = async (paymentData) => {
   const response = await api.post('/orders/payments', paymentData);
@@ -44,7 +35,7 @@ export const getSessionState = async () => {
   return response.data.data;
 };
 
-// Consulta el detalle completo de la sesión activa (incluye orden y datos de moneda).
+// Consulta el detalle completo de la sesión activa.
 export const getSessionDetails = async () => {
   const response = await api.get('/orders/session/details');
   return response.data.data;
@@ -58,11 +49,32 @@ export const cancelSession = async () => {
 
 /**
  * Detalle de una orden puntual (GET /orders/:id).
- * Si la orden viene de un canje de CinePuntos, el backend adjunta
- * `redemption` (premio canjeado) y `vouchers` (boleto en blanco / 2x1
- * emitidos), para poder recuperarlos después desde "Mis Compras".
  */
 export const getOrderById = async (orderId) => {
   const response = await api.get(`/orders/${orderId}`);
   return response.data.data;
+};
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+/**
+ * Cancela la sesión de compra reintentando ante fallos transitorios.
+ * @param {number} retries
+ * @param {number} backoffMs
+ */
+export const cancelSessionWithRetries = async (retries = 3, backoffMs = 800) => {
+  let lastError = null;
+
+  for (let attempt = 1; attempt <= retries; attempt += 1) {
+    try {
+      return await cancelSession();
+    } catch (error) {
+      if (error?.response?.status === 404) return null;
+      lastError = error;
+      if (attempt === retries) break;
+      await sleep(backoffMs * attempt);
+    }
+  }
+
+  throw lastError;
 };

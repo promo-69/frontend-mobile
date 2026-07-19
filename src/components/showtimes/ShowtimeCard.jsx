@@ -62,7 +62,7 @@ export default function ShowtimeCard({ showtime, contentId, type, cinemaId }) {
     // Pasamos showtimeId, el id del contenido, el tipo y la sucursal (cinemaId)
     // para que el flujo de compra disponga de la sucursal desde el inicio.
     router.push({
-      pathname: '/(buy)/selectSeats',
+      pathname: '/(buy)/tickets',
       params: {
         showtimeId: showtime.id,
         movieId: contentId,

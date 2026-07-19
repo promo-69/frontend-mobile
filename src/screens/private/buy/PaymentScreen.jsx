@@ -21,6 +21,12 @@ import {
     getSessionState,
     registerPayment,
 } from '../../../services/orders.service';
+import {
+    getAccountsForMethod,
+    getPaymentOptions,
+} from '../../../services/payments.service';
+import { usePurchaseSession } from '../../../context/PurchaseSessionContext';
+import { usePaymentEvents } from '../../../hooks/buy/usePaymentEvents';
 import { usersService } from '../../../services/users.service';
 
 const { colors, spacing, borderRadius } = theme;
@@ -46,107 +52,92 @@ const PAYMENT_METHOD_ID = {
   points: 5,
 };
 
-const BANK_INFO = {
-  bank: 'Banco Mercantil',
-  account: '0105-0000-00-0000000000',
-  rif: 'J-12345678-9',
-};
+// ─── Formulario de métodos bancarios (Pago Móvil / Transferencia) ────────────
+// El backend exige que se indique a QUÉ cuenta destino de la empresa se pagó
+// (campo `bank` = ID del banco de esa cuenta) más el número de referencia.
+// Las cuentas destino se obtienen de GET /payments/options.
+function BankMethodForm({
+  accounts,
+  loadingAccounts,
+  selectedAccountId,
+  onSelectAccount,
+  reference,
+  onChangeReference,
+}) {
+  const selected = accounts.find((a) => a.id === selectedAccountId) || null;
+  const details = Array.isArray(selected?.payment_details)
+    ? selected.payment_details
+    : [];
 
-// ─── Formularios (sin cambios) ──────────────────────────────────────────────
-function MobilePaymentForm({ data, onChange }) {
   return (
     <View style={styles.formSection}>
-      <View style={styles.bankCard}>
-        <AppText variant="caption" style={styles.bankCardLabel}>
-          DATOS DE PAGO
-        </AppText>
-        <AppText variant="smallText" style={styles.bankCardField}>
-          <AppText style={styles.bankFieldKey}>Banco: </AppText>
-          {BANK_INFO.bank}
-        </AppText>
-        <AppText variant="smallText" style={styles.bankCardField}>
-          <AppText style={styles.bankFieldKey}>Cuenta: </AppText>
-          {BANK_INFO.account}
-        </AppText>
-        <AppText variant="smallText" style={styles.bankCardField}>
-          <AppText style={styles.bankFieldKey}>RIF: </AppText>
-          {BANK_INFO.rif}
-        </AppText>
-      </View>
       <AppText variant="caption" style={styles.formLabel}>
+        CUENTA DESTINO
+      </AppText>
+
+      {loadingAccounts ? (
+        <View style={styles.bankCard}>
+          <ActivityIndicator size="small" color={colors.primary} />
+        </View>
+      ) : accounts.length === 0 ? (
+        <View style={styles.bankCard}>
+          <AppText style={styles.estimateNote}>
+            No hay cuentas destino disponibles para este método en este momento.
+            Elige otro método de pago.
+          </AppText>
+        </View>
+      ) : (
+        <View style={{ gap: spacing.s8 }}>
+          {accounts.map((acc) => {
+            const active = acc.id === selectedAccountId;
+            const bankName = acc._Banks?.name || `Banco #${acc.bank}`;
+            const currencyCode = acc._Currencies?.code || '';
+            return (
+              <TouchableOpacity
+                key={acc.id}
+                style={[
+                  styles.accountCard,
+                  active && styles.accountCardActive,
+                ]}
+                onPress={() => onSelectAccount(acc.id)}
+                activeOpacity={0.85}
+              >
+                <View style={styles.accountHeaderRow}>
+                  <AppText style={styles.accountBankName}>{bankName}</AppText>
+                  {!!currencyCode && (
+                    <AppText style={styles.accountCurrency}>
+                      {currencyCode}
+                    </AppText>
+                  )}
+                </View>
+                {active &&
+                  details.map((d, i) => (
+                    <AppText
+                      key={`${acc.id}-${i}`}
+                      variant="smallText"
+                      style={styles.bankCardField}
+                    >
+                      <AppText style={styles.bankFieldKey}>
+                        {d.label}:{' '}
+                      </AppText>
+                      {d.value}
+                    </AppText>
+                  ))}
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+      )}
+
+      <AppText variant="caption" style={[styles.formLabel, { marginTop: 4 }]}>
         DETALLES DE LA OPERACIÓN
       </AppText>
       <FormField
-        label="Banco de origen"
-        placeholder="Ej: Banco de Venezuela"
-        value={data.bank}
-        onChangeText={(v) => onChange({ ...data, bank: v })}
-      />
-      <FormField
         label="Número de referencia"
         placeholder="Ej: 12345678"
-        value={data.reference}
-        onChangeText={(v) => onChange({ ...data, reference: v })}
+        value={reference}
+        onChangeText={onChangeReference}
         keyboardType="numeric"
-      />
-      <FormField
-        label="Teléfono emisor"
-        placeholder="Ej: 04121234567"
-        value={data.phone}
-        onChangeText={(v) => onChange({ ...data, phone: v })}
-        keyboardType="phone-pad"
-      />
-    </View>
-  );
-}
-
-function TransferForm({ data, onChange }) {
-  return (
-    <View style={styles.formSection}>
-      <View style={styles.bankCard}>
-        <AppText variant="caption" style={styles.bankCardLabel}>
-          DATOS DE PAGO
-        </AppText>
-        <AppText variant="smallText" style={styles.bankCardField}>
-          <AppText style={styles.bankFieldKey}>Banco: </AppText>
-          {BANK_INFO.bank}
-        </AppText>
-        <AppText variant="smallText" style={styles.bankCardField}>
-          <AppText style={styles.bankFieldKey}>Cuenta: </AppText>
-          {BANK_INFO.account}
-        </AppText>
-        <AppText variant="smallText" style={styles.bankCardField}>
-          <AppText style={styles.bankFieldKey}>RIF: </AppText>
-          {BANK_INFO.rif}
-        </AppText>
-      </View>
-      <AppText variant="caption" style={styles.formLabel}>
-        DETALLES DE LA OPERACIÓN
-      </AppText>
-      <FormField
-        label="Banco de origen"
-        placeholder="Seleccionar banco..."
-        value={data.bank}
-        onChangeText={(v) => onChange({ ...data, bank: v })}
-      />
-      <FormField
-        label="Número de referencia"
-        placeholder="Ej: 12345678"
-        value={data.reference}
-        onChangeText={(v) => onChange({ ...data, reference: v })}
-        keyboardType="numeric"
-      />
-      <FormField
-        label="Fecha de transferencia"
-        placeholder="mm/dd/aaaa"
-        value={data.date}
-        onChangeText={(v) => onChange({ ...data, date: v })}
-      />
-      <FormField
-        label="Nombre del titular"
-        placeholder="Nombre completo"
-        value={data.holder}
-        onChangeText={(v) => onChange({ ...data, holder: v })}
       />
     </View>
   );
@@ -301,6 +292,9 @@ export default function PaymentScreen() {
     expiresAt: expiresAtParam,
   } = useLocalSearchParams();
   const { clearCart } = useCart();
+
+  const { endSession } = usePurchaseSession();
+
   const insets = useSafeAreaInsets();
 
   const totalVes = Number(total || 0);
@@ -425,14 +419,46 @@ export default function PaymentScreen() {
   const [loadingPoints, setLoadingPoints] = useState(false);
   const [selectedMethod, setSelectedMethod] = useState(null);
   const [pointsToRedeem, setPointsToRedeem] = useState('');
-  const [formData, setFormData] = useState({
-    bank: '',
-    reference: '',
-    phone: '',
-    date: '',
-    holder: '',
-  });
+  // Métodos bancarios: referencia + cuenta destino seleccionada (su `bank` +
+  // `currency` es lo que se envía al backend).
+  const [reference, setReference] = useState('');
+  const [selectedAccountId, setSelectedAccountId] = useState(null);
+
+  // `submitting`: POST en vuelo. `processing`: ya se aceptó (HTTP 200) y estamos
+  // esperando el dictamen final por WebSocket (payment_completed/failed/...).
   const [submitting, setSubmitting] = useState(false);
+  const [processing, setProcessing] = useState(false);
+  const processingTimeoutRef = useRef(null);
+  // Evita navegar/alertar dos veces si llegan eventos duplicados.
+  const settledRef = useRef(false);
+
+  // ─── Opciones de pago (métodos + cuentas destino) ────────────────────────────
+  const [paymentOptions, setPaymentOptions] = useState([]);
+  const [loadingOptions, setLoadingOptions] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoadingOptions(true);
+    getPaymentOptions()
+      .then((opts) => {
+        if (!cancelled) setPaymentOptions(Array.isArray(opts) ? opts : []);
+      })
+      .catch(() => {
+        if (!cancelled) setPaymentOptions([]);
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingOptions(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Cuentas destino disponibles para el método bancario seleccionado.
+  const accounts =
+    selectedMethod === 'mobile_payment' || selectedMethod === 'transfer'
+      ? getAccountsForMethod(paymentOptions, PAYMENT_METHOD_ID[selectedMethod])
+      : [];
 
   useEffect(() => {
     if (selectedMethod !== 'points') return;
@@ -457,39 +483,96 @@ export default function PaymentScreen() {
   const selectMethod = (key) => {
     setSelectedMethod(key);
     setPointsToRedeem('');
-    setFormData({ bank: '', reference: '', phone: '', date: '', holder: '' });
+    setReference('');
+    setSelectedAccountId(null);
   };
+
+  // ─── Fin del pago: helpers para salir del estado "procesando" ────────────────
+  const stopProcessing = () => {
+    setProcessing(false);
+    if (processingTimeoutRef.current) {
+      clearTimeout(processingTimeoutRef.current);
+      processingTimeoutRef.current = null;
+    }
+  };
+
+  const goToSuccess = async (qrCode) => {
+    if (settledRef.current) return;
+    settledRef.current = true;
+    stopProcessing();
+
+    endSession();
+
+    await clearCart();
+    const method = METHODS.find((m) => m.key === selectedMethod);
+    router.replace({
+      pathname: '/(buy)/order-success',
+      params: {
+        qrCode: qrCode || '',
+        total: String(totalVes),
+        paymentMethod: method?.label ?? '',
+        isPoints: selectedMethod === 'points' ? '1' : '0',
+        pointsUsed:
+          selectedMethod === 'points'
+            ? String(Number(pointsToRedeem) || 0)
+            : '0',
+      },
+    });
+  };
+
+  // ─── Suscripción a los eventos asíncronos del backend ────────────────────────
+  usePaymentEvents({
+    // Orden pagada en su totalidad → mostramos el QR.
+    onCompleted: (data) => goToSuccess(data?.qrCode),
+    // Orden pagada pero requiere facturación (flujo de empleado). Igualmente
+    // hay QR, así que avanzamos a la pantalla de éxito.
+    onBillingRequired: (data) => goToSuccess(data?.qrCode),
+    // Pago PARCIAL: la orden aún debe saldo. No completamos la compra.
+    onPartialSuccess: (data) => {
+      stopProcessing();
+      const remaining = Number(data?.remaining_balance);
+      Alert.alert(
+        'Pago parcial registrado',
+        !isNaN(remaining) && remaining > 0
+          ? `Se registró tu pago, pero la orden aún tiene un saldo pendiente de ${fmtVes(remaining)}. Agrega otro pago para completar la compra.`
+          : (data?.message ||
+              'Se registró un pago parcial. Aún queda saldo pendiente.')
+      );
+    },
+    // Falló el pago (fondos, banco o timeout de POS a los 60s).
+    onFailed: (data) => {
+      stopProcessing();
+      Alert.alert(
+        'Pago rechazado',
+        data?.message ||
+          'No se pudo procesar el pago. Verifica los datos e intenta de nuevo.'
+      );
+    },
+  });
+
+  // Limpieza del timeout de seguridad al desmontar.
+  useEffect(() => {
+    return () => {
+      if (processingTimeoutRef.current)
+        clearTimeout(processingTimeoutRef.current);
+    };
+  }, []);
 
   const validate = () => {
     if (!selectedMethod) {
       Alert.alert('Método requerido', 'Selecciona un método de pago.');
       return false;
     }
-    if (selectedMethod === 'mobile_payment') {
-      if (!formData.bank.trim()) {
-        Alert.alert('Campo requerido', 'Ingresa el banco de origen.');
+    if (selectedMethod === 'mobile_payment' || selectedMethod === 'transfer') {
+      if (!selectedAccountId) {
+        Alert.alert(
+          'Cuenta destino requerida',
+          'Selecciona la cuenta a la que realizaste el pago.'
+        );
         return false;
       }
-      if (!formData.reference.trim()) {
+      if (!reference.trim()) {
         Alert.alert('Campo requerido', 'Ingresa el número de referencia.');
-        return false;
-      }
-      if (!formData.phone.trim()) {
-        Alert.alert('Campo requerido', 'Ingresa el teléfono emisor.');
-        return false;
-      }
-    }
-    if (selectedMethod === 'transfer') {
-      if (!formData.bank.trim()) {
-        Alert.alert('Campo requerido', 'Ingresa el banco de origen.');
-        return false;
-      }
-      if (!formData.reference.trim()) {
-        Alert.alert('Campo requerido', 'Ingresa el número de referencia.');
-        return false;
-      }
-      if (!formData.date.trim()) {
-        Alert.alert('Campo requerido', 'Ingresa la fecha de transferencia.');
         return false;
       }
     }
@@ -536,60 +619,57 @@ export default function PaymentScreen() {
 
   const handlePay = async () => {
     if (!validate()) return;
+
+    // Construimos el pago según el método (contrato del backend).
+    let payment;
+    if (selectedMethod === 'points') {
+      // Cinepuntos: el backend fuerza la moneda PTS; solo enviamos el monto en
+      // puntos. No requiere currency.
+      payment = {
+        payment_method: PAYMENT_METHOD_ID.points,
+        amount: Number(pointsToRedeem) || 0,
+      };
+    } else {
+      // Pago Móvil / Transferencia: cuenta destino (bank + currency) + referencia.
+      const account = accounts.find((a) => a.id === selectedAccountId);
+      const accountCurrency = Number(account?.currency ?? currency);
+      // El monto se envía en la MONEDA de la cuenta destino. exchangeRates guarda
+      // la tasa como Bs por unidad de esa moneda, así: monto = totalBs / tasa.
+      const rate = Number(exchangeRates?.[accountCurrency]?.rate) || 1;
+      const amountInCurrency = Math.round((totalVes / rate) * 100) / 100;
+
+      payment = {
+        payment_method: PAYMENT_METHOD_ID[selectedMethod],
+        amount: amountInCurrency,
+        currency: accountCurrency,
+        bank: account?.bank,
+        reference_number: reference.trim(),
+      };
+    }
+
+    settledRef.current = false;
     setSubmitting(true);
     try {
-      const pointsAmount = Number(pointsToRedeem) || 0;
-      const payload = {
-        payment_method: PAYMENT_METHOD_ID[selectedMethod] ?? selectedMethod,
-        amount: selectedMethod === 'points' ? pointsAmount : totalVes,
-        currency,
-        ...(formData.reference.trim()
-          ? { reference_number: formData.reference.trim() }
-          : {}),
-        ...(formData.bank.trim() ? { bank: formData.bank.trim() } : {}),
-        ...(formData.phone.trim() ? { phone: formData.phone.trim() } : {}),
-        ...(formData.date.trim()
-          ? { transfer_date: formData.date.trim() }
-          : {}),
-        ...(formData.holder.trim()
-          ? { account_holder: formData.holder.trim() }
-          : {}),
-      };
+      // El endpoint recibe un ARREGLO de pagos. Aquí enviamos uno solo, pero el
+      // servicio lo normaliza a arreglo.
+      const res = await registerPayment([payment]);
 
-      const orderData = await registerPayment(payload);
+      // HTTP 200 = "se está procesando", NO "pagado". Entramos en estado de
+      // espera y el dictamen final llega por WebSocket (ver usePaymentEvents).
+      if (__DEV__) console.log('[payment] aceptado:', res?.message);
 
-      // El backend responde con pago PARCIAL si el monto no cubre el total:
-      // { remaining_balance, message } SIN qr_code. La orden NO se completó,
-      // así que no debemos mostrar "compra exitosa".
-      const remaining =
-        orderData?.remaining_balance ?? orderData?.data?.remaining_balance;
-      const qrCode = orderData?.qr_code ?? orderData?.data?.qr_code ?? '';
+      setProcessing(true);
 
-      if ((remaining != null && Number(remaining) > 0) || !qrCode) {
-        const faltante =
-          remaining != null ? ` Faltan ${fmtVes(remaining)} por cubrir.` : '';
+      // Red de seguridad: si no llega ningún evento (incluye el timeout de POS de
+      // 60s del backend), liberamos la UI tras 70s.
+      processingTimeoutRef.current = setTimeout(() => {
+        if (settledRef.current) return;
+        stopProcessing();
         Alert.alert(
-          'Pago incompleto',
-          `El pago no cubrió el total de la orden, por lo que la compra no se completó.${faltante} Verifica el monto e intenta de nuevo.`
+          'Sin respuesta',
+          'No recibimos la confirmación del pago a tiempo. Revisa "Mis Compras" antes de reintentar para no pagar dos veces.'
         );
-        return;
-      }
-
-      await clearCart();
-      const method = METHODS.find((m) => m.key === selectedMethod);
-      router.replace({
-        pathname: '/(buy)/order-success',
-        params: {
-          qrCode,
-          total: String(totalVes),
-          paymentMethod: method?.label ?? '',
-          isPoints: selectedMethod === 'points' ? '1' : '0',
-          pointsUsed:
-            selectedMethod === 'points'
-              ? String(Number(pointsToRedeem) || 0)
-              : '0',
-        },
-      });
+      }, 70000);
     } catch (err) {
       console.error('Error registrando pago:', err);
       Alert.alert(
@@ -686,11 +766,16 @@ export default function PaymentScreen() {
         </View>
 
         {/* ── Formularios dinámicos ── */}
-        {selectedMethod === 'mobile_payment' && (
-          <MobilePaymentForm data={formData} onChange={setFormData} />
-        )}
-        {selectedMethod === 'transfer' && (
-          <TransferForm data={formData} onChange={setFormData} />
+        {(selectedMethod === 'mobile_payment' ||
+          selectedMethod === 'transfer') && (
+          <BankMethodForm
+            accounts={accounts}
+            loadingAccounts={loadingOptions}
+            selectedAccountId={selectedAccountId}
+            onSelectAccount={setSelectedAccountId}
+            reference={reference}
+            onChangeReference={setReference}
+          />
         )}
         {selectedMethod === 'points' && (
           <CinePuntosForm
@@ -709,14 +794,14 @@ export default function PaymentScreen() {
         <TouchableOpacity
           style={[
             styles.payBtn,
-            (!selectedMethod || submitting || timerExpired) &&
+            (!selectedMethod || submitting || processing || timerExpired) &&
               styles.payBtnDisabled,
           ]}
           onPress={handlePay}
-          disabled={!selectedMethod || submitting || timerExpired}
+          disabled={!selectedMethod || submitting || processing || timerExpired}
           activeOpacity={0.8}
         >
-          {submitting ? (
+          {submitting || processing ? (
             <ActivityIndicator color={colors.midnight[950]} />
           ) : (
             <AppText variant="button" style={styles.payBtnText}>
@@ -727,6 +812,20 @@ export default function PaymentScreen() {
           )}
         </TouchableOpacity>
       </View>
+
+      {/* ── Overlay: esperando el dictamen del pago por WebSocket ── */}
+      {processing && (
+        <View style={styles.processingOverlay} pointerEvents="auto">
+          <View style={styles.processingCard}>
+            <ActivityIndicator size="large" color={colors.primary} />
+            <AppText style={styles.processingTitle}>Procesando pago…</AppText>
+            <AppText style={styles.processingSub}>
+              Estamos confirmando tu pago. Esto puede tardar unos segundos, no
+              cierres esta pantalla.
+            </AppText>
+          </View>
+        </View>
+      )}
     </KeyboardAvoidingView>
   );
 }
@@ -930,4 +1029,64 @@ const styles = StyleSheet.create({
   },
   payBtnDisabled: { opacity: 0.4 },
   payBtnText: { color: colors.midnight[950] },
+
+  // Selector de cuenta destino (métodos bancarios)
+  accountCard: {
+    backgroundColor: colors.midnight[900],
+    borderRadius: borderRadius.s16,
+    padding: spacing.s16,
+    gap: spacing.s4,
+    borderWidth: 1.5,
+    borderColor: colors.midnight[700],
+  },
+  accountCardActive: {
+    borderColor: colors.primary,
+    backgroundColor: colors.midnight[800],
+  },
+  accountHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  accountBankName: {
+    color: colors.textPrimary,
+    fontFamily: theme.typography.family.primary.bold,
+    fontSize: 15,
+  },
+  accountCurrency: {
+    color: colors.primary,
+    fontFamily: theme.typography.family.primary.bold,
+    fontSize: 12,
+    letterSpacing: 0.5,
+  },
+
+  // Overlay de "procesando pago"
+  processingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(15, 10, 30, 0.82)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: spacing.s16,
+  },
+  processingCard: {
+    backgroundColor: colors.midnight[800],
+    borderRadius: borderRadius.s16,
+    paddingVertical: spacing.s16,
+    paddingHorizontal: spacing.s16,
+    alignItems: 'center',
+    gap: spacing.s12,
+    borderWidth: 1,
+    borderColor: colors.midnight[700],
+    maxWidth: 320,
+  },
+  processingTitle: {
+    color: colors.textPrimary,
+    fontFamily: theme.typography.family.primary.bold,
+    fontSize: 16,
+  },
+  processingSub: {
+    color: colors.textSecondary,
+    fontSize: 13,
+    textAlign: 'center',
+  },
 });

@@ -1,5 +1,5 @@
-import Tickets from '../../screens/private/buy/TicketsSelectionCategory';
+import TicketsQuantityScreen from '../../screens/private/buy/TicketsQuantityScreen';
 
 export default function TicketsScreen() {
-  return <Tickets />;
+  return <TicketsQuantityScreen />;
 }
