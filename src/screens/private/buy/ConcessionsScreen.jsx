@@ -37,7 +37,7 @@ function getItemPrice(item) {
 }
 
 // ─── ConcessionItem (inline para evitar problemas de path) ───────────────────
-function ConcessionItem({ item, quantity, onAdd, onRemove, isCombo }) {
+function ConcessionItem({ item, quantity, onAdd, onRemove, isCombo, available = true }) {
   const price = `$${getItemPrice(item).toFixed(2)}`;
   const imageUri = item.image_url || item.imageUrl;
 
@@ -73,36 +73,44 @@ function ConcessionItem({ item, quantity, onAdd, onRemove, isCombo }) {
 
         <View style={itemStyles.footerRow}>
           <AppText style={itemStyles.price}>{price}</AppText>
-          <View style={itemStyles.counter}>
-            <TouchableOpacity
-              style={[itemStyles.btn, quantity === 0 && itemStyles.btnDisabled]}
-              onPress={onRemove}
-              disabled={quantity === 0}
-              activeOpacity={0.7}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            >
-              <AppText
-                style={[
-                  itemStyles.btnText,
-                  quantity === 0 && itemStyles.btnTextDisabled,
-                ]}
+          {available ? (
+            <View style={itemStyles.counter}>
+              <TouchableOpacity
+                style={[itemStyles.btn, quantity === 0 && itemStyles.btnDisabled]}
+                onPress={onRemove}
+                disabled={quantity === 0}
+                activeOpacity={0.7}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               >
-                −
-              </AppText>
-            </TouchableOpacity>
+                <AppText
+                  style={[
+                    itemStyles.btnText,
+                    quantity === 0 && itemStyles.btnTextDisabled,
+                  ]}
+                >
+                  −
+                </AppText>
+              </TouchableOpacity>
 
-            <AppText style={itemStyles.qty}>{quantity}</AppText>
+              <AppText style={itemStyles.qty}>{quantity}</AppText>
 
-            <TouchableOpacity
-              style={itemStyles.btn}
-              onPress={onAdd}
-              activeOpacity={0.7}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            >
-              <AppText style={itemStyles.btnText}>+</AppText>
-            </TouchableOpacity>
-          </View>
+              <TouchableOpacity
+                style={itemStyles.btn}
+                onPress={onAdd}
+                activeOpacity={0.7}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
+                <AppText style={itemStyles.btnText}>+</AppText>
+              </TouchableOpacity>
+            </View>
+          ) : null}
         </View>
+
+        {!available && (
+          <View style={itemStyles.unavailablePill}>
+            <AppText style={itemStyles.unavailableText}>No disponible</AppText>
+          </View>
+        )}
       </View>
     </View>
   );
@@ -197,6 +205,19 @@ const itemStyles = StyleSheet.create({
     minWidth: 18,
     textAlign: 'center',
   },
+  unavailablePill: {
+    backgroundColor: 'rgba(239,68,68,0.15)',
+    borderWidth: 1,
+    borderColor: 'rgba(239,68,68,0.35)',
+    borderRadius: borderRadius.s8,
+    paddingVertical: spacing.s8,
+    alignItems: 'center',
+  },
+  unavailableText: {
+    color: '#f87171',
+    fontSize: 11,
+    fontFamily: theme.typography.family.primary.bold,
+  },
 });
 
 // ─── Grid de 2 columnas por sección ──────────────────────────────────────────
@@ -216,6 +237,7 @@ function GridSection({ items, lineType, getQuantity, onAdd, onRemove }) {
                 quantity={getQuantity(item.id, lineType)}
                 onAdd={() => onAdd(item, lineType)}
                 onRemove={() => onRemove(item, lineType)}
+                available={item._available !== false}
               />
             </View>
           ))}
@@ -241,15 +263,37 @@ const gridStyles = StyleSheet.create({
 // ─── Agrupa productos por categoría ──────────────────────────────────────────
 function buildSections(combos, products) {
   const sections = [];
+
+  // Mapa producto → stock para evaluar disponibilidad de combos
+  const stockMap = new Map();
+  for (const p of products) stockMap.set(p.id, p.stock ?? 0);
+
+  // Disponibilidad: si el producto no trae stock, se asume disponible
+  const productAvailable = (p) => p.stock === undefined || (p.stock ?? 0) > 0;
+  const comboAvailable = (c) => {
+    const parts = c._ComboProducts || [];
+    if (parts.length === 0) return true;
+    return parts.every((cp) => (stockMap.get(cp.product) ?? 0) >= cp.quantity);
+  };
+
   if (combos.length > 0) {
-    sections.push({ title: 'Combos', data: combos, lineType: LINE_TYPE_COMBO });
+    sections.push({
+      title: 'Combos',
+      data: combos.map((c) => ({ ...c, _available: comboAvailable(c) })),
+      lineType: LINE_TYPE_COMBO,
+    });
   }
   const byCategory = {};
   for (const p of products) {
+    // El backend expone la categoría como `description` (no `name`)
     const cat =
-      p._ProductCategories?.name || p.product_category?.name || 'Otros';
+      p._ProductCategories?.description ||
+      p._ProductCategories?.name ||
+      p.product_category?.description ||
+      p.product_category?.name ||
+      'Otros';
     if (!byCategory[cat]) byCategory[cat] = [];
-    byCategory[cat].push(p);
+    byCategory[cat].push({ ...p, _available: productAvailable(p) });
   }
   for (const [title, data] of Object.entries(byCategory)) {
     sections.push({ title, data, lineType: LINE_TYPE_PRODUCT });

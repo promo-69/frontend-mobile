@@ -39,10 +39,27 @@ const getPrice = (item) => {
   return 0;
 };
 const fmt = (n) => `$${Number(n || 0).toFixed(2)}`;
+// El backend expone la categoría como `description` (no `name`)
 const getCategoryName = (item) =>
-  item._ProductCategories?.name || item.product_category?.name || null;
+  item._ProductCategories?.description ||
+  item._ProductCategories?.name ||
+  item.product_category?.description ||
+  item.product_category?.name ||
+  null;
 const getCategoryId = (item) =>
   item._ProductCategories?.id ?? item.product_category ?? null;
+
+// Disponibilidad: los productos de /available traen `stock`; si el campo no
+// viene (catálogo público) se asume disponible para no bloquear nada.
+const isProductAvailable = (p) =>
+  p.stock === undefined || (p.stock ?? 0) > 0;
+
+// Un combo está disponible si todos sus productos tienen stock suficiente
+const isComboAvailable = (combo, stockMap) => {
+  const parts = combo._ComboProducts || [];
+  if (parts.length === 0) return true;
+  return parts.every((cp) => (stockMap.get(cp.product) ?? 0) >= cp.quantity);
+};
 
 // ─── Tabs ─────────────────────────────────────────────────────────────────────
 const ALL_TAB = { id: 'all', label: 'Todo' };
@@ -59,7 +76,7 @@ function buildCategoryTabs(products) {
 }
 
 // ─── Card con botones +/- ─────────────────────────────────────────────────────
-function CatalogCard({ item, isCombo, quantity, onAdd, onRemove }) {
+function CatalogCard({ item, isCombo, quantity, onAdd, onRemove, available = true }) {
   const price = getPrice(item);
   const imageUri = item.image_url || item.imageUrl;
 
@@ -95,34 +112,42 @@ function CatalogCard({ item, isCombo, quantity, onAdd, onRemove }) {
 
         <View style={cardStyles.footerRow}>
           <AppText style={cardStyles.price}>{fmt(price)}</AppText>
-          <View style={cardStyles.counter}>
-            <TouchableOpacity
-              style={[cardStyles.btn, quantity === 0 && cardStyles.btnDisabled]}
-              onPress={onRemove}
-              disabled={quantity === 0}
-              activeOpacity={0.7}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            >
-              <AppText
-                style={[
-                  cardStyles.btnText,
-                  quantity === 0 && cardStyles.btnTextDisabled,
-                ]}
+          {available ? (
+            <View style={cardStyles.counter}>
+              <TouchableOpacity
+                style={[cardStyles.btn, quantity === 0 && cardStyles.btnDisabled]}
+                onPress={onRemove}
+                disabled={quantity === 0}
+                activeOpacity={0.7}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               >
-                −
-              </AppText>
-            </TouchableOpacity>
-            <AppText style={cardStyles.qty}>{quantity}</AppText>
-            <TouchableOpacity
-              style={cardStyles.btn}
-              onPress={onAdd}
-              activeOpacity={0.7}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            >
-              <AppText style={cardStyles.btnText}>+</AppText>
-            </TouchableOpacity>
-          </View>
+                <AppText
+                  style={[
+                    cardStyles.btnText,
+                    quantity === 0 && cardStyles.btnTextDisabled,
+                  ]}
+                >
+                  −
+                </AppText>
+              </TouchableOpacity>
+              <AppText style={cardStyles.qty}>{quantity}</AppText>
+              <TouchableOpacity
+                style={cardStyles.btn}
+                onPress={onAdd}
+                activeOpacity={0.7}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
+                <AppText style={cardStyles.btnText}>+</AppText>
+              </TouchableOpacity>
+            </View>
+          ) : null}
         </View>
+
+        {!available && (
+          <View style={cardStyles.unavailablePill}>
+            <AppText style={cardStyles.unavailableText}>No disponible</AppText>
+          </View>
+        )}
       </View>
     </View>
   );
@@ -208,6 +233,19 @@ const cardStyles = StyleSheet.create({
     fontFamily: theme.typography.family.primary.bold,
     minWidth: 18,
     textAlign: 'center',
+  },
+  unavailablePill: {
+    backgroundColor: 'rgba(239,68,68,0.15)',
+    borderWidth: 1,
+    borderColor: 'rgba(239,68,68,0.35)',
+    borderRadius: borderRadius.s8,
+    paddingVertical: spacing.s8,
+    alignItems: 'center',
+  },
+  unavailableText: {
+    color: '#f87171',
+    fontSize: 11,
+    fontFamily: theme.typography.family.primary.bold,
   },
 });
 
@@ -338,8 +376,22 @@ export default function ConcessionsCatalogScreen() {
 
   // ─── Tabs dinámicas ──────────────────────────────────────────────────────
   const categoryTabs = useMemo(
-    () => [ALL_TAB, COMBOS_TAB, ...buildCategoryTabs(products)],
+    () => [ALL_TAB, ...buildCategoryTabs(products), COMBOS_TAB],
     [products]
+  );
+
+  // ─── Disponibilidad ───────────────────────────────────────────────────────
+  // Mapa producto → stock para evaluar la disponibilidad de los combos
+  const stockMap = useMemo(() => {
+    const map = new Map();
+    for (const p of products) map.set(p.id, p.stock ?? 0);
+    return map;
+  }, [products]);
+
+  const isItemAvailable = useCallback(
+    (item, isCombo) =>
+      isCombo ? isComboAvailable(item, stockMap) : isProductAvailable(item),
+    [stockMap]
   );
 
   // ─── Datos filtrados ──────────────────────────────────────────────────────
@@ -423,11 +475,12 @@ export default function ConcessionsCatalogScreen() {
             quantity={getItemQuantity(item.id, lineType)}
             onAdd={() => handleAdd(item, lineType)}
             onRemove={() => handleRemove(item, lineType)}
+            available={isItemAvailable(item, !!item._isCombo)}
           />
         </View>
       );
     },
-    [getItemQuantity, handleAdd, handleRemove]
+    [getItemQuantity, handleAdd, handleRemove, isItemAvailable]
   );
 
   const renderEmpty = () =>
