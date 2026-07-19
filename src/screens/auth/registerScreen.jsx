@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { ChevronLeft } from 'lucide-react-native';
+import { ArrowLeft } from 'lucide-react-native';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import {
@@ -99,7 +99,7 @@ export default function RegisterScreen() {
         lastName: finalForm.lastName.trim(),
         email: finalForm.email,
         password: finalForm.password,
-        documentNumber: finalForm.documentNumber, // Ahora sí llegará el número
+        documentNumber: `${finalForm.documentType}-${finalForm.documentNumber}`,
         phoneNumber: finalForm.phoneNumber,
         gender: finalForm.gender ? Number(finalForm.gender) : null,
         birthDate: finalForm.birthDate, // Ahora sí llegará YYYY-MM-DD
@@ -121,7 +121,7 @@ export default function RegisterScreen() {
   return (
     <ScreenWrapper>
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={{ flex: 1 }}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
       >
@@ -132,7 +132,7 @@ export default function RegisterScreen() {
         >
           <View style={styles.mainContainer}>
             <TouchableOpacity onPress={handleBack} style={styles.backButton}>
-              <ChevronLeft size={28} color={theme.colors.border} />
+              <ArrowLeft size={22} color={theme.colors.accent} strokeWidth={2.5} />
             </TouchableOpacity>
 
             <AppText variant="h2" style={styles.title}>
@@ -203,7 +203,7 @@ const styles = StyleSheet.create({
   footer: {
     width: '100%',
     paddingBottom: 40,
-    marginTop: 20,
+    marginTop: 40,
   },
   loginRedirect: {
     flexDirection: 'row',
