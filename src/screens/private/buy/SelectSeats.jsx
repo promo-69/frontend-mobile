@@ -44,7 +44,8 @@ export default function SelectSeats() {
   } = useCart();
 
   // La sesión de compra (quote) ya la abrió la pantalla de boletos vía el provider.
-  const { quoteReady } = usePurchaseSession();
+  // initSession se usa para auto-recuperar la quote si expiró en Redis.
+  const { quoteReady, initSession } = usePurchaseSession();
 
   // Plan de boletos: un audienceCategoryId por cada boleto solicitado.
   const ticketPlan = useMemo(() => {
@@ -120,7 +121,7 @@ export default function SelectSeats() {
       onSeatsReleased: handleSeatsReleased,
       onQuoteExpired: handleQuoteExpired,
     },
-    // Solo habilitamos el tiempo real cuando la quote está lista.
+    // Solo se habilita el tiempo real cuando la quote está lista.
     quoteReady
   );
 
@@ -146,6 +147,13 @@ export default function SelectSeats() {
     });
     return () => sub.remove();
   }, [leave]);
+
+  const cartPricingRef = useRef(cart.pricingMatrix);
+  cartPricingRef.current = cart.pricingMatrix;
+  const updateTicketsRef = useRef(updateTickets);
+  updateTicketsRef.current = updateTickets;
+  const updateCartDetailsRef = useRef(updateCartDetails);
+  updateCartDetailsRef.current = updateCartDetails;
 
   useEffect(() => {
     async function loadData() {
@@ -184,15 +192,15 @@ export default function SelectSeats() {
         const pricingMatrix =
           cleanSeatsObj?.pricing?.pricing_matrix ??
           cleanSeatsObj?.pricing?.matrix ??
-          cart.pricingMatrix ??
+          cartPricingRef.current ??
           [];
 
         setMovie(cleanMovie);
         setShowtime(cleanShowtime);
         setSeatsData(cleanSeatsObj?.seats || []);
-        updateTickets([]);
+        updateTicketsRef.current([]);
 
-        updateCartDetails(cleanMovie, cleanShowtime, {
+        updateCartDetailsRef.current(cleanMovie, cleanShowtime, {
           cinemaId: Number(cinemaId),
           booking: bookingId,
           pricingMatrix,
@@ -240,25 +248,40 @@ export default function SelectSeats() {
       }
 
       setLockingSeatId(seatId);
-            try {
-              // --- SONDA TEMPORAL ---
-              try {
-                const { getSessionState } = await import('../../../services/orders.service');
-                const s = await getSessionState();
-                console.log('🎫 quote antes de lock:', s ? 'EXISTE' : 'null');
-              } catch {
-                console.log('🎫 quote antes de lock: NO existe (404)');
-              }
-              // --- FIN SONDA ---
+      try {
+        try {
+          await lockSeat(seatId);
+        } catch (err) {
+          // Si la quote expiró en Redis, la recreamos y reintentamos UNA vez
+          // en lugar de dejar al usuario bloqueado sin poder continuar.
+          const msg = err?.message || '';
+          const sessionGone = /sesión de compra|expirad/i.test(msg);
+          if (!sessionGone) throw err;
 
-              await lockSeat(seatId);
-              toggleSeat(seatId, { ...seatData, booking: bookingId });
-            } catch (err) {
-        setLiveSeatStatus((prev) => ({ ...prev, [seatId]: 'occupied' }));
-        Alert.alert(
-          'Asiento no disponible',
-          err?.message || 'Ese asiento acaba de ser ocupado. Elige otro.'
-        );
+          const recovered = await initSession(Number(cinemaId), { force: true });
+          if (!recovered) throw err;
+          await lockSeat(seatId);
+        }
+        toggleSeat(seatId, { ...seatData, booking: bookingId });
+      } catch (err) {
+        const msg = err?.message || '';
+        // Solo se marca el asiento como ocupado si el error es del asiento;
+        // un problema de sesión no significa que el asiento esté tomado.
+        if (!/sesión de compra|expirad/i.test(msg)) {
+          setLiveSeatStatus((prev) => ({ ...prev, [seatId]: 'occupied' }));
+          Alert.alert(
+            'Asiento no disponible',
+            msg || 'Ese asiento acaba de ser ocupado. Elige otro.'
+          );
+        } else {
+          Alert.alert(
+            'Sesión de compra interrumpida',
+            'Tu sesión de compra fue cerrada o reemplazada. Esto puede ocurrir ' +
+              'si tienes otra compra en curso con esta misma cuenta en otro ' +
+              'dispositivo. Cierra ese flujo y vuelve a ' +
+              'intentarlo desde la selección de boletos.'
+          );
+        }
       } finally {
         setLockingSeatId(null);
       }
@@ -272,6 +295,8 @@ export default function SelectSeats() {
       lockSeat,
       unlockSeat,
       toggleSeat,
+      initSession,
+      cinemaId,
     ]
   );
 

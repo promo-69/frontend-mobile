@@ -1,15 +1,11 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import {
-    ActivityIndicator,
-    ScrollView,
-    StyleSheet,
-} from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet } from 'react-native';
+import { FormEditProfile } from '../../../components/profile/FormEditProfile';
+import { PasswordVerifyModal } from '../../../components/profile/PasswordVerifyModal';
 import { AppText } from '../../../components/ui/AppText';
 import { ScreenWrapper } from '../../../components/ui/ScreenWrapper';
 import { SuccessModal } from '../../../components/ui/SuccessModal';
-import { FormEditProfile } from '../../../components/profile/FormEditProfile';
-import { PasswordVerifyModal } from '../../../components/profile/PasswordVerifyModal';
 import { theme } from '../../../constants';
 import { useProfile } from '../../../hooks/profile/useProfile';
 
@@ -39,44 +35,50 @@ export default function PersonalDataScreen() {
     }
   };
 
-  // Save changes: security (email/password) + profile (phone)
+  // Save changes: security (email) + profile (name, surname, phone)
   const handleSave = async (updatedData) => {
     if (!securityToken) {
       setStep('view');
       return;
     }
 
-    const currentEmail = (
-      profile?.personalEmail ||
-      profile?.email ||
-      ''
-    ).trim().toLowerCase();
+    const currentEmail = (profile?.personalEmail || profile?.email || '')
+      .trim()
+      .toLowerCase();
     const targetEmail = updatedData.email.trim().toLowerCase();
     const hasEmailChanged = targetEmail !== currentEmail;
-    const hasPasswordChanged = !!updatedData.password;
 
-    // Aplicar cambios en la contraseña 
-    if (hasEmailChanged || hasPasswordChanged) {
-      const securityPayload = { securityChangeToken: securityToken };
-      if (hasEmailChanged) securityPayload.newEmail = updatedData.email.trim();
-      if (hasPasswordChanged) securityPayload.newPassword = updatedData.password;
+    const currentFirstName = (profile?.firstName || '').trim();
+    const currentLastName = (profile?.lastName || '').trim();
+    const targetFirstName = updatedData.firstName.trim();
+    const targetLastName = updatedData.lastName.trim();
+    const hasNameChanged =
+      targetFirstName !== currentFirstName ||
+      targetLastName !== currentLastName;
 
-      const secRes = await changeSecurity(securityPayload);
+    const currentPhone = (profile?.phoneNumber || '').trim();
+    const targetPhone = updatedData.cellphone.trim();
+    const hasPhoneChanged = targetPhone !== currentPhone;
+
+    if (hasEmailChanged) {
+      const secRes = await changeSecurity({
+        securityChangeToken: securityToken,
+        newEmail: updatedData.email.trim(),
+      });
       if (!secRes.success) {
         alert(secRes.message || 'Error al actualizar credenciales');
         return;
       }
     }
 
-    // Aplicar cambios (numero de telefono) 
-    const currentPhone = (profile?.phoneNumber || '').trim();
-    const targetPhone = updatedData.cellphone.trim();
-    const hasPhoneChanged = targetPhone !== currentPhone;
-
-    if (hasPhoneChanged) {
-      const profileRes = await updateProfileData({ phoneNumber: targetPhone });
+    if (hasNameChanged || hasPhoneChanged) {
+      const profileRes = await updateProfileData({
+        firstName: targetFirstName,
+        lastName: targetLastName,
+        phoneNumber: targetPhone,
+      });
       if (!profileRes.success) {
-        alert(profileRes.message || 'Error al actualizar teléfono');
+        alert(profileRes.message || 'Error al actualizar datos personales');
         return;
       }
     }

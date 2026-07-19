@@ -8,6 +8,7 @@ import {
     Platform,
     ScrollView,
     StyleSheet,
+    Switch,
     TextInput,
     TouchableOpacity,
     View,
@@ -53,9 +54,6 @@ const PAYMENT_METHOD_ID = {
 };
 
 // ─── Formulario de métodos bancarios (Pago Móvil / Transferencia) ────────────
-// El backend exige que se indique a QUÉ cuenta destino de la empresa se pagó
-// (campo `bank` = ID del banco de esa cuenta) más el número de referencia.
-// Las cuentas destino se obtienen de GET /payments/options.
 function BankMethodForm({
   accounts,
   loadingAccounts,
@@ -129,7 +127,7 @@ function BankMethodForm({
         </View>
       )}
 
-      <AppText variant="caption" style={[styles.formLabel, { marginTop: 4 }]}>
+      <AppText variant="caption" style={[styles.formLabel, styles.formLabelSpaced]}>
         DETALLES DE LA OPERACIÓN
       </AppText>
       <FormField
@@ -329,7 +327,7 @@ export default function PaymentScreen() {
           setExchangeRates(rates);
           return;
         }
-      } catch (e) {
+      } catch {
         // Sin sesión activa: probamos el otro endpoint.
       }
       // 2. Respaldo con /orders/session/details
@@ -341,7 +339,7 @@ export default function PaymentScreen() {
         if (!cancelled && rates && rates[PTS_CURRENCY_ID]) {
           setExchangeRates(rates);
         }
-      } catch (e) {
+      } catch {
         // No es crítico: la UI maneja la ausencia de tasa.
       }
     })();
@@ -349,7 +347,7 @@ export default function PaymentScreen() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [exchangeRates]);
 
   const usdRate = exchangeRates?.[USD_CURRENCY_ID]?.rate;
   const totalUsd = usdRate ? totalVes / usdRate : null;
@@ -423,12 +421,23 @@ export default function PaymentScreen() {
   // `currency` es lo que se envía al backend).
   const [reference, setReference] = useState('');
   const [selectedAccountId, setSelectedAccountId] = useState(null);
+  // ── Pago dividido: dos métodos cubren el total ──
+  const [splitEnabled, setSplitEnabled] = useState(false);
+  const [secondMethod, setSecondMethod] = useState(null);
+  // Monto en Bs del método 1 cuando ambos métodos son bancarios (si CinePuntos
+  // participa, el monto lo definen los puntos y este campo no se usa).
+  const [firstAmountVes, setFirstAmountVes] = useState('');
+  const [reference2, setReference2] = useState('');
+  const [selectedAccountId2, setSelectedAccountId2] = useState(null);
 
   // `submitting`: POST en vuelo. `processing`: ya se aceptó (HTTP 200) y estamos
   // esperando el dictamen final por WebSocket (payment_completed/failed/...).
   const [submitting, setSubmitting] = useState(false);
   const [processing, setProcessing] = useState(false);
   const processingTimeoutRef = useRef(null);
+  // Desglose de métodos usado en ESTE intento de pago; viaja a order-success
+  // vía el evento de pago completado para mostrar el detalle real.
+  const paymentsSummaryRef = useRef(null);
   // Evita navegar/alertar dos veces si llegan eventos duplicados.
   const settledRef = useRef(false);
 
@@ -452,16 +461,25 @@ export default function PaymentScreen() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [exchangeRates]);
 
   // Cuentas destino disponibles para el método bancario seleccionado.
   const accounts =
     selectedMethod === 'mobile_payment' || selectedMethod === 'transfer'
       ? getAccountsForMethod(paymentOptions, PAYMENT_METHOD_ID[selectedMethod])
       : [];
+  // Cuentas del segundo método (pago dividido).
+  const accounts2 =
+    splitEnabled &&
+    (secondMethod === 'mobile_payment' || secondMethod === 'transfer')
+      ? getAccountsForMethod(paymentOptions, PAYMENT_METHOD_ID[secondMethod])
+      : [];
+  // CinePuntos participa (como método único o dentro del pago dividido).
+  const pointsInvolved =
+    selectedMethod === 'points' || (splitEnabled && secondMethod === 'points');
 
   useEffect(() => {
-    if (selectedMethod !== 'points') return;
+    if (!pointsInvolved) return;
     let cancelled = false;
     setLoadingPoints(true);
     usersService
@@ -485,7 +503,51 @@ export default function PaymentScreen() {
     setPointsToRedeem('');
     setReference('');
     setSelectedAccountId(null);
+    // Reiniciamos el pago dividido al cambiar el método principal.
+    setSecondMethod(null);
+    setFirstAmountVes('');
+    setReference2('');
+    setSelectedAccountId2(null);
   };
+
+  const selectSecondMethod = (key) => {
+    setSecondMethod(key);
+    setFirstAmountVes('');
+    setReference2('');
+    setSelectedAccountId2(null);
+  };
+
+  const toggleSplit = (value) => {
+    setSplitEnabled(value);
+    setSecondMethod(null);
+    setFirstAmountVes('');
+    setReference2('');
+    setSelectedAccountId2(null);
+    if (!value) setPointsToRedeem('');
+  };
+
+  // ── Cálculos del pago dividido ──
+  // Regla: si CinePuntos participa, SIEMPRE actúa como método 1 (los puntos
+  // definen cuánto cubre; el método bancario paga el resto).
+  const ptsRateVal = Number(exchangeRates?.[PTS_CURRENCY_ID]?.rate) || 0;
+  const splitPointsFirst = splitEnabled && pointsInvolved;
+  // Bs cubiertos por el método 1
+  const splitCoveredVes = !splitEnabled
+    ? 0
+    : splitPointsFirst
+      ? Math.min((Number(pointsToRedeem) || 0) * ptsRateVal, totalVes)
+      : Math.min(Number(firstAmountVes) || 0, totalVes);
+  const splitRemainderVes = splitEnabled
+    ? Math.max(Math.round((totalVes - splitCoveredVes) * 100) / 100, 0)
+    : 0;
+  // Método bancario que cobra el RESTO en el pago dividido
+  const splitBankMethod = !splitEnabled
+    ? null
+    : splitPointsFirst
+      ? selectedMethod === 'points'
+        ? secondMethod
+        : selectedMethod
+      : secondMethod;
 
   // ─── Fin del pago: helpers para salir del estado "procesando" ────────────────
   const stopProcessing = () => {
@@ -496,12 +558,14 @@ export default function PaymentScreen() {
     }
   };
 
-  const goToSuccess = async (qrCode) => {
+  const goToSuccess = async (qrCode, orderId) => {
     if (settledRef.current) return;
     settledRef.current = true;
     stopProcessing();
 
-    endSession();
+    // El pago se completó: el backend ya eliminó la sesión de compra en Redis,
+    // así que no hace falta (ni tiene sentido) el DELETE /orders/session.
+    endSession({ skipServerCancel: true });
 
     await clearCart();
     const method = METHODS.find((m) => m.key === selectedMethod);
@@ -509,8 +573,12 @@ export default function PaymentScreen() {
       pathname: '/(buy)/order-success',
       params: {
         qrCode: qrCode || '',
+        orderId: orderId ? String(orderId) : '',
         total: String(totalVes),
         paymentMethod: method?.label ?? '',
+        paymentsSummary: paymentsSummaryRef.current
+          ? JSON.stringify(paymentsSummaryRef.current)
+          : '',
         isPoints: selectedMethod === 'points' ? '1' : '0',
         pointsUsed:
           selectedMethod === 'points'
@@ -523,10 +591,10 @@ export default function PaymentScreen() {
   // ─── Suscripción a los eventos asíncronos del backend ────────────────────────
   usePaymentEvents({
     // Orden pagada en su totalidad → mostramos el QR.
-    onCompleted: (data) => goToSuccess(data?.qrCode),
+    onCompleted: (data) => goToSuccess(data?.qrCode, data?.orderId),
     // Orden pagada pero requiere facturación (flujo de empleado). Igualmente
     // hay QR, así que avanzamos a la pantalla de éxito.
-    onBillingRequired: (data) => goToSuccess(data?.qrCode),
+    onBillingRequired: (data) => goToSuccess(data?.qrCode, data?.orderId),
     // Pago PARCIAL: la orden aún debe saldo. No completamos la compra.
     onPartialSuccess: (data) => {
       stopProcessing();
@@ -558,11 +626,90 @@ export default function PaymentScreen() {
     };
   }, []);
 
+  // Valida el lado bancario (cuenta destino + referencia) de un método.
+  const validateBankSide = (label, accId, ref) => {
+    if (!accId) {
+      Alert.alert(
+        'Cuenta destino requerida',
+        `Selecciona la cuenta a la que realizaste el pago de ${label}.`
+      );
+      return false;
+    }
+    if (!ref.trim()) {
+      Alert.alert(
+        'Campo requerido',
+        `Ingresa el número de referencia de ${label}.`
+      );
+      return false;
+    }
+    return true;
+  };
+
+  const validateSplit = () => {
+    if (!secondMethod || secondMethod === selectedMethod) {
+      Alert.alert('Segundo método requerido', 'Selecciona el segundo método de pago.');
+      return false;
+    }
+    if (splitPointsFirst) {
+      const pts = Number(pointsToRedeem) || 0;
+      if (ptsRateVal <= 0) {
+        Alert.alert(
+          'CinePuntos no disponible',
+          'No hay una tasa de cambio de CinePuntos configurada. Usa otros métodos.'
+        );
+        return false;
+      }
+      if (pts <= 0) {
+        Alert.alert('Puntos requeridos', 'Ingresa la cantidad de puntos a canjear.');
+        return false;
+      }
+      if (pts > pointsBalance) {
+        Alert.alert(
+          'Saldo insuficiente',
+          `Solo tienes ${pointsBalance.toLocaleString('es-VE')} puntos disponibles.`
+        );
+        return false;
+      }
+      if (splitRemainderVes <= 0) {
+        Alert.alert(
+          'Los puntos cubren el total',
+          'Con esos puntos no queda monto para el segundo método. Desactiva el pago dividido y paga solo con CinePuntos.'
+        );
+        return false;
+      }
+    } else {
+      // Dos métodos bancarios: el monto del método 1 lo define el usuario.
+      const first = Number(firstAmountVes) || 0;
+      if (first <= 0) {
+        Alert.alert('Monto requerido', 'Ingresa cuánto pagarás con el primer método (Bs).');
+        return false;
+      }
+      if (first >= totalVes) {
+        Alert.alert(
+          'Monto inválido',
+          'El monto del primer método debe ser MENOR al total; el segundo método paga el resto.'
+        );
+        return false;
+      }
+    }
+    // Lados bancarios involucrados
+    const m1Label = METHODS.find((m) => m.key === selectedMethod)?.label;
+    const m2Label = METHODS.find((m) => m.key === secondMethod)?.label;
+    if (selectedMethod === 'mobile_payment' || selectedMethod === 'transfer') {
+      if (!validateBankSide(m1Label, selectedAccountId, reference)) return false;
+    }
+    if (secondMethod === 'mobile_payment' || secondMethod === 'transfer') {
+      if (!validateBankSide(m2Label, selectedAccountId2, reference2)) return false;
+    }
+    return true;
+  };
+
   const validate = () => {
     if (!selectedMethod) {
       Alert.alert('Método requerido', 'Selecciona un método de pago.');
       return false;
     }
+    if (splitEnabled) return validateSplit();
     if (selectedMethod === 'mobile_payment' || selectedMethod === 'transfer') {
       if (!selectedAccountId) {
         Alert.alert(
@@ -592,8 +739,7 @@ export default function PaymentScreen() {
         );
         return false;
       }
-      // Validamos con la TASA REAL de Cinepuntos del backend (no asumimos 1:1).
-      // Cada punto vale `ptsRate` Bs; los puntos deben cubrir el total.
+      // Validamos con la tasa real de Cinepuntos del backend
       const ptsRate = Number(exchangeRates?.[PTS_CURRENCY_ID]?.rate) || 0;
       if (ptsRate <= 0) {
         Alert.alert(
@@ -618,7 +764,113 @@ export default function PaymentScreen() {
   };
 
   const handlePay = async () => {
+    if (submitting || processing || settledRef.current) return;
     if (!validate()) return;
+
+    const buildBankPayment = (methodKey, accList, accId, ref, portionVes) => {
+      const account = accList.find((a) => a.id === accId);
+      const accountCurrency = Number(account?.currency ?? currency);
+      const rate = Number(exchangeRates?.[accountCurrency]?.rate) || 1;
+      const amountInCurrency = Math.ceil((portionVes / rate) * 100) / 100;
+      return {
+        payment_method: PAYMENT_METHOD_ID[methodKey],
+        amount: amountInCurrency,
+        currency: accountCurrency,
+        bank: account?.bank,
+        reference_number: ref.trim(),
+      };
+    };
+
+    // ── Pago dividido: dos pagos en el mismo POST ──
+    if (splitEnabled) {
+      const payments = [];
+      if (splitPointsFirst) {
+        payments.push({
+          payment_method: PAYMENT_METHOD_ID.points,
+          amount: Number(pointsToRedeem) || 0,
+        });
+        const bankIsPrimary = splitBankMethod === selectedMethod;
+        payments.push(
+          buildBankPayment(
+            splitBankMethod,
+            bankIsPrimary ? accounts : accounts2,
+            bankIsPrimary ? selectedAccountId : selectedAccountId2,
+            bankIsPrimary ? reference : reference2,
+            splitRemainderVes
+          )
+        );
+      } else {
+        payments.push(
+          buildBankPayment(
+            selectedMethod,
+            accounts,
+            selectedAccountId,
+            reference,
+            Number(firstAmountVes) || 0
+          )
+        );
+        payments.push(
+          buildBankPayment(
+            secondMethod,
+            accounts2,
+            selectedAccountId2,
+            reference2,
+            splitRemainderVes
+          )
+        );
+      }
+
+      // Desglose para la pantalla de éxito
+      paymentsSummaryRef.current = splitPointsFirst
+        ? [
+            {
+              icon: '🎟️',
+              label: 'Cine Puntos',
+              pts: Number(pointsToRedeem) || 0,
+              amountVes: splitCoveredVes,
+            },
+            {
+              icon: METHODS.find((m) => m.key === splitBankMethod)?.icon,
+              label: METHODS.find((m) => m.key === splitBankMethod)?.label,
+              amountVes: splitRemainderVes,
+            },
+          ]
+        : [
+            {
+              icon: METHODS.find((m) => m.key === selectedMethod)?.icon,
+              label: METHODS.find((m) => m.key === selectedMethod)?.label,
+              amountVes: Number(firstAmountVes) || 0,
+            },
+            {
+              icon: METHODS.find((m) => m.key === secondMethod)?.icon,
+              label: METHODS.find((m) => m.key === secondMethod)?.label,
+              amountVes: splitRemainderVes,
+            },
+          ];
+
+      settledRef.current = false;
+      setSubmitting(true);
+      try {
+        const res = await registerPayment(payments);
+        if (__DEV__) console.log('[payment] dividido aceptado:', res?.message);
+        setProcessing(true);
+        processingTimeoutRef.current = setTimeout(() => {
+          stopProcessing();
+          Alert.alert(
+            'Seguimos procesando tu pago',
+            'Está tardando más de lo normal. Revisa "Mis Compras" en unos minutos.'
+          );
+        }, 70000);
+      } catch (err) {
+        Alert.alert(
+          'Pago rechazado',
+          err?.response?.data?.message || 'No se pudo registrar el pago.'
+        );
+      } finally {
+        setSubmitting(false);
+      }
+      return;
+    }
 
     // Construimos el pago según el método (contrato del backend).
     let payment;
@@ -646,6 +898,25 @@ export default function PaymentScreen() {
         reference_number: reference.trim(),
       };
     }
+
+    // Desglose para la pantalla de éxito (un solo método)
+    paymentsSummaryRef.current =
+      selectedMethod === 'points'
+        ? [
+            {
+              icon: '🎟️',
+              label: 'Cine Puntos',
+              pts: Number(pointsToRedeem) || 0,
+              amountVes: totalVes,
+            },
+          ]
+        : [
+            {
+              icon: METHODS.find((m) => m.key === selectedMethod)?.icon,
+              label: METHODS.find((m) => m.key === selectedMethod)?.label,
+              amountVes: totalVes,
+            },
+          ];
 
     settledRef.current = false;
     setSubmitting(true);
@@ -787,6 +1058,118 @@ export default function PaymentScreen() {
             exchangeRates={exchangeRates}
           />
         )}
+
+        {/* ── Pago dividido ── */}
+        {selectedMethod && (
+          <View style={styles.splitToggleRow}>
+            <View style={styles.splitToggleTextWrap}>
+              <AppText style={styles.splitToggleTitle}>
+                Dividir el pago en dos métodos
+              </AppText>
+              <AppText variant="caption" style={styles.splitToggleHint}>
+                Paga una parte con {METHODS.find((m) => m.key === selectedMethod)?.label} y el resto con otro método.
+              </AppText>
+            </View>
+            <Switch
+              value={splitEnabled}
+              onValueChange={toggleSplit}
+              trackColor={{
+                false: colors.midnight[700],
+                true: colors.primary,
+              }}
+              thumbColor={colors.textPrimary}
+            />
+          </View>
+        )}
+
+        {splitEnabled && (
+          <>
+            <AppText variant="caption" style={styles.sectionLabel}>
+              SEGUNDO MÉTODO
+            </AppText>
+            <View style={styles.methodsRow}>
+              {METHODS.filter((m) => m.key !== selectedMethod).map((m) => {
+                const active = secondMethod === m.key;
+                return (
+                  <TouchableOpacity
+                    key={m.key}
+                    style={[styles.methodBtn, active && styles.methodBtnActive]}
+                    onPress={() => selectSecondMethod(m.key)}
+                    activeOpacity={0.8}
+                  >
+                    <AppText style={styles.methodIcon}>{m.icon}</AppText>
+                    <AppText
+                      variant="caption"
+                      style={[
+                        styles.methodBtnLabel,
+                        active && styles.methodBtnLabelActive,
+                      ]}
+                      numberOfLines={1}
+                    >
+                      {m.label}
+                    </AppText>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+
+            {/* Monto del método 1 (solo cuando ambos son bancarios; con
+                CinePuntos el monto lo definen los puntos) */}
+            {secondMethod && !splitPointsFirst && (
+              <View style={styles.splitAmountBox}>
+                <AppText variant="caption" style={styles.splitAmountLabel}>
+                  MONTO A PAGAR CON{' '}
+                  {METHODS.find((m) => m.key === selectedMethod)?.label?.toUpperCase()}{' '}
+                  (BS)
+                </AppText>
+                <TextInput
+                  style={styles.input}
+                  placeholder="0,00"
+                  placeholderTextColor={colors.textDisabled}
+                  value={firstAmountVes}
+                  onChangeText={setFirstAmountVes}
+                  keyboardType="decimal-pad"
+                />
+              </View>
+            )}
+
+            {/* Formulario del segundo método */}
+            {(secondMethod === 'mobile_payment' ||
+              secondMethod === 'transfer') && (
+              <BankMethodForm
+                accounts={accounts2}
+                loadingAccounts={loadingOptions}
+                selectedAccountId={selectedAccountId2}
+                onSelectAccount={setSelectedAccountId2}
+                reference={reference2}
+                onChangeReference={setReference2}
+              />
+            )}
+            {secondMethod === 'points' && (
+              <CinePuntosForm
+                pointsBalance={pointsBalance}
+                loadingPoints={loadingPoints}
+                pointsToRedeem={pointsToRedeem}
+                onChangePoints={setPointsToRedeem}
+                totalVes={totalVes}
+                exchangeRates={exchangeRates}
+              />
+            )}
+
+            {/* Resumen del reparto */}
+            {secondMethod && (
+              <View style={styles.splitSummary}>
+                <AppText variant="caption" style={styles.splitSummaryText}>
+                  {splitPointsFirst
+                    ? `CinePuntos cubre ${fmtVes(splitCoveredVes)} · ` +
+                      `${METHODS.find((m) => m.key === splitBankMethod)?.label} paga ${fmtVes(splitRemainderVes)}`
+                    : `${METHODS.find((m) => m.key === selectedMethod)?.label} paga ${fmtVes(splitCoveredVes)} · ` +
+                      `${METHODS.find((m) => m.key === secondMethod)?.label} paga ${fmtVes(splitRemainderVes)}`}
+                </AppText>
+              </View>
+            )}
+          </>
+        )}
       </ScrollView>
 
       {/* ── Botón inferior ── */}
@@ -891,6 +1274,49 @@ const styles = StyleSheet.create({
     fontFamily: theme.typography.family.primary.bold,
     letterSpacing: 0.8,
   },
+  splitToggleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: colors.midnight[900],
+    borderWidth: 1,
+    borderColor: colors.midnight[700],
+    borderRadius: borderRadius.s12,
+    paddingHorizontal: spacing.s12,
+    paddingVertical: spacing.s12,
+    marginTop: spacing.s16,
+    marginBottom: spacing.s8,
+    gap: spacing.s8,
+  },
+  splitToggleTextWrap: { flex: 1 },
+  splitToggleTitle: {
+    color: colors.textPrimary,
+    fontSize: 14,
+    fontFamily: theme.typography.family.primary.bold,
+  },
+  splitToggleHint: { color: colors.textSecondary, marginTop: 2 },
+  splitAmountBox: {
+    backgroundColor: colors.midnight[900],
+    borderWidth: 1,
+    borderColor: colors.midnight[700],
+    borderRadius: borderRadius.s12,
+    padding: spacing.s12,
+    marginBottom: spacing.s12,
+  },
+  splitAmountLabel: {
+    color: colors.primary,
+    letterSpacing: 0.5,
+    marginBottom: spacing.s8,
+  },
+  splitSummary: {
+    backgroundColor: 'rgba(240,177,42,0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(240,177,42,0.35)',
+    borderRadius: borderRadius.s12,
+    padding: spacing.s12,
+    marginBottom: spacing.s12,
+  },
+  splitSummaryText: { color: colors.textPrimary, textAlign: 'center' },
   methodsRow: {
     flexDirection: 'row',
     gap: spacing.s8,
@@ -943,6 +1369,9 @@ const styles = StyleSheet.create({
     fontFamily: theme.typography.family.primary.bold,
     letterSpacing: 0.8,
     marginTop: spacing.s4,
+  },
+  formLabelSpaced: {
+    marginTop: 4,
   },
   fieldWrapper: { gap: spacing.s4 },
   fieldLabel: { color: colors.textSecondary },

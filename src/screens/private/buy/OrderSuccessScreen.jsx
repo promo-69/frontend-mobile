@@ -1,6 +1,6 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
     Animated,
     ScrollView,
@@ -98,11 +98,49 @@ function DetailRow({ icon, label, value }) {
 // ─── Pantalla ─────────────────────────────────────────────────────────────────
 export default function OrderSuccessScreen() {
   const router = useRouter();
-  const { qrCode, total, paymentMethod, isPoints, pointsUsed } =
-    useLocalSearchParams();
+  const {
+    qrCode,
+    orderId,
+    total,
+    paymentMethod,
+    isPoints,
+    pointsUsed,
+    paymentsSummary,
+  } = useLocalSearchParams();
+
+  // Desglose de métodos de pago (pago dividido o simple)
+  let paymentsBreakdown = [];
+  try {
+    paymentsBreakdown = paymentsSummary ? JSON.parse(paymentsSummary) : [];
+    if (!Array.isArray(paymentsBreakdown)) paymentsBreakdown = [];
+  } catch {
+    paymentsBreakdown = [];
+  }
   const totalAmount = Number(total || 0);
   const paidWithPoints = isPoints === '1';
   const pointsRedeemed = Number(pointsUsed || 0);
+
+  // Respaldo: si el evento de socket llegó sin QR (o se perdió), lo
+  // recuperamos por REST desde la orden — el backend ya lo guardó en BD.
+  const [resolvedQr, setResolvedQr] = useState(qrCode || '');
+  useEffect(() => {
+    if (resolvedQr || !orderId) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const { getOrderById } = await import(
+          '../../../services/orders.service'
+        );
+        const order = await getOrderById(orderId);
+        if (!cancelled && order?.qr_code) setResolvedQr(order.qr_code);
+      } catch (err) {
+        if (__DEV__) console.log('[order-success] fallback QR falló:', err?.message);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [orderId, resolvedQr]);
 
   const handleShare = async () => {
     try {
@@ -139,28 +177,51 @@ export default function OrderSuccessScreen() {
         </AppText>
 
         {/* QR */}
-        <QrSection qrCode={qrCode} />
+        <QrSection qrCode={resolvedQr} />
 
         {/* Detalles */}
         <View style={styles.detailsCard}>
           <AppText style={styles.detailsTitle}>Detalle de compra</AppText>
 
-          <DetailRow
-            icon="💳"
-            label="Método de pago"
-            value={paymentMethod || '—'}
-          />
-          <View style={styles.divider} />
-          {paidWithPoints ? (
+          {paymentsBreakdown.length > 0 ? (
+            paymentsBreakdown.map((pago, index) => (
+              <View key={`${pago.label}-${index}`}>
+                <DetailRow
+                  icon={pago.icon || '💳'}
+                  label={
+                    paymentsBreakdown.length > 1
+                      ? `Método ${index + 1}: ${pago.label}`
+                      : `Método de pago: ${pago.label}`
+                  }
+                  value={
+                    pago.pts
+                      ? `${fmtPts(pago.pts)} · ${fmt(Number(pago.amountVes) || 0)}`
+                      : fmt(Number(pago.amountVes) || 0)
+                  }
+                />
+                <View style={styles.divider} />
+              </View>
+            ))
+          ) : (
             <>
               <DetailRow
-                icon="🎟️"
-                label="CinePuntos canjeados"
-                value={fmtPts(pointsRedeemed)}
+                icon="💳"
+                label="Método de pago"
+                value={paymentMethod || '—'}
               />
               <View style={styles.divider} />
+              {paidWithPoints ? (
+                <>
+                  <DetailRow
+                    icon="🎟️"
+                    label="CinePuntos canjeados"
+                    value={fmtPts(pointsRedeemed)}
+                  />
+                  <View style={styles.divider} />
+                </>
+              ) : null}
             </>
-          ) : null}
+          )}
           <DetailRow icon="💰" label="Total pagado" value={fmt(totalAmount)} />
           <View style={styles.divider} />
           <DetailRow
@@ -217,7 +278,6 @@ const styles = StyleSheet.create({
     paddingTop: spacing.s24,
     paddingBottom: spacing.s32,
     alignItems: 'center',
-    // gap simulado con marginBottom en cada sección
   },
 
   // Check

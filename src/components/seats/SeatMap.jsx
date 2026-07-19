@@ -71,50 +71,80 @@ export default function SeatMap({
           </View>
 
           {/* Filas de asientos */}
-          {groupedSeats.map((row) => (
-            <View key={row.rowName} style={styles.row}>
-              <View style={styles.rowLabelCell}>
-                <Text style={styles.axisLabel}>{row.rowName}</Text>
-              </View>
-              {row.seats.map((seat) => {
-                const seatId = seat.id ?? seat.seatId ?? seat._id;
-                const seatColumn = seat.column ?? seat.number ?? '';
-                const isSelected =
-                  Array.isArray(selectedSeats) &&
-                  selectedSeats.some((s) => s.seatId === seatId);
-                const status = seat.status ?? 'available';
-                const isOccupied = status !== 'available';
+          {groupedSeats.map((row) => {
+            // Mapa columna → asiento para respetar los pasillos (columnas sin
+            // asiento en esta fila) y mantener la alineación con el encabezado.
+            const seatByCol = new Map(
+              row.seats.map((s) => [s.column ?? s.number, s])
+            );
+            return (
+              <View key={row.rowName} style={styles.row}>
+                <View style={styles.rowLabelCell}>
+                  <Text style={styles.axisLabel}>{row.rowName}</Text>
+                </View>
+                {columns.map((col) => {
+                  const seat = seatByCol.get(col);
 
-                return (
-                  <TouchableOpacity
-                    key={seatId ?? `${row.rowName}-${seatColumn}`}
-                    style={[
-                      styles.seat,
-                      !isOccupied && !isSelected && styles.seatAvailable,
-                      isOccupied && styles.seatOccupied,
-                      isSelected && styles.seatSelected,
-                    ]}
-                    onPress={() =>
-                      !isOccupied &&
-                      onToggleSeat(seatId, {
-                        row: seat.row,
-                        column: seatColumn,
-                        category: seat.category ?? null,
-                        price: seat.price ?? 0,
-                      })
-                    }
-                    disabled={isOccupied}
-                    activeOpacity={0.7}
-                    accessibilityLabel={`Asiento ${seat.row}${seatColumn} ${isOccupied ? 'ocupado' : 'disponible'}`}
-                    accessibilityState={{
-                      disabled: isOccupied,
-                      selected: isSelected,
-                    }}
-                  />
-                );
-              })}
-            </View>
-          ))}
+                  // Pasillo: hueco punteado, no interactivo (como en la web)
+                  if (!seat) {
+                    return (
+                      <View
+                        key={`aisle-${row.rowName}-${col}`}
+                        style={[styles.seat, styles.aisle]}
+                      />
+                    );
+                  }
+
+                  const seatId = seat.id ?? seat.seatId ?? seat._id;
+                  const seatColumn = seat.column ?? seat.number ?? '';
+                  const isSelected =
+                    Array.isArray(selectedSeats) &&
+                    selectedSeats.some((s) => s.seatId === seatId);
+                  const status = seat.status ?? 'available';
+                  const isOccupied = status !== 'available';
+
+                  return (
+                    <TouchableOpacity
+                      key={seatId ?? `${row.rowName}-${seatColumn}`}
+                      style={[
+                        styles.seat,
+                        !isOccupied && !isSelected && styles.seatAvailable,
+                        isOccupied && styles.seatOccupied,
+                        isSelected && styles.seatSelected,
+                      ]}
+                      onPress={() =>
+                        !isOccupied &&
+                        onToggleSeat(seatId, {
+                          row: seat.row,
+                          column: seatColumn,
+                          category: seat.category ?? null,
+                          price: seat.price ?? 0,
+                        })
+                      }
+                      disabled={isOccupied}
+                      activeOpacity={0.7}
+                      accessibilityLabel={`Asiento ${seat.row}${seatColumn} ${isOccupied ? 'ocupado' : 'disponible'}`}
+                      accessibilityState={{
+                        disabled: isOccupied,
+                        selected: isSelected,
+                      }}
+                    >
+                      <Text
+                        style={[
+                          styles.seatLabel,
+                          isSelected && styles.seatLabelSelected,
+                          isOccupied && styles.seatLabelOccupied,
+                        ]}
+                        numberOfLines={1}
+                      >
+                        {`${row.rowName}${seatColumn}`}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            );
+          })}
         </View>
       </ScrollView>
     </ScrollView>
@@ -166,8 +196,24 @@ const styles = StyleSheet.create({
     height: SEAT_SIZE,
     borderRadius: 6,
     marginHorizontal: SEAT_GAP / 2,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   seatAvailable: { backgroundColor: SEAT_COLORS.available },
   seatSelected: { backgroundColor: SEAT_COLORS.selected },
   seatOccupied: { backgroundColor: SEAT_COLORS.occupied },
+  // Pasillo: hueco punteado semitransparente, claramente distinto de "ocupado"
+  aisle: {
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderColor: 'rgba(233,227,245,0.25)',
+  },
+  seatLabel: {
+    color: SEAT_COLORS.label,
+    fontSize: 9,
+    fontWeight: '700',
+  },
+  seatLabelSelected: { color: '#3a2500' },
+  seatLabelOccupied: { color: 'rgba(233,227,245,0.45)' },
 });
