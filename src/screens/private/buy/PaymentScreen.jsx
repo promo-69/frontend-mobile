@@ -129,7 +129,7 @@ function BankMethodForm({
         </View>
       )}
 
-      <AppText variant="caption" style={[styles.formLabel, { marginTop: 4 }]}>
+      <AppText variant="caption" style={[styles.formLabel, styles.formLabelSpaced]}>
         DETALLES DE LA OPERACIÓN
       </AppText>
       <FormField
@@ -329,7 +329,7 @@ export default function PaymentScreen() {
           setExchangeRates(rates);
           return;
         }
-      } catch (e) {
+      } catch {
         // Sin sesión activa: probamos el otro endpoint.
       }
       // 2. Respaldo con /orders/session/details
@@ -341,7 +341,7 @@ export default function PaymentScreen() {
         if (!cancelled && rates && rates[PTS_CURRENCY_ID]) {
           setExchangeRates(rates);
         }
-      } catch (e) {
+      } catch {
         // No es crítico: la UI maneja la ausencia de tasa.
       }
     })();
@@ -349,7 +349,7 @@ export default function PaymentScreen() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [exchangeRates]);
 
   const usdRate = exchangeRates?.[USD_CURRENCY_ID]?.rate;
   const totalUsd = usdRate ? totalVes / usdRate : null;
@@ -452,7 +452,7 @@ export default function PaymentScreen() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [exchangeRates]);
 
   // Cuentas destino disponibles para el método bancario seleccionado.
   const accounts =
@@ -496,12 +496,14 @@ export default function PaymentScreen() {
     }
   };
 
-  const goToSuccess = async (qrCode) => {
+  const goToSuccess = async (qrCode, orderId) => {
     if (settledRef.current) return;
     settledRef.current = true;
     stopProcessing();
 
-    endSession();
+    // El pago se completó: el backend ya eliminó la sesión de compra en Redis,
+    // así que no hace falta (ni tiene sentido) el DELETE /orders/session.
+    endSession({ skipServerCancel: true });
 
     await clearCart();
     const method = METHODS.find((m) => m.key === selectedMethod);
@@ -509,6 +511,7 @@ export default function PaymentScreen() {
       pathname: '/(buy)/order-success',
       params: {
         qrCode: qrCode || '',
+        orderId: orderId ? String(orderId) : '',
         total: String(totalVes),
         paymentMethod: method?.label ?? '',
         isPoints: selectedMethod === 'points' ? '1' : '0',
@@ -523,10 +526,10 @@ export default function PaymentScreen() {
   // ─── Suscripción a los eventos asíncronos del backend ────────────────────────
   usePaymentEvents({
     // Orden pagada en su totalidad → mostramos el QR.
-    onCompleted: (data) => goToSuccess(data?.qrCode),
+    onCompleted: (data) => goToSuccess(data?.qrCode, data?.orderId),
     // Orden pagada pero requiere facturación (flujo de empleado). Igualmente
     // hay QR, así que avanzamos a la pantalla de éxito.
-    onBillingRequired: (data) => goToSuccess(data?.qrCode),
+    onBillingRequired: (data) => goToSuccess(data?.qrCode, data?.orderId),
     // Pago PARCIAL: la orden aún debe saldo. No completamos la compra.
     onPartialSuccess: (data) => {
       stopProcessing();
@@ -618,6 +621,10 @@ export default function PaymentScreen() {
   };
 
   const handlePay = async () => {
+    // Guard anti doble-envío: el botón se deshabilita por estado, pero un
+    // segundo tap puede colarse antes del re-render. Si ya hay un POST en
+    // vuelo o un pago aceptado en procesamiento, ignoramos el tap.
+    if (submitting || processing || settledRef.current) return;
     if (!validate()) return;
 
     // Construimos el pago según el método (contrato del backend).
@@ -943,6 +950,9 @@ const styles = StyleSheet.create({
     fontFamily: theme.typography.family.primary.bold,
     letterSpacing: 0.8,
     marginTop: spacing.s4,
+  },
+  formLabelSpaced: {
+    marginTop: 4,
   },
   fieldWrapper: { gap: spacing.s4 },
   fieldLabel: { color: colors.textSecondary },

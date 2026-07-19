@@ -26,8 +26,9 @@ export const getProjectionTypes = async () => {
 // ─── Alquiler de salas ───────────────────────────────────────────────────────
 
 // Lista de sucursales (cines)
+// limit: 200 = todas las sucursales (el default del backend pagina a 10)
 export const getCinemasList = async () => {
-  const response = await api.get('/cinemas');
+  const response = await api.get('/cinemas', { params: { limit: 200 } });
   return response.data?.data ?? [];
 };
 
@@ -44,8 +45,6 @@ export const getEventTypes = async () => {
 };
 
 // Crea una solicitud de alquiler de sala
-// payload: { room, event_type, event_name, event_description, event_date,
-//            requested_start_time, requested_end_time, attendees }
 export const createRoomRentalRequest = async (payload) => {
   const response = await api.post('/rentals/requests', payload);
   return response.data?.data ?? response.data;

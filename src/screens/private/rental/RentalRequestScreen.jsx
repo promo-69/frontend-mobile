@@ -3,12 +3,11 @@ import {
     Calendar,
     ChevronDown,
     ChevronLeft,
-    Clock,
     Info,
     MapPin,
     Users,
 } from 'lucide-react-native';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
     ActivityIndicator,
     Modal,
@@ -20,7 +19,9 @@ import {
     View,
 } from 'react-native';
 import { AppText } from '../../../components/ui/AppText';
+import { DateInput } from '../../../components/ui/DateInput';
 import { ScreenWrapper } from '../../../components/ui/ScreenWrapper';
+import { TimeInput } from '../../../components/ui/TimeInput';
 import { theme } from '../../../constants';
 import {
     createRoomRentalRequest,
@@ -33,6 +34,16 @@ const { colors, spacing, borderRadius } = theme;
 
 // Anticipación mínima requerida (2 semanas = 14 días)
 const MIN_DAYS_AHEAD = 14;
+
+// Límites del calendario: desde hoy + 14 días hasta 1 año adelante
+const getDateBounds = () => {
+  const min = new Date();
+  min.setHours(0, 0, 0, 0);
+  min.setDate(min.getDate() + MIN_DAYS_AHEAD);
+  const max = new Date(min);
+  max.setFullYear(max.getFullYear() + 1);
+  return { min, max };
+};
 
 // ─── Selector reutilizable (abre un modal con opciones) ──────────────────────
 function SelectField({
@@ -137,6 +148,9 @@ export default function RentalRequestScreen() {
   const [startTime, setStartTime] = useState(''); // HH:MM
   const [endTime, setEndTime] = useState(''); // HH:MM
   const [attendees, setAttendees] = useState('');
+
+  // Rango de fechas seleccionables en el calendario
+  const dateBounds = useMemo(() => getDateBounds(), []);
 
   // Carga inicial de catálogos (cines y tipos de evento)
   useEffect(() => {
@@ -361,50 +375,47 @@ export default function RentalRequestScreen() {
 
           <View style={styles.fieldWrapper}>
             <AppText style={styles.fieldLabel}>Fecha *</AppText>
-            <View style={styles.inputWithIcon}>
-              <Calendar size={16} color={colors.textSecondary} />
-              <TextInput
-                style={styles.inputInline}
-                placeholder="AAAA-MM-DD"
-                placeholderTextColor={colors.textDisabled}
-                value={eventDate}
-                onChangeText={setEventDate}
-                maxLength={10}
-                keyboardType="numbers-and-punctuation"
-              />
-            </View>
+            <DateInput
+              value={eventDate}
+              onChange={setEventDate}
+              minimumDate={dateBounds.min}
+              maximumDate={dateBounds.max}
+              renderTrigger={(open, displayValue) => (
+                <TouchableOpacity
+                  style={styles.inputWithIcon}
+                  onPress={open}
+                  activeOpacity={0.8}
+                >
+                  <Calendar size={16} color={colors.textSecondary} />
+                  <AppText
+                    style={[
+                      styles.pickerText,
+                      !displayValue && styles.pickerPlaceholder,
+                    ]}
+                  >
+                    {displayValue || 'DD/MM/AAAA'}
+                  </AppText>
+                </TouchableOpacity>
+              )}
+            />
           </View>
 
           <View style={styles.row}>
             <View style={styles.col}>
               <AppText style={styles.fieldLabel}>Hora inicio *</AppText>
-              <View style={styles.inputWithIcon}>
-                <Clock size={16} color={colors.textSecondary} />
-                <TextInput
-                  style={styles.inputInline}
-                  placeholder="HH:MM"
-                  placeholderTextColor={colors.textDisabled}
-                  value={startTime}
-                  onChangeText={setStartTime}
-                  maxLength={5}
-                  keyboardType="numbers-and-punctuation"
-                />
-              </View>
+              <TimeInput
+                title="Hora inicio"
+                value={startTime}
+                onChange={setStartTime}
+              />
             </View>
             <View style={styles.col}>
               <AppText style={styles.fieldLabel}>Hora fin *</AppText>
-              <View style={styles.inputWithIcon}>
-                <Clock size={16} color={colors.textSecondary} />
-                <TextInput
-                  style={styles.inputInline}
-                  placeholder="HH:MM"
-                  placeholderTextColor={colors.textDisabled}
-                  value={endTime}
-                  onChangeText={setEndTime}
-                  maxLength={5}
-                  keyboardType="numbers-and-punctuation"
-                />
-              </View>
+              <TimeInput
+                title="Hora fin"
+                value={endTime}
+                onChange={setEndTime}
+              />
             </View>
           </View>
 
@@ -568,6 +579,13 @@ const styles = StyleSheet.create({
     fontSize: 14,
     paddingVertical: spacing.s12,
   },
+  pickerText: {
+    flex: 1,
+    color: colors.textPrimary,
+    fontSize: 14,
+    paddingVertical: spacing.s12,
+  },
+  pickerPlaceholder: { color: colors.textDisabled },
   note: {
     flexDirection: 'row',
     alignItems: 'flex-start',

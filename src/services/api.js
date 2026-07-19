@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { ENV } from '../constants/config';
 import { storageHelper } from '../helper/storage.helper';
+
 const api = axios.create({
   baseURL: ENV.API_URL,
   timeout: 30000,
@@ -13,6 +14,7 @@ const api = axios.create({
 //  Interceptor de Peticiones
 api.interceptors.request.use(
   async (config) => {
+    config.headers['x-client-channel'] = 'mobile';
     const token = await storageHelper.getAccessToken();
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -76,6 +78,14 @@ api.interceptors.response.use(
           newRefreshToken ?? null,
           freshUser
         );
+
+        try {
+          const { reauthenticateSocket } = await import('./socket.service');
+          await reauthenticateSocket();
+        } catch {
+          // Si el socket no está disponible, el próximo getSocket usará el
+          // token fresco de todas formas.
+        }
 
         originalRequest.headers = originalRequest.headers || {};
         originalRequest.headers.Authorization = `Bearer ${accessToken}`;

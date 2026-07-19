@@ -5,7 +5,6 @@ import { formatTime12hrs } from '../../utils/TimeUtils';
 export default function ShowtimeHeader({ movie, showtime }) {
   if (!movie || !showtime) return null;
 
-  if (__DEV__) console.log('→ ShowtimeHeader recibe:', showtime);
   const roomName =
     showtime.booking?.room?.name ??
     showtime.booking?.room ??

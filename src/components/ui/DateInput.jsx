@@ -67,7 +67,9 @@ export const DateInput = ({
   placeholder,
   error,
   maximumDate = new Date(),
+  minimumDate = null,
   minimumYear = 1920,
+  renderTrigger, // (open, displayValue) => ReactNode. Reemplaza el Input por defecto.
 }) => {
   const [show, setShow] = useState(false);
   const [mode, setMode] = useState('days'); // 'days' | 'years'
@@ -75,6 +77,10 @@ export const DateInput = ({
   const [temp, setTemp] = useState(() => parseYMD(value));
 
   const maxDay = useMemo(() => startOfDay(maximumDate), [maximumDate]);
+  const minDay = useMemo(
+    () => (minimumDate ? startOfDay(minimumDate) : null),
+    [minimumDate]
+  );
 
   const displayValue =
     value && value.includes('-')
@@ -82,7 +88,7 @@ export const DateInput = ({
       : value || '';
 
   const open = () => {
-    const base = parseYMD(value) || new Date();
+    const base = parseYMD(value) || minDay || new Date();
     setViewDate(base);
     setTemp(parseYMD(value));
     setMode('days');
@@ -119,27 +125,32 @@ export const DateInput = ({
 
   const years = useMemo(() => {
     const max = maxDay.getFullYear();
+    const min = Math.max(minimumYear, minDay ? minDay.getFullYear() : minimumYear);
     const list = [];
-    for (let y = max; y >= minimumYear; y--) list.push(y);
+    for (let y = max; y >= min; y--) list.push(y);
     return list;
-  }, [maxDay, minimumYear]);
+  }, [maxDay, minDay, minimumYear]);
 
   const today = startOfDay(new Date());
 
   return (
     <>
-      <Pressable onPress={open} style={{ width: '100%' }}>
-        <View pointerEvents="none">
-          <Input
-            label={label}
-            value={displayValue}
-            placeholder={placeholder}
-            editable={false}
-            error={error}
-            rightIcon={<CalendarIcon size={20} color={colors.secondary} />}
-          />
-        </View>
-      </Pressable>
+      {renderTrigger ? (
+        renderTrigger(open, displayValue)
+      ) : (
+        <Pressable onPress={open} style={{ width: '100%' }}>
+          <View pointerEvents="none">
+            <Input
+              label={label}
+              value={displayValue}
+              placeholder={placeholder}
+              editable={false}
+              error={error}
+              rightIcon={<CalendarIcon size={20} color={colors.secondary} />}
+            />
+          </View>
+        </Pressable>
+      )}
 
       <Modal visible={show} transparent animationType="fade">
         <Pressable style={styles.overlay} onPress={() => setShow(false)}>
@@ -205,7 +216,7 @@ export const DateInput = ({
                 <View style={styles.grid}>
                   {cells.map((date, i) => {
                     if (!date) return <View key={i} style={styles.cell} />;
-                    const disabled = date > maxDay;
+                    const disabled = date > maxDay || (minDay && date < minDay);
                     const selected = sameDay(date, temp);
                     const isToday = sameDay(date, today);
                     return (
