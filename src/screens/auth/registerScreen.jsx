@@ -174,6 +174,7 @@ export default function RegisterScreen() {
       </KeyboardAvoidingView>
     </ScreenWrapper>
   );
+  
 }
 
 const styles = StyleSheet.create({

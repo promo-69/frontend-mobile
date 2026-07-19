@@ -1,7 +1,8 @@
+import { useRouter } from 'expo-router';
 import { ChevronDown } from 'lucide-react-native';
 import { useState } from 'react';
 import { Controller } from 'react-hook-form';
-import { StyleSheet, TouchableOpacity, View } from 'react-native';
+import { Pressable, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { theme } from '../constants';
 import { AppText } from './ui/AppText';
 import {
@@ -34,6 +35,7 @@ export const PersonalInfoSteps = ({
   setValue,
 }) => {
   const [isGenderOpen, setIsGenderOpen] = useState(false);
+  const router = useRouter();
 
   // Paso 1: Información Personal
   if (step === 1) {
@@ -375,15 +377,24 @@ export const PersonalInfoSteps = ({
                   style={{ color: theme.colors.textPrimary }}
                 >
                   Acepto los{' '}
-                  <AppText
-                    variant="label"
-                    style={{
-                      color: theme.colors.primary,
-                      textDecorationLine: 'underline',
-                    }}
+                  <Pressable
+                    onPress={() =>
+                      router.push({
+                        pathname: '/(legal)/terms',
+                        params: { acceptOnly: 'true' },
+                      })
+                    }
                   >
-                    Términos y Condiciones
-                  </AppText>
+                    <AppText
+                      variant="label"
+                      style={{
+                        color: theme.colors.primary,
+                        textDecorationLine: 'underline',
+                      }}
+                    >
+                      Términos y Condiciones
+                    </AppText>
+                  </Pressable>
                 </AppText>
               </Checkbox>
             )}
