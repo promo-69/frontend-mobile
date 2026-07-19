@@ -2,8 +2,8 @@ import api from './api';
 
 //GET - Toda la lista de Sucursales
 export const getCinemas = async (params = {}) => {
-  const response = await api.get('/cinemas', { params });
-  return response.data; // Devolvemos todo para conservar el objeto 'metadata'
+  const response = await api.get('/cinemas', { params: { limit: 200, ...params } });
+  return response.data;
 };
 
 //GET - Detalle de una sucursal por ID
@@ -13,10 +13,9 @@ export const getCinemaById = async (id) => {
 };
 
 //GET - Cartelera específica de una sucursal
-// con los mismos filtros opcionales (cinemaId, movieId, projectionType, language)
 export const getCinemaBillboard = async (cinemaId, params = {}) => {
   const response = await api.get(`/cinemas/${cinemaId}/showtimes/billboard`, {
     params,
-  }); // Se cambió 'billboard' a 'showtimes'
+  });
   return response.data.data || [];
 };

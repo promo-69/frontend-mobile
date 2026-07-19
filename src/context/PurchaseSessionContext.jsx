@@ -2,26 +2,18 @@ import {
   createContext,
   useCallback,
   useContext,
-  useEffect,
   useRef,
   useState,
 } from 'react';
 import {
   createQuote,
-  cancelSession,
   cancelSessionWithRetries,
+  getSessionState,
 } from '../services/orders.service';
-import { disconnectSocket } from '../services/socket.service';
 
 const PurchaseSessionContext = createContext(undefined);
 
 // ─── Epoch de sesión a nivel de MÓDULO ───────────────────────────────────────
-// Sobrevive a los remontajes del provider (a diferencia de refs/estado).
-// Cada vez que se crea una quote nueva, el epoch avanza. Un cleanup viejo solo
-// puede cancelar la sesión si su epoch sigue siendo el vigente; si otra
-// instancia ya creó una quote más nueva, el cleanup viejo NO la toca.
-// Esto elimina la carrera: cancelSessionWithRetries (con backoff) aterrizando
-// tarde y borrando la quote recién creada por la instancia nueva.
 let globalSessionEpoch = 0;
 
 export function PurchaseSessionProvider({ children }) {
@@ -38,28 +30,46 @@ export function PurchaseSessionProvider({ children }) {
 
   const _openQuote = useCallback(async (cid) => {
     try {
-      // Intentamos crear directo. En un inicio limpio no hay sesión previa, así
-      // que NO llamamos a DELETE /orders/session (evita el 404 "No existe una
-      // sesión de compra activa" que ensuciaba la consola en rojo).
       await createQuote(cid);
     } catch (e) {
       const status = e?.response?.status;
-      // Solo si de verdad había una sesión colgada (409/400) la limpiamos y
-      // reintentamos una vez (equivalente al deleteOrderSessionWithRetries web).
-      if (status === 409 || status === 400) {
-        await cancelSessionWithRetries().catch(() => {});
-        await new Promise((r) => setTimeout(r, 400));
-        await createQuote(cid);
-      } else {
-        throw e;
+      if (status !== 409 && status !== 400) throw e;
+
+      // 409 = "Ya tienes una sesión activa". Estrategia de la WEB (probada en
+      // producción): ADOPTAR la sesión existente en lugar de pelear con ella.
+      // Cancelar+recrear generaba carreras cuando la pantalla se remontaba.
+      try {
+        const state = await getSessionState();
+        const sameCinema = Number(state?.cinema) === Number(cid);
+        const earlyStage = !state?.status || state.status === 'pending_order';
+        if (state && sameCinema && earlyStage) {
+          // Sesión compatible: la reusamos tal cual. Nada más que hacer.
+          return;
+        }
+        if (__DEV__ && state) {
+          // La sesión existente pertenece a OTRO flujo (posiblemente de otro
+          // dispositivo con la misma cuenta: la sesión de compra es única por
+          // usuario en todo el sistema, web y móvil la comparten).
+          console.log(
+            '[quote] sesión existente incompatible → se resetea:',
+            `cinema=${state.cinema} status=${state.status} order=${state.order_id ?? '—'}`
+          );
+        }
+      } catch {
+        // No se pudo consultar el estado: caemos al último recurso de abajo.
       }
+
+      // Último recurso: la sesión existente es de OTRA sucursal o quedó a
+      // mitad de un flujo anterior (orden pendiente de pago abandonada).
+      // Solo entonces la limpiamos y creamos una nueva.
+      await cancelSessionWithRetries().catch(() => {});
+      await new Promise((r) => setTimeout(r, 400));
+      await createQuote(cid);
     }
   }, []);
 
   /**
    * Inicializa (o reutiliza) la sesión de compra para una sucursal.
-   * Idempotente: si ya está lista para esa sucursal, no hace nada.
-   * Lo llama la PRIMERA pantalla del flujo (selección de boletos).
    *
    * @param {number} cinemaId
    * @param {{force?: boolean}} opts - force=true recrea la quote aunque el
@@ -104,36 +114,20 @@ export function PurchaseSessionProvider({ children }) {
 
   /**
    * Cierra la sesión de compra (al cancelar o al completar la compra).
+   * @param {{skipServerCancel?: boolean}} opts - skipServerCancel=true cuando
+   *   el backend ya eliminó la quote (pago completado): evita un DELETE
+   *   /orders/session que siempre respondería 404.
    */
-  const endSession = useCallback(async () => {
+  const endSession = useCallback(async ({ skipServerCancel = false } = {}) => {
     setQuoteReady(false);
     activeCinemaRef.current = null;
     // Cierre explícito: avanzamos el epoch para que ningún cleanup pendiente
     // (de esta u otra instancia) vuelva a cancelar después de esto.
     globalSessionEpoch += 1;
     myEpochRef.current = 0;
-    await cancelSessionWithRetries().catch(() => {});
-  }, []);
-
-  // Al desmontar el provider liberamos la sesión, PERO solo si la quote de
-  // esta instancia sigue siendo la vigente (epoch). Si otra instancia ya creó
-  // una quote más nueva (remontaje durante la navegación), no la tocamos.
-  useEffect(() => {
-    return () => {
-      if (
-        activeCinemaRef.current != null &&
-        myEpochRef.current !== 0 &&
-        myEpochRef.current === globalSessionEpoch
-      ) {
-        globalSessionEpoch += 1; // invalida reintentos tardíos propios
-        // UN solo intento, sin reintentos: un DELETE rezagado reintentándose
-        // era capaz de borrar la quote creada por la instancia nueva. Si este
-        // intento falla, el TTL de Redis limpia la quote huérfana y el
-        // manejador del 409 en _openQuote la recupera al reabrir el flujo.
-        cancelSession().catch(() => {});
-      }
-      disconnectSocket();
-    };
+    if (!skipServerCancel) {
+      await cancelSessionWithRetries().catch(() => {});
+    }
   }, []);
 
   return (

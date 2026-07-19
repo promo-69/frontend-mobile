@@ -245,10 +245,6 @@ export default function SelectSeats() {
         try {
           await lockSeat(seatId);
         } catch (err) {
-          // Si la quote expiró en Redis, la recreamos y reintentamos UNA vez
-          // en lugar de dejar al usuario bloqueado sin poder continuar.
-          // force: el provider puede creer que su quote sigue viva (estado
-          // local desactualizado), así que lo obligamos a recrearla.
           const msg = err?.message || '';
           const sessionGone = /sesión de compra|expirad/i.test(msg);
           if (!sessionGone) throw err;
@@ -260,8 +256,6 @@ export default function SelectSeats() {
         toggleSeat(seatId, { ...seatData, booking: bookingId });
       } catch (err) {
         const msg = err?.message || '';
-        // Solo marcamos el asiento como ocupado si el error es del asiento;
-        // un problema de sesión no significa que el asiento esté tomado.
         if (!/sesión de compra|expirad/i.test(msg)) {
           setLiveSeatStatus((prev) => ({ ...prev, [seatId]: 'occupied' }));
           Alert.alert(
@@ -270,8 +264,11 @@ export default function SelectSeats() {
           );
         } else {
           Alert.alert(
-            'Sesión de compra expirada',
-            'No pudimos renovar tu sesión de compra. Vuelve a la selección de boletos para reiniciar el proceso.'
+            'Sesión de compra interrumpida',
+            'Tu sesión de compra fue cerrada o reemplazada. Esto puede ocurrir ' +
+              'si tienes otra compra en curso con esta misma cuenta en otro ' +
+              'dispositivo. Cierra ese flujo y vuelve a ' +
+              'intentarlo desde la selección de boletos.'
           );
         }
       } finally {

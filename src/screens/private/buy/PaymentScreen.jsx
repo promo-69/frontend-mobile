@@ -53,9 +53,6 @@ const PAYMENT_METHOD_ID = {
 };
 
 // ─── Formulario de métodos bancarios (Pago Móvil / Transferencia) ────────────
-// El backend exige que se indique a QUÉ cuenta destino de la empresa se pagó
-// (campo `bank` = ID del banco de esa cuenta) más el número de referencia.
-// Las cuentas destino se obtienen de GET /payments/options.
 function BankMethodForm({
   accounts,
   loadingAccounts,
@@ -424,8 +421,6 @@ export default function PaymentScreen() {
   const [reference, setReference] = useState('');
   const [selectedAccountId, setSelectedAccountId] = useState(null);
 
-  // `submitting`: POST en vuelo. `processing`: ya se aceptó (HTTP 200) y estamos
-  // esperando el dictamen final por WebSocket (payment_completed/failed/...).
   const [submitting, setSubmitting] = useState(false);
   const [processing, setProcessing] = useState(false);
   const processingTimeoutRef = useRef(null);
@@ -501,7 +496,8 @@ export default function PaymentScreen() {
     settledRef.current = true;
     stopProcessing();
 
-    endSession();
+    // El pago se completó: el backend ya eliminó la sesión de compra en Redis
+    endSession({ skipServerCancel: true });
 
     await clearCart();
     const method = METHODS.find((m) => m.key === selectedMethod);
@@ -593,7 +589,7 @@ export default function PaymentScreen() {
         );
         return false;
       }
-      // Validamos con la TASA REAL de Cinepuntos del backend (no asumimos 1:1).
+      // Validamos con la tasa de Cinepuntos del backend
       // Cada punto vale `ptsRate` Bs; los puntos deben cubrir el total.
       const ptsRate = Number(exchangeRates?.[PTS_CURRENCY_ID]?.rate) || 0;
       if (ptsRate <= 0) {
@@ -619,6 +615,10 @@ export default function PaymentScreen() {
   };
 
   const handlePay = async () => {
+    // Guard anti doble-envío: el botón se deshabilita por estado, pero un
+    // segundo tap puede colarse antes del re-render. Si ya hay un POST en
+    // vuelo o un pago aceptado en procesamiento, ignoramos el tap.
+    if (submitting || processing || settledRef.current) return;
     if (!validate()) return;
 
     // Construimos el pago según el método (contrato del backend).
