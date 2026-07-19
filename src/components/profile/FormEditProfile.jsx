@@ -1,29 +1,36 @@
-import { useState, useEffect } from 'react';
+import { Pencil } from 'lucide-react-native';
+import { useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
-    StyleSheet,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  StyleSheet,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
-import { Eye, EyeOff, Pencil } from 'lucide-react-native';
-import { AppText } from '../ui/AppText';
 import { theme } from '../../constants';
+import { AppText } from '../ui/AppText';
 
-const PASS_REGEX = /^(?=.*[a-zA-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>]).{8,20}$/;
-
-export function FormEditProfile({ profile, step, onEdit, onSave, onCancel, loading }) {
+export function FormEditProfile({
+  profile,
+  step,
+  onEdit,
+  onSave,
+  onCancel,
+  loading,
+}) {
   const isEditing = step === 'editing';
 
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [phonePrefix, setPhonePrefix] = useState('+58');
   const [phoneBody, setPhoneBody] = useState('');
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({});
 
   useEffect(() => {
     if (profile) {
+      setFirstName(profile.firstName || '');
+      setLastName(profile.lastName || '');
       setEmail(profile.personalEmail || profile.email || '');
       const rawPhone = profile.phoneNumber || '';
       if (rawPhone.startsWith('+')) {
@@ -33,8 +40,6 @@ export function FormEditProfile({ profile, step, onEdit, onSave, onCancel, loadi
         setPhoneBody(rawPhone);
       }
     }
-    setPassword('');
-    setShowPassword(false);
     setErrors({});
   }, [profile, step]);
 
@@ -42,24 +47,32 @@ export function FormEditProfile({ profile, step, onEdit, onSave, onCancel, loadi
     const newErrors = {};
     let isValid = true;
 
+    if (!firstName.trim()) {
+      newErrors.firstName = 'El nombre es obligatorio';
+      isValid = false;
+    }
+
+    if (!lastName.trim()) {
+      newErrors.lastName = 'El apellido es obligatorio';
+      isValid = false;
+    }
+
     if (!email.includes('@')) {
       newErrors.email = 'Correo inválido';
       isValid = false;
     }
 
-    if (password.length > 0 && !PASS_REGEX.test(password)) {
-      newErrors.password = '8-20 caracteres, letras, números y símbolos';
-      isValid = false;
-    }
-
     const originalPhone = profile?.phoneNumber || '';
     const currentPhone = `${phonePrefix}${phoneBody}`;
+    const hasNameChanged =
+      firstName.trim() !== (profile?.firstName || '').trim() ||
+      lastName.trim() !== (profile?.lastName || '').trim();
     const hasEmailChanged =
-      email.trim().toLowerCase() !== (profile?.personalEmail || profile?.email || '').trim().toLowerCase();
+      email.trim().toLowerCase() !==
+      (profile?.personalEmail || profile?.email || '').trim().toLowerCase();
     const hasPhoneChanged = currentPhone.trim() !== originalPhone.trim();
-    const hasPasswordChanged = password.length > 0;
 
-    if (!hasEmailChanged && !hasPasswordChanged && !hasPhoneChanged) {
+    if (!hasNameChanged && !hasEmailChanged && !hasPhoneChanged) {
       newErrors.email = 'No has realizado ninguna modificación en tus datos.';
       isValid = false;
     }
@@ -72,8 +85,9 @@ export function FormEditProfile({ profile, step, onEdit, onSave, onCancel, loadi
     if (loading) return;
     if (isEditing && validate()) {
       onSave({
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
         email: email.trim(),
-        password: password.length > 0 ? password : undefined,
         cellphone: `${phonePrefix}${phoneBody}`,
       });
     }
@@ -102,7 +116,7 @@ export function FormEditProfile({ profile, step, onEdit, onSave, onCancel, loadi
     value,
     onChangeText,
     errorKey,
-    options = {},
+    options = {}
   ) => (
     <View style={styles.fieldContainer}>
       <AppText variant="small" style={styles.fieldLabel}>
@@ -119,13 +133,14 @@ export function FormEditProfile({ profile, step, onEdit, onSave, onCancel, loadi
           placeholderTextColor="rgba(255,255,255,0.2)"
           placeholder={options.placeholder}
         />
-        <Pencil size={14} color={theme.colors.textSecondary} style={{ opacity: 0.4 }} />
+        <Pencil
+          size={14}
+          color={theme.colors.textSecondary}
+          style={{ opacity: 0.4 }}
+        />
       </View>
       <View
-        style={[
-          styles.underline,
-          errors[errorKey] && styles.underlineError,
-        ]}
+        style={[styles.underline, errors[errorKey] && styles.underlineError]}
       />
       {errors[errorKey] && (
         <AppText variant="small" style={styles.errorText}>
@@ -161,65 +176,17 @@ export function FormEditProfile({ profile, step, onEdit, onSave, onCancel, loadi
           placeholder="4121234567"
         />
         {isEditing && (
-          <Pencil size={14} color={theme.colors.textSecondary} style={{ opacity: 0.4 }} />
+          <Pencil
+            size={14}
+            color={theme.colors.textSecondary}
+            style={{ opacity: 0.4 }}
+          />
         )}
       </View>
-      <View
-        style={[
-          styles.underline,
-          errors.phone && styles.underlineError,
-        ]}
-      />
+      <View style={[styles.underline, errors.phone && styles.underlineError]} />
       {errors.phone && (
         <AppText variant="small" style={styles.errorText}>
           {errors.phone}
-        </AppText>
-      )}
-    </View>
-  );
-
-  // ─── PASSWORD FIELD ─────────────────────────────────────────────────
-  const renderPasswordField = () => (
-    <View style={styles.fieldContainer}>
-      <AppText variant="small" style={styles.fieldLabel}>
-        {isEditing ? 'Nueva Contraseña (Opcional)' : 'Contraseña'}
-      </AppText>
-      <View style={styles.inputRow}>
-        <TextInput
-          style={styles.textInput}
-          value={password}
-          onChangeText={setPassword}
-          editable={isEditing && !loading}
-          secureTextEntry={!showPassword}
-          autoCapitalize="none"
-          placeholderTextColor="rgba(255,255,255,0.2)"
-          placeholder={isEditing ? 'Escribe para cambiar tu clave...' : ''}
-        />
-        {isEditing && (
-          <View style={styles.passwordActions}>
-            <TouchableOpacity
-              onPress={() => setShowPassword(!showPassword)}
-              style={styles.eyeButton}
-            >
-              {showPassword ? (
-                <EyeOff size={16} color={theme.colors.textSecondary} />
-              ) : (
-                <Eye size={16} color={theme.colors.textSecondary} />
-              )}
-            </TouchableOpacity>
-            <Pencil size={14} color={theme.colors.textSecondary} style={{ opacity: 0.4 }} />
-          </View>
-        )}
-      </View>
-      <View
-        style={[
-          styles.underline,
-          errors.password && styles.underlineError,
-        ]}
-      />
-      {errors.password && (
-        <AppText variant="small" style={styles.errorText}>
-          {errors.password}
         </AppText>
       )}
     </View>
@@ -229,27 +196,40 @@ export function FormEditProfile({ profile, step, onEdit, onSave, onCancel, loadi
   return (
     <View style={styles.container}>
       {/* Read-only fields (grid 2 cols) */}
-      <View style={styles.readOnlyGrid}>
-        <View style={styles.halfField}>
-          {renderReadOnlyField('Nombre', profile?.firstName)}
-        </View>
-        <View style={styles.halfField}>
-          {renderReadOnlyField('Apellido', profile?.lastName)}
-        </View>
-      </View>
 
       {/* Editable fields */}
       {isEditing ? (
         <>
+          <View style={styles.readOnlyGrid}>
+            <View style={styles.halfField}>
+              {renderEditableField(
+                'Nombre',
+                firstName,
+                setFirstName,
+                'firstName'
+              )}
+            </View>
+            <View style={styles.halfField}>
+              {renderEditableField(
+                'Apellido',
+                lastName,
+                setLastName,
+                'lastName'
+              )}
+            </View>
+          </View>
           {renderEditableField('Correo', email, setEmail, 'email')}
           {renderPhoneField()}
-          {renderPasswordField()}
         </>
       ) : (
         <>
-          {renderReadOnlyField('Correo', profile?.personalEmail || profile?.email)}
+          {renderReadOnlyField('Nombre', profile?.firstName)}
+          {renderReadOnlyField('Apellido', profile?.lastName)}
+          {renderReadOnlyField(
+            'Correo',
+            profile?.personalEmail || profile?.email
+          )}
           {renderReadOnlyField('Teléfono', profile?.phoneNumber)}
-          {renderReadOnlyField('Contraseña', '••••••••')}
         </>
       )}
 
@@ -275,7 +255,10 @@ export function FormEditProfile({ profile, step, onEdit, onSave, onCancel, loadi
           disabled={loading}
         >
           {loading ? (
-            <ActivityIndicator size="small" color={theme.colors.background.main} />
+            <ActivityIndicator
+              size="small"
+              color={theme.colors.background.main}
+            />
           ) : (
             <AppText
               variant="button"
@@ -350,14 +333,6 @@ const styles = StyleSheet.create({
     color: theme.colors.textPrimary,
     fontSize: 12,
     fontWeight: '600',
-  },
-  passwordActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  eyeButton: {
-    padding: 4,
   },
   underline: {
     height: 1.5,
