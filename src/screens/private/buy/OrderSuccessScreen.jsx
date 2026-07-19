@@ -1,6 +1,6 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
     Animated,
     ScrollView,
@@ -98,11 +98,33 @@ function DetailRow({ icon, label, value }) {
 // ─── Pantalla ─────────────────────────────────────────────────────────────────
 export default function OrderSuccessScreen() {
   const router = useRouter();
-  const { qrCode, total, paymentMethod, isPoints, pointsUsed } =
+  const { qrCode, orderId, total, paymentMethod, isPoints, pointsUsed } =
     useLocalSearchParams();
   const totalAmount = Number(total || 0);
   const paidWithPoints = isPoints === '1';
   const pointsRedeemed = Number(pointsUsed || 0);
+
+  // Respaldo: si el evento de socket llegó sin QR (o se perdió), lo
+  // recuperamos por REST desde la orden — el backend ya lo guardó en BD.
+  const [resolvedQr, setResolvedQr] = useState(qrCode || '');
+  useEffect(() => {
+    if (resolvedQr || !orderId) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const { getOrderById } = await import(
+          '../../../services/orders.service'
+        );
+        const order = await getOrderById(orderId);
+        if (!cancelled && order?.qr_code) setResolvedQr(order.qr_code);
+      } catch (err) {
+        if (__DEV__) console.log('[order-success] fallback QR falló:', err?.message);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [orderId, resolvedQr]);
 
   const handleShare = async () => {
     try {
@@ -139,7 +161,7 @@ export default function OrderSuccessScreen() {
         </AppText>
 
         {/* QR */}
-        <QrSection qrCode={qrCode} />
+        <QrSection qrCode={resolvedQr} />
 
         {/* Detalles */}
         <View style={styles.detailsCard}>

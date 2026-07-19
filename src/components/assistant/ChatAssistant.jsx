@@ -13,6 +13,7 @@ import {
   Dimensions,
 } from 'react-native';
 import { X, Mic, Send } from 'lucide-react-native';
+import { requireOptionalNativeModule } from 'expo-modules-core';
 import { sendAssistantMessage } from '../../services/assistant.service';
 import { getCinemasList } from '../../services/info.service';
 import robotAvatar from '../../assets/images/robotIA.png';
@@ -105,6 +106,16 @@ export default function ChatAssistant() {
   // Verificar disponibilidad de voz
   useEffect(() => {
     const checkVoice = async () => {
+      // Si el módulo nativo no está compilado en este binario (Expo Go, o un dev
+      // build sin recompilar), NO importamos el paquete. Eso evita el error rojo:
+      // requireOptionalNativeModule devuelve null en vez de lanzar.
+      const nativeVoice = requireOptionalNativeModule('ExpoSpeechRecognition');
+      if (!nativeVoice) {
+        speechRef.current = null;
+        setVoiceAvailable(false);
+        return;
+      }
+
       try {
         const module = await import('expo-speech-recognition');
         speechRef.current = module;

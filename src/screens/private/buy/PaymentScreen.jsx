@@ -496,7 +496,7 @@ export default function PaymentScreen() {
     }
   };
 
-  const goToSuccess = async (qrCode) => {
+  const goToSuccess = async (qrCode, orderId) => {
     if (settledRef.current) return;
     settledRef.current = true;
     stopProcessing();
@@ -509,6 +509,7 @@ export default function PaymentScreen() {
       pathname: '/(buy)/order-success',
       params: {
         qrCode: qrCode || '',
+        orderId: orderId ? String(orderId) : '',
         total: String(totalVes),
         paymentMethod: method?.label ?? '',
         isPoints: selectedMethod === 'points' ? '1' : '0',
@@ -523,10 +524,10 @@ export default function PaymentScreen() {
   // ─── Suscripción a los eventos asíncronos del backend ────────────────────────
   usePaymentEvents({
     // Orden pagada en su totalidad → mostramos el QR.
-    onCompleted: (data) => goToSuccess(data?.qrCode),
+    onCompleted: (data) => goToSuccess(data?.qrCode, data?.orderId),
     // Orden pagada pero requiere facturación (flujo de empleado). Igualmente
     // hay QR, así que avanzamos a la pantalla de éxito.
-    onBillingRequired: (data) => goToSuccess(data?.qrCode),
+    onBillingRequired: (data) => goToSuccess(data?.qrCode, data?.orderId),
     // Pago PARCIAL: la orden aún debe saldo. No completamos la compra.
     onPartialSuccess: (data) => {
       stopProcessing();
