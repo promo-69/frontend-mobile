@@ -120,13 +120,13 @@ export default function SelectSeats() {
       onSeatsReleased: handleSeatsReleased,
       onQuoteExpired: handleQuoteExpired,
     },
-    // Solo se habilita el tiempo real cuando la quote está lista.
+    // Solo habilitamos el tiempo real cuando la quote está lista.
     quoteReady
   );
 
-  // Volver atrás (a la selección de boletos): liberamos los LOCKS de asientos,
+  // Volver atrás (a la selección de boletos): se liberan los LOCKS de asientos,
   // pero no se cancela la sesión de compra: el provider es su único dueño y la
-  // mantiene mientras sigamos dentro del flujo (buy). Al salir del grupo, el
+  // mantiene mientras se siga dentro del flujo (buy). Al salir del grupo, el
   // provider la cancela.
   useEffect(() => {
     const unsubscribe = navigation.addListener('beforeRemove', () => {
@@ -240,10 +240,20 @@ export default function SelectSeats() {
       }
 
       setLockingSeatId(seatId);
-      try {
-        await lockSeat(seatId);
-        toggleSeat(seatId, { ...seatData, booking: bookingId });
-      } catch (err) {
+            try {
+              // --- SONDA TEMPORAL ---
+              try {
+                const { getSessionState } = await import('../../../services/orders.service');
+                const s = await getSessionState();
+                console.log('🎫 quote antes de lock:', s ? 'EXISTE' : 'null');
+              } catch {
+                console.log('🎫 quote antes de lock: NO existe (404)');
+              }
+              // --- FIN SONDA ---
+
+              await lockSeat(seatId);
+              toggleSeat(seatId, { ...seatData, booking: bookingId });
+            } catch (err) {
         setLiveSeatStatus((prev) => ({ ...prev, [seatId]: 'occupied' }));
         Alert.alert(
           'Asiento no disponible',
@@ -290,7 +300,7 @@ export default function SelectSeats() {
       return;
     }
 
-    // Asignamos a cada asiento (en orden de selección) el tipo de boleto del plan
+    // Se asigna a cada asiento (en orden de selección) el tipo de boleto del plan
     const enriched = cart.tickets.map((seat, i) => {
       const audienceCategoryId = ticketPlan[i] ?? ticketPlan[ticketPlan.length - 1] ?? 1;
       return {
