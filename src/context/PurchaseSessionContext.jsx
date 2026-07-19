@@ -22,9 +22,17 @@ export function PurchaseSessionProvider({ children }) {
   // Sucursal para la que la quote está activa (evita reabrir si ya está lista)
   const activeCinemaRef = useRef(null);
   // Candado anti-carrera: garantiza un solo createQuote en vuelo
-  const initLockRef = useRef(false);
+  // Candado anti-carrera: garantiza un solo createQuote en vuelo
+    const initLockRef = useRef(false);
 
-  const _openQuote = useCallback(async (cid) => {
+    // --- SONDA TEMPORAL ---
+    useEffect(() => {
+      console.log('🟢 PROVIDER MONTADO');
+      return () => console.log('🔴 PROVIDER DESMONTADO');
+    }, []);
+    // --- FIN SONDA ---
+
+    const _openQuote = useCallback(async (cid) => {
     try {
       // Intentamos crear directo. En un inicio limpio no hay sesión previa, así
       // que NO llamamos a DELETE /orders/session (evita el 404 "No existe una

@@ -1,5 +1,5 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Search, ShoppingCart, X } from 'lucide-react-native';
+import { ChevronRight, MapPin, Search, ShoppingCart, X } from 'lucide-react-native';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
     ActivityIndicator,
@@ -457,9 +457,14 @@ export default function ConcessionsCatalogScreen() {
     <ScreenWrapper>
       {/* Modal selector de sucursal */}
       <Modal visible={cinemaModalVisible} animationType="slide" transparent>
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <AppText style={styles.modalTitle}>Selecciona tu sucursal</AppText>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalSheet}>
+            <View style={styles.modalHeader}>
+              <AppText style={styles.modalTitle}>Elige tu sucursal</AppText>
+              <TouchableOpacity onPress={() => setCinemaModalVisible(false)}>
+                <X size={22} color={theme.colors.textSecondary} />
+              </TouchableOpacity>
+            </View>
             <FlatList
               data={cinemas}
               keyExtractor={(item) => String(item.id)}
@@ -472,7 +477,9 @@ export default function ConcessionsCatalogScreen() {
                   }}
                 >
                   <AppText style={styles.cinemaName}>{item.name}</AppText>
-                  <AppText style={styles.cinemaAddress}>{item.address}</AppText>
+                  {!!item.address && (
+                    <AppText style={styles.cinemaAddress}>{item.address}</AppText>
+                  )}
                 </TouchableOpacity>
               )}
             />
@@ -510,10 +517,11 @@ export default function ConcessionsCatalogScreen() {
         }}
         activeOpacity={0.8}
       >
-        <AppText style={styles.cinemaBarText}>
-          📍 {selectedCinema?.name || 'Selecciona una sucursal'}
+        <MapPin size={16} color={colors.primary} />
+        <AppText style={styles.cinemaBarText} numberOfLines={1}>
+          {selectedCinema?.name || 'Elige tu sucursal'}
         </AppText>
-        <AppText style={styles.cinemaBarChange}>Cambiar</AppText>
+        <ChevronRight size={16} color={colors.textSecondary} />
       </TouchableOpacity>
 
       {/* Búsqueda */}
@@ -778,62 +786,63 @@ const styles = StyleSheet.create({
     fontFamily: theme.typography.family.primary.bold,
   },
 
-  // ── Modal sucursal ──
-  modalContainer: {
+  // ── Modal sucursal (mismo patrón que Premios: bottom-sheet) ──
+  modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.85)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: 'flex-end',
   },
-  modalContent: {
-    width: '85%',
-    maxHeight: '70%',
+  modalSheet: {
     backgroundColor: colors.midnight[900],
-    borderRadius: borderRadius.s16,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    maxHeight: '70%',
+    paddingBottom: spacing.s24,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     padding: spacing.s16,
-  },
-  modalTitle: {
-    color: colors.primary,
-    fontSize: 18,
-    fontFamily: theme.typography.family.primary.bold,
-    marginBottom: spacing.s12,
-    textAlign: 'center',
-  },
-  cinemaOption: {
-    paddingVertical: spacing.s12,
     borderBottomWidth: 1,
     borderBottomColor: colors.midnight[700],
+  },
+  modalTitle: {
+    color: colors.textPrimary,
+    fontSize: 16,
+    fontFamily: theme.typography.family.primary.bold,
+  },
+  cinemaOption: {
+    paddingHorizontal: spacing.s16,
+    paddingVertical: spacing.s16,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.midnight[800],
   },
   cinemaName: {
     color: colors.textPrimary,
     fontSize: 15,
     fontFamily: theme.typography.family.primary.bold,
   },
-  cinemaAddress: { color: colors.textSecondary, fontSize: 12, marginTop: 3 },
+  cinemaAddress: { color: colors.textSecondary, fontSize: 12, marginTop: 2 },
 
-  // ── Barra de sucursal seleccionada ──
+  // ── Barra de sucursal (mismo patrón que Premios) ──
   cinemaBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    gap: spacing.s8,
     marginHorizontal: spacing.s16,
-    marginBottom: spacing.s8,
-    backgroundColor: colors.midnight[800],
-    borderRadius: borderRadius.s8,
+    marginBottom: spacing.s12,
     paddingHorizontal: spacing.s12,
-    paddingVertical: spacing.s8,
+    paddingVertical: 10,
+    backgroundColor: colors.midnight[800],
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: colors.midnight[600],
+    borderColor: colors.midnight[700],
   },
   cinemaBarText: {
+    flex: 1,
     color: colors.textPrimary,
     fontSize: 13,
-    flex: 1,
-  },
-  cinemaBarChange: {
-    color: colors.primary,
-    fontSize: 12,
     fontFamily: theme.typography.family.primary.bold,
-    marginLeft: spacing.s8,
   },
 });
