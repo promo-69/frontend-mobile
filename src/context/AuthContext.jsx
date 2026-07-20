@@ -1,8 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createContext, useContext, useEffect, useState } from 'react';
-import { getErrorMessage, AUTH_ERRORS } from '../constants/errorMessages';
-import { storageHelper } from '../helper/storage.helper';
+import { getErrorMessage } from '../constants/errorMessages';
 import { jwtHelper } from '../helper/jwt.helper';
+import { storageHelper } from '../helper/storage.helper';
 import { authService } from '../services/auth.service';
 
 const AuthContext = createContext({});
@@ -100,14 +100,23 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       console.log(error);
 
-      // Extraemos el mensaje y el code directamente del payload de error de la API
-      const backendCode = error.response?.data?.code; // Ej: "UNVERIFIED_ACCOUNT"
+      const backendCode = error.response?.data?.code;
+      const backendMessage =
+        error.response?.data?.message?.toString?.().toLowerCase() || '';
+      const backendStatus = error.response?.status;
+      const isCredentialsError =
+        [400, 401, 403, 404, 422].includes(backendStatus) ||
+        /credencial|password|contraseña|correo|email|usuario|login|credentials|invalid/i.test(
+          backendMessage
+        );
+      const errorCode =
+        backendCode || (isCredentialsError ? 'INVALID_LOGIN' : null);
 
       return {
         success: false,
-        message: getErrorMessage(backendCode),
-        code: backendCode || null,
-        status: error.response?.status ?? null,
+        message: getErrorMessage(errorCode),
+        code: errorCode,
+        status: backendStatus ?? null,
       };
     }
   };
