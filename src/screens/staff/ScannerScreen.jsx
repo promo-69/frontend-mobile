@@ -305,6 +305,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.s12,
   },
   topBarTitle: { color: colors.primary, fontSize: 18, fontFamily: typography.family.primary.bold },
+  spacer: { width: 26 },
   detailScroll: { padding: spacing.s16, gap: spacing.s16 },
   card: {
     backgroundColor: colors.midnight[800],
