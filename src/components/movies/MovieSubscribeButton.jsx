@@ -1,13 +1,13 @@
 import { Bell, BellRing } from 'lucide-react-native';
 import {
     ActivityIndicator,
-    Alert,
     StyleSheet,
     TouchableOpacity,
 } from 'react-native';
 import { theme } from '../../constants';
 import { useMovieSubscription } from '../../hooks/movies/useMovieSubscription';
 import { AppText } from '../ui/AppText';
+import { appAlert } from '../../context/AlertContext';
 
 const { colors, spacing, borderRadius } = theme;
 
@@ -25,7 +25,7 @@ export function MovieSubscribeButton({ movieId }) {
     try {
       await toggle();
     } catch (err) {
-      Alert.alert(
+      appAlert(
         'No se pudo actualizar tu suscripción',
         err?.response?.data?.message || 'Intenta de nuevo en unos momentos.'
       );

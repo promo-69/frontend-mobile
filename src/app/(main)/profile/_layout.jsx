@@ -63,10 +63,13 @@ export default function ProfileLayout() {
         }}
       />
 
-
+      <Stack.Screen name="bookmarks" options={{
+        title: 'Mis marcadores',
+        gestureEnabled: true }} />
 
       {/* Mis solicitudes de alquiler de salas */}
       <Stack.Screen name="rental-requests" options={{
+        title: 'Mis solicitudes de alquier',
         gestureEnabled: true }} />
 
       {/* Módulo de fidelidad: sus pantallas traen encabezado propio */}

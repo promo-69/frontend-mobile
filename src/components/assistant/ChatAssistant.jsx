@@ -9,7 +9,6 @@ import {
   StyleSheet,
   Animated,
   Platform,
-  Alert,
   Dimensions,
 } from 'react-native';
 import { X, Mic } from 'lucide-react-native';
@@ -17,6 +16,7 @@ import { requireOptionalNativeModule } from 'expo-modules-core';
 import { sendAssistantMessage } from '../../services/assistant.service';
 import { getCinemasList } from '../../services/info.service';
 import robotAvatar from '../../assets/images/robotIA.png';
+import { appAlert } from '../../context/AlertContext';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -193,7 +193,7 @@ export default function ChatAssistant() {
     }
 
     if (!speechRef.current) {
-      Alert.alert(
+      appAlert(
         'Voz no disponible',
         'El reconocimiento de voz no está disponible en este entorno. Puedes escribir tu mensaje.'
       );
@@ -203,7 +203,7 @@ export default function ChatAssistant() {
     try {
       const permission = await speechRef.current.requestPermissionsAsync();
       if (!permission.granted) {
-        Alert.alert(
+        appAlert(
           'Permiso requerido',
           'Necesitamos acceso al micrófono para el reconocimiento de voz.'
         );
@@ -231,7 +231,7 @@ export default function ChatAssistant() {
     } catch (error) {
       console.error('Error al iniciar reconocimiento de voz:', error);
       setIsListening(false);
-      Alert.alert(
+      appAlert(
         'Voz no disponible',
         'El reconocimiento de voz no está disponible en este momento. Puedes escribir tu mensaje.'
       );

@@ -3,7 +3,6 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import {
     ActivityIndicator,
-    Alert,
     KeyboardAvoidingView,
     Platform,
     ScrollView,
@@ -29,6 +28,7 @@ import {
 import { usePurchaseSession } from '../../../context/PurchaseSessionContext';
 import { usePaymentEvents } from '../../../hooks/buy/usePaymentEvents';
 import { usersService } from '../../../services/users.service';
+import { appAlert } from '../../../context/AlertContext';
 
 const { colors, spacing, borderRadius } = theme;
 
@@ -395,7 +395,7 @@ export default function PaymentScreen() {
   useEffect(() => {
     if (timeLeft === 0 && timeLeft !== null && !alertShownRef.current) {
       alertShownRef.current = true;
-      Alert.alert(
+      appAlert(
         'Sesión expirada',
         'Tu tiempo para pagar ha terminado. Vuelve a intentarlo.',
         [
@@ -496,7 +496,9 @@ export default function PaymentScreen() {
     return () => {
       cancelled = true;
     };
-  }, [selectedMethod]);
+    // pointsInvolved cubre también el pago dividido con puntos (antes solo
+    // se refrescaba al cambiar el método principal).
+  }, [pointsInvolved]);
 
   const selectMethod = (key) => {
     setSelectedMethod(key);
@@ -599,7 +601,7 @@ export default function PaymentScreen() {
     onPartialSuccess: (data) => {
       stopProcessing();
       const remaining = Number(data?.remaining_balance);
-      Alert.alert(
+      appAlert(
         'Pago parcial registrado',
         !isNaN(remaining) && remaining > 0
           ? `Se registró tu pago, pero la orden aún tiene un saldo pendiente de ${fmtVes(remaining)}. Agrega otro pago para completar la compra.`
@@ -610,7 +612,7 @@ export default function PaymentScreen() {
     // Falló el pago (fondos, banco o timeout de POS a los 60s).
     onFailed: (data) => {
       stopProcessing();
-      Alert.alert(
+      appAlert(
         'Pago rechazado',
         data?.message ||
           'No se pudo procesar el pago. Verifica los datos e intenta de nuevo.'
@@ -629,14 +631,14 @@ export default function PaymentScreen() {
   // Valida el lado bancario (cuenta destino + referencia) de un método.
   const validateBankSide = (label, accId, ref) => {
     if (!accId) {
-      Alert.alert(
+      appAlert(
         'Cuenta destino requerida',
         `Selecciona la cuenta a la que realizaste el pago de ${label}.`
       );
       return false;
     }
     if (!ref.trim()) {
-      Alert.alert(
+      appAlert(
         'Campo requerido',
         `Ingresa el número de referencia de ${label}.`
       );
@@ -647,31 +649,31 @@ export default function PaymentScreen() {
 
   const validateSplit = () => {
     if (!secondMethod || secondMethod === selectedMethod) {
-      Alert.alert('Segundo método requerido', 'Selecciona el segundo método de pago.');
+      appAlert('Segundo método requerido', 'Selecciona el segundo método de pago.');
       return false;
     }
     if (splitPointsFirst) {
       const pts = Number(pointsToRedeem) || 0;
       if (ptsRateVal <= 0) {
-        Alert.alert(
+        appAlert(
           'CinePuntos no disponible',
           'No hay una tasa de cambio de CinePuntos configurada. Usa otros métodos.'
         );
         return false;
       }
       if (pts <= 0) {
-        Alert.alert('Puntos requeridos', 'Ingresa la cantidad de puntos a canjear.');
+        appAlert('Puntos requeridos', 'Ingresa la cantidad de puntos a canjear.');
         return false;
       }
       if (pts > pointsBalance) {
-        Alert.alert(
+        appAlert(
           'Saldo insuficiente',
           `Solo tienes ${pointsBalance.toLocaleString('es-VE')} puntos disponibles.`
         );
         return false;
       }
       if (splitRemainderVes <= 0) {
-        Alert.alert(
+        appAlert(
           'Los puntos cubren el total',
           'Con esos puntos no queda monto para el segundo método. Desactiva el pago dividido y paga solo con CinePuntos.'
         );
@@ -681,11 +683,11 @@ export default function PaymentScreen() {
       // Dos métodos bancarios: el monto del método 1 lo define el usuario.
       const first = Number(firstAmountVes) || 0;
       if (first <= 0) {
-        Alert.alert('Monto requerido', 'Ingresa cuánto pagarás con el primer método (Bs).');
+        appAlert('Monto requerido', 'Ingresa cuánto pagarás con el primer método (Bs).');
         return false;
       }
       if (first >= totalVes) {
-        Alert.alert(
+        appAlert(
           'Monto inválido',
           'El monto del primer método debe ser MENOR al total; el segundo método paga el resto.'
         );
@@ -706,34 +708,34 @@ export default function PaymentScreen() {
 
   const validate = () => {
     if (!selectedMethod) {
-      Alert.alert('Método requerido', 'Selecciona un método de pago.');
+      appAlert('Método requerido', 'Selecciona un método de pago.');
       return false;
     }
     if (splitEnabled) return validateSplit();
     if (selectedMethod === 'mobile_payment' || selectedMethod === 'transfer') {
       if (!selectedAccountId) {
-        Alert.alert(
+        appAlert(
           'Cuenta destino requerida',
           'Selecciona la cuenta a la que realizaste el pago.'
         );
         return false;
       }
       if (!reference.trim()) {
-        Alert.alert('Campo requerido', 'Ingresa el número de referencia.');
+        appAlert('Campo requerido', 'Ingresa el número de referencia.');
         return false;
       }
     }
     if (selectedMethod === 'points') {
       const pts = Number(pointsToRedeem) || 0;
       if (pts <= 0) {
-        Alert.alert(
+        appAlert(
           'Puntos requeridos',
           'Ingresa la cantidad de puntos a canjear.'
         );
         return false;
       }
       if (pts > pointsBalance) {
-        Alert.alert(
+        appAlert(
           'Saldo insuficiente',
           `Solo tienes ${pointsBalance.toLocaleString('es-VE')} puntos disponibles.`
         );
@@ -742,7 +744,7 @@ export default function PaymentScreen() {
       // Validamos con la tasa real de Cinepuntos del backend
       const ptsRate = Number(exchangeRates?.[PTS_CURRENCY_ID]?.rate) || 0;
       if (ptsRate <= 0) {
-        Alert.alert(
+        appAlert(
           'CinePuntos no disponible',
           'No hay una tasa de cambio de CinePuntos configurada. Usa otro método de pago.'
         );
@@ -750,7 +752,7 @@ export default function PaymentScreen() {
       }
       const pointsNeeded = Math.ceil(totalVes / ptsRate);
       if (pts < pointsNeeded) {
-        Alert.alert(
+        appAlert(
           'Puntos insuficientes para esta compra',
           `Esta compra cuesta ${pointsNeeded.toLocaleString('es-VE')} puntos ` +
             `(cada punto vale ${fmtVes(ptsRate)}). Vas a canjear ${pts.toLocaleString('es-VE')}. ` +
@@ -856,13 +858,13 @@ export default function PaymentScreen() {
         setProcessing(true);
         processingTimeoutRef.current = setTimeout(() => {
           stopProcessing();
-          Alert.alert(
+          appAlert(
             'Seguimos procesando tu pago',
             'Está tardando más de lo normal. Revisa "Mis Compras" en unos minutos.'
           );
         }, 70000);
       } catch (err) {
-        Alert.alert(
+        appAlert(
           'Pago rechazado',
           err?.response?.data?.message || 'No se pudo registrar el pago.'
         );
@@ -936,14 +938,14 @@ export default function PaymentScreen() {
       processingTimeoutRef.current = setTimeout(() => {
         if (settledRef.current) return;
         stopProcessing();
-        Alert.alert(
+        appAlert(
           'Sin respuesta',
           'No recibimos la confirmación del pago a tiempo. Revisa "Mis Compras" antes de reintentar para no pagar dos veces.'
         );
       }, 70000);
     } catch (err) {
       console.error('Error registrando pago:', err);
-      Alert.alert(
+      appAlert(
         'Error en el pago',
         err?.response?.data?.message ||
           'No se pudo procesar el pago. Verifica e intenta de nuevo.'

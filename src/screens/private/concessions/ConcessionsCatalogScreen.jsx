@@ -3,7 +3,6 @@ import { ChevronRight, MapPin, Search, ShoppingCart, X } from 'lucide-react-nati
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
     ActivityIndicator,
-    Alert,
     FlatList,
     Image,
     Modal,
@@ -25,6 +24,7 @@ import {
     getAvailableCombos,
     getAvailableProducts,
 } from '../../../services/concessions.service';
+import { appAlert } from '../../../context/AlertContext';
 
 const { colors, spacing, borderRadius } = theme;
 
@@ -322,11 +322,11 @@ export default function ConcessionsCatalogScreen() {
           setCinemas(data);
           setCinemaModalVisible(true);
         } else if (isMounted) {
-          Alert.alert('Sin sucursales', 'No hay sucursales disponibles.');
+          appAlert('Sin sucursales', 'No hay sucursales disponibles.');
         }
       } catch {
         if (isMounted) {
-          Alert.alert('Error de conexión', 'No se pudo cargar las sucursales.');
+          appAlert('Error de conexión', 'No se pudo cargar las sucursales.');
         }
       } finally {
         if (isMounted) setLoadingCinemas(false);
@@ -361,7 +361,7 @@ export default function ConcessionsCatalogScreen() {
         setCombos(Array.isArray(cRes) ? cRes : cRes?.rows || []);
       } catch (err) {
         console.error('Error cargando catálogo:', err);
-        Alert.alert('Error', 'No se pudo cargar el catálogo de esta sucursal.');
+        appAlert('Error', 'No se pudo cargar el catálogo de esta sucursal.');
       } finally {
         setLoading(false);
         setRefreshing(false);
@@ -372,7 +372,7 @@ export default function ConcessionsCatalogScreen() {
 
   useEffect(() => {
     if (selectedCinema) fetchAll(false, selectedCinema);
-  }, [selectedCinema]);
+  }, [selectedCinema, fetchAll]);
 
   // ─── Tabs dinámicas ──────────────────────────────────────────────────────
   const categoryTabs = useMemo(
@@ -678,7 +678,7 @@ export default function ConcessionsCatalogScreen() {
             style={styles.continueBtn}
             onPress={() => {
               if (!selectedCinema) {
-                Alert.alert(
+                appAlert(
                   'Sucursal requerida',
                   'Por favor selecciona una sucursal primero.'
                 );

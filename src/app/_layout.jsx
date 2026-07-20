@@ -5,6 +5,7 @@ import { useEffect } from 'react';
 import { Platform, StatusBar } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import BottomSheet from '../components/ui/BottomSheet';
+import { AlertProvider } from '../context/AlertContext';
 import { AuthProvider, useAuth } from '../context/AuthContext';
 import { CartProvider } from '../context/CartContext';
 import { BottomSheetProvider } from '../context/BottomSheetContext';
@@ -66,8 +67,6 @@ export default function RootLayout() {
 
   useEffect(() => {
     if (Platform.OS !== 'android') return;
-    // Usamos StatusBar de React Native (estable en todas las arquitecturas)
-    // para sincronizar el color de la barra de sistema con el Tab Bar
     StatusBar.setBackgroundColor(theme.colors.background.accent);
     StatusBar.setBarStyle('light-content');
   }, []);
@@ -86,8 +85,10 @@ export default function RootLayout() {
         <AuthProvider>
           <CartProvider>
             <BottomSheetProvider>
-              <NavigationGuard />
-              <BottomSheet />
+              <AlertProvider>
+                <NavigationGuard />
+                <BottomSheet />
+              </AlertProvider>
             </BottomSheetProvider>
           </CartProvider>
         </AuthProvider>
