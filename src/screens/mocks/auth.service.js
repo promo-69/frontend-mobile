@@ -34,19 +34,25 @@ export const authService = {
     })
   ),
 
-  sendRecoveryEmailRequest: jest.fn(() =>
+  forgotPassword: jest.fn(() =>
     Promise.resolve({
       success: true,
       message: 'Correo de recuperación enviado',
     })
   ),
 
-  verifyRecoveryCodeRequest: jest.fn(() =>
-    Promise.resolve({ success: true, resetToken: 'mock-reset-token-64-chars' })
+  verifyResetCode: jest.fn(() =>
+    Promise.resolve({
+      success: true,
+      data: { resetToken: 'mock-reset-token-64-chars' },
+    })
   ),
 
-  resetPasswordRequest: jest.fn(() =>
-    Promise.resolve({ success: true, message: 'Contraseña actualizada' })
+  resetPassword: jest.fn(() =>
+    Promise.resolve({
+      success: true,
+      message: 'Contraseña actualizada',
+    })
   ),
 
   refreshToken: jest.fn(() =>
