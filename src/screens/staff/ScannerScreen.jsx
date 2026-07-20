@@ -1,5 +1,4 @@
 import { CameraView, useCameraPermissions } from 'expo-camera';
-import { useRouter } from 'expo-router';
 import {
   Armchair,
   ArrowLeft,
@@ -38,7 +37,6 @@ const { colors, spacing, borderRadius, typography } = theme;
  * - RF-51: resultado visual inmediato (verde = autorizado, rojo = denegado).
  */
 export default function ScannerScreen() {
-  const router = useRouter();
   const { user, logout } = useAuth();
   const [permission, requestPermission] = useCameraPermissions();
 
@@ -160,7 +158,7 @@ export default function ScannerScreen() {
             <ArrowLeft size={22} color={colors.primary} strokeWidth={1} />
           </TouchableOpacity>
           <AppText style={styles.topBarTitle}>Detalle de la orden</AppText>
-          <View style={{ width: 26 }} />
+          <View style={styles.spacer} />
         </View>
 
         {loadingDetail || !detail ? (
