@@ -55,8 +55,8 @@ export default function TicketsQuantityScreen() {
   //    "No hay tarifas configuradas"). La web hace lo mismo: quote primero,
   //    seat-map después.
   useEffect(() => {
-    if (!showtimeId) {
-      setLoading(false);
+    if (!showtimeId || !quoteReady) {
+      if (showtimeId && !quoteReady) setLoading(true);
       return;
     }
     if (!quoteReady) return; // esperamos a que la sesión de compra exista

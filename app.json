@@ -9,7 +9,11 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSSpeechRecognitionUsageDescription": "Allow $(PRODUCT_NAME) to use speech recognition.",
+        "NSMicrophoneUsageDescription": "Allow $(PRODUCT_NAME) to use the microphone."
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -19,7 +23,12 @@
         "monochromeImage": "./src/assets/images/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.promo69.cineflixapp"
+      "package": "com.promo69.cineflixapp",
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS"
+      ]
     },
     "web": {
       "output": "static",
@@ -61,15 +70,13 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "b09aa1e5-0287-47f4-adad-89ac8a03db11"
+        "projectId": "1306c7c8-4a95-48d9-8802-2975cf87801a"
       }
     },
-    "owner": "cineflixorg",
+    "owner": "prismca",
     "runtimeVersion": {
       "policy": "appVersion"
     },
-    "updates": {
-      "url": "https://u.expo.dev/b09aa1e5-0287-47f4-adad-89ac8a03db11"
-    }
+    "updates": {}
   }
 }

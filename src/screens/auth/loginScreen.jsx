@@ -1,10 +1,11 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation, useRouter } from 'expo-router';
-import { ChevronLeft } from 'lucide-react-native';
+import { ArrowLeft } from 'lucide-react-native';
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import {
     Dimensions,
+    Image,
     ImageBackground,
     KeyboardAvoidingView,
     Platform,
@@ -16,7 +17,7 @@ import {
 import Animated, { FadeInUp, FadeOutDown } from 'react-native-reanimated';
 import { AppText } from '../../components/ui/AppText';
 import { CustomButton } from '../../components/ui/CustomButton';
-import Logo from '../../components/ui/Icons/Logo';
+import Logo from '../../assets/images/logo-cineflix-2.png';
 import { Input } from '../../components/ui/Input';
 import { ScreenWrapper } from '../../components/ui/ScreenWrapper';
 import { theme } from '../../constants';
@@ -136,23 +137,24 @@ export default function LoginScreen() {
               activeOpacity={0.7}
               style={styles.backButton}
             >
-              <ChevronLeft size={28} color="#fff" />
+              <ArrowLeft size={22} color={theme.colors.accent} strokeWidth={2.5} />
             </TouchableOpacity>
 
-            {/* Gradiente para fundir la imagen con el fondo morado */}
+            {/* Gradiente: imagen sólida arriba, difumina hacia el fondo */}
             <LinearGradient
               colors={[
                 'transparent',
-                'rgba(35, 22, 64, 0.6)',
-                theme.colors.gradients.bgColor.colors[0],
+                'transparent',
+                theme.colors.gradients.bgColor.colors[1],
+                theme.colors.gradients.bgColor.colors[1],
               ]}
-              locations={[0, 0.4, 1]}
+              locations={[0, 0.6, 0.8, 1]}
               style={styles.gradient}
             />
           </ImageBackground>
 
           <View style={styles.logoSection}>
-            <Logo width={187} height={43} viewBox="0 0 187 43" />
+            <Image source={Logo} style={styles.logoImage} contentFit="fill" />
           </View>
 
           <View style={styles.formContainer}>
@@ -286,20 +288,20 @@ const styles = StyleSheet.create({
     width: width,
     height: 380,
     justifyContent: 'flex-end',
-    opacity: 0.6,
   },
   gradient: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
-    height: '100%',
+    ...StyleSheet.absoluteFillObject,
   },
   logoSection: {
     alignItems: 'center',
     marginTop: -228,
     marginBottom: theme.spacing.s16,
     zIndex: 10,
+  },
+  logoImage: {
+    width: 187,
+    height: 43,
+    borderRadius: theme.borderRadius.s16,
   },
   loginTitle: {
     color: theme.colors.primary,

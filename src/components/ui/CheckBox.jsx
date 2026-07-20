@@ -41,7 +41,7 @@ const styles = StyleSheet.create({
   },
   wrapper: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
   },
   box: {
     width: 20,
@@ -50,6 +50,8 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: theme.colors.primary,
     marginRight: theme.spacing.s12,
+    marginTop: 1,
+    flexShrink: 0,
     justifyContent: 'center',
     alignItems: 'center',
   },

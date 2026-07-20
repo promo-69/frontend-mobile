@@ -5,6 +5,7 @@ import {
     CalendarClock,
     ChevronRight,
     ClipboardList,
+    FileText,
     LogOut,
     ShieldCheck,
     Film,
@@ -148,6 +149,11 @@ export default function ProfileScreen() {
             icon: ShieldCheck,
             title: 'Seguridad',
             onPress: () => router.push( '/profile/security' ),
+          })}
+          {renderMenuItem({
+            icon: FileText,
+            title: 'Términos y Condiciones',
+            onPress: () => router.push('/(legal)/terms'),
           })}
           {renderMenuItem({
             icon: LogOut,
