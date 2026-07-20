@@ -1,8 +1,8 @@
 import { useRouter } from 'expo-router';
 import {
+    ArrowLeft,
     Calendar,
     ChevronDown,
-    ChevronLeft,
     Info,
     MapPin,
     Users,
@@ -288,10 +288,11 @@ export default function RentalRequestScreen() {
     <ScreenWrapper>
       <View style={styles.topBar}>
         <TouchableOpacity
+          style={styles.backButton}
           onPress={() => router.back()}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
-          <ChevronLeft size={26} color={colors.primary} />
+          <ArrowLeft size={22} color={colors.primary} strokeWidth={1} />
         </TouchableOpacity>
         <AppText style={styles.topBarTitle}>Alquiler de Sala</AppText>
         <View style={{ width: 26 }} />
@@ -366,7 +367,10 @@ export default function RentalRequestScreen() {
               placeholder="Detalles obligatorios del evento..."
               placeholderTextColor={colors.textDisabled}
               value={eventDescription}
-              onChangeText={setEventDescription}
+              onChangeText={(text) => {
+                if (text.length <= 500) setEventDescription(text);
+              }}
+              maxLength={500}
               multiline
               numberOfLines={4}
               textAlignVertical="top"
@@ -504,6 +508,11 @@ export default function RentalRequestScreen() {
 }
 
 const styles = StyleSheet.create({
+  backButton: {
+    padding: 8,
+    borderRadius: 999,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
   topBar: {
     flexDirection: 'row',
     alignItems: 'center',

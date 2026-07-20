@@ -10,7 +10,10 @@
       "channel": "development",
       "corepack": true,
       "autoIncrement": true,
-      "environment": "development"
+      "environment": "development",
+      "env": {
+        "APP_VARIANT": ".dev"
+      }
     },
     "preview": {
       "distribution": "internal",

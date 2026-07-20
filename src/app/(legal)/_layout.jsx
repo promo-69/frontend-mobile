@@ -41,7 +41,7 @@ export default function LegalLayout() {
             <ArrowLeft
               size={22}
               color={theme.colors.accent}
-              strokeWidth={2.5}
+              strokeWidth={1}
             />
           </Pressable>
         ),
@@ -57,8 +57,9 @@ export default function LegalLayout() {
 
 const styles = StyleSheet.create({
   backButton: {
-    justifyContent: 'center',
-    alignItems: 'center',
+    padding: 8,
+    borderRadius: 999,
+    backgroundColor: 'rgba(0,0,0,0.5)',
   },
   buttonPressed: {
     opacity: 0.7,

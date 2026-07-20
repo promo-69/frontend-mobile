@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { ChevronLeft, ScanLine } from 'lucide-react-native';
+import { ArrowLeft, ScanLine } from 'lucide-react-native';
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import {
@@ -18,7 +18,7 @@ import { ScreenWrapper } from '../../components/ui/ScreenWrapper';
 import { theme } from '../../constants';
 import { useAuth } from '../../context/AuthContext';
 import { canAccessScanner } from '../../helper/roles.helper';
-import { sanitizeInput, validateEmail } from '../../utils/validators';
+import { sanitizeInput, validateEmail, validatePassword } from '../../utils/validators';
 
 export default function StaffLoginScreen() {
   const router = useRouter();
@@ -75,7 +75,7 @@ export default function StaffLoginScreen() {
             activeOpacity={0.7}
             style={styles.backButton}
           >
-            <ChevronLeft size={26} color={theme.colors.textPrimary} />
+            <ArrowLeft size={22} color={theme.colors.textPrimary} strokeWidth={1} />
           </TouchableOpacity>
 
           <View style={styles.badge}>
@@ -118,7 +118,10 @@ export default function StaffLoginScreen() {
             <Controller
               control={control}
               name="password"
-              rules={{ required: 'La contraseña es obligatoria' }}
+              rules={{
+                required: 'La contraseña es obligatoria',
+                validate: validatePassword,
+              }}
               render={({
                 field: { onChange, onBlur, value },
                 fieldState: { error: e },
@@ -176,7 +179,7 @@ const styles = StyleSheet.create({
     zIndex: 20,
     padding: 8,
     borderRadius: 999,
-    backgroundColor: 'rgba(0,0,0,0.25)',
+    backgroundColor: 'rgba(0,0,0,0.5)',
   },
   badge: {
     alignSelf: 'center',

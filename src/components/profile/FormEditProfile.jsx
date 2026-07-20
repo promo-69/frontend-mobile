@@ -8,6 +8,11 @@ import {
   View,
 } from 'react-native';
 import { theme } from '../../constants';
+import {
+  validateEmail,
+  validateNames,
+  validatePhoneNumberVE,
+} from '../../utils/validators';
 import { AppText } from '../ui/AppText';
 
 export function FormEditProfile({
@@ -47,18 +52,28 @@ export function FormEditProfile({
     const newErrors = {};
     let isValid = true;
 
-    if (!firstName.trim()) {
-      newErrors.firstName = 'El nombre es obligatorio';
+    const nameResult = validateNames(firstName);
+    if (nameResult !== true) {
+      newErrors.firstName = nameResult;
       isValid = false;
     }
 
-    if (!lastName.trim()) {
-      newErrors.lastName = 'El apellido es obligatorio';
+    const lastNameResult = validateNames(lastName);
+    if (lastNameResult !== true) {
+      newErrors.lastName = lastNameResult;
       isValid = false;
     }
 
-    if (!email.includes('@')) {
-      newErrors.email = 'Correo inválido';
+    const emailResult = validateEmail(email);
+    if (emailResult !== true) {
+      newErrors.email = emailResult;
+      isValid = false;
+    }
+
+    const fullPhone = `${phonePrefix}${phoneBody}`;
+    const phoneResult = validatePhoneNumberVE(fullPhone);
+    if (phoneResult !== true) {
+      newErrors.phone = phoneResult;
       isValid = false;
     }
 

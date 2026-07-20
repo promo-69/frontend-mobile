@@ -137,7 +137,7 @@ export default function LoginScreen() {
               activeOpacity={0.7}
               style={styles.backButton}
             >
-              <ArrowLeft size={22} color={theme.colors.accent} strokeWidth={2.5} />
+              <ArrowLeft size={22} color={theme.colors.accent} strokeWidth={1} />
             </TouchableOpacity>
 
             {/* Gradiente: imagen sólida arriba, difumina hacia el fondo */}
@@ -394,6 +394,6 @@ const styles = StyleSheet.create({
     zIndex: 20,
     padding: 8,
     borderRadius: 999,
-    backgroundColor: 'rgba(0,0,0,0.25)',
+    backgroundColor: 'rgba(0,0,0,0.5)',
   },
 });

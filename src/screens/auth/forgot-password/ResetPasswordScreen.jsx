@@ -62,7 +62,7 @@ export const ResetPasswordScreen = () => {
         keyboardVerticalOffset={Platform.OS === 'android' ? 0 : 64}
       >
         <TouchableOpacity onPress={handleBack} style={styles.backButton}>
-          <ArrowLeft size={22} color={theme.colors.accent} strokeWidth={2.5} />
+          <ArrowLeft size={22} color={theme.colors.accent} strokeWidth={1} />
         </TouchableOpacity>
 
         <View style={styles.content}>
@@ -135,13 +135,13 @@ const styles = StyleSheet.create({
     paddingBottom: theme.spacing.s48,
     paddingHorizontal: theme.spacing.s16,
   },
-  backButton: {
-    width: 40,
-    height: 40,
-    marginTop: theme.spacing.s8,
-    marginLeft: theme.spacing.s16,
-    justifyContent: 'center',
-  },
+backButton: {
+  padding: 8,
+  marginTop: theme.spacing.s8,
+  marginLeft: theme.spacing.s16,
+  borderRadius: 999,
+  backgroundColor: 'rgba(0,0,0,0.5)',
+},
   title: {
     color: theme.colors.primary,
     marginTop: 16,

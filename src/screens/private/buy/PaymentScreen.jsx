@@ -136,6 +136,8 @@ function BankMethodForm({
         value={reference}
         onChangeText={onChangeReference}
         keyboardType="numeric"
+        maxLength={20}
+        sanitizeDigits
       />
     </View>
   );
@@ -147,6 +149,8 @@ function FormField({
   value,
   onChangeText,
   keyboardType = 'default',
+  maxLength,
+  sanitizeDigits,
 }) {
   return (
     <View style={styles.fieldWrapper}>
@@ -158,9 +162,18 @@ function FormField({
         placeholder={placeholder}
         placeholderTextColor={colors.textDisabled}
         value={value}
-        onChangeText={onChangeText}
+        onChangeText={(text) => {
+          if (sanitizeDigits) {
+            const cleaned = text.replace(/[^0-9]/g, '');
+            if (maxLength && cleaned.length > maxLength) return;
+            onChangeText(cleaned);
+          } else {
+            onChangeText(text);
+          }
+        }}
         keyboardType={keyboardType}
         autoCapitalize="none"
+        maxLength={maxLength}
       />
     </View>
   );

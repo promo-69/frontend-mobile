@@ -104,11 +104,12 @@ export const validatePhoneNumberVE = (phone) => {
 
   /**
    * Explicación del Regex:
-   * ^0(2|4) -> Debe empezar por 02 o 04
+   * ^(\+58|\+57)? -> Opcionalmente acepta prefijo internacional +58 (Venezuela) o +57 (Colombia)
+   * 0(2|4) -> Debe empezar por 02 o 04
    * (12|14|24|16|26|51|11) -> Prefijos comunes (puedes añadir más)
    * [0-9]{7}$ -> Seguido de exactamente 7 números
    */
-  const phoneRegex = /^0(2|4)(12|14|24|16|26|51|11)[0-9]{7}$/;
+  const phoneRegex = /^(\+58|\+57)?0(2|4)(12|14|24|16|26|51|11)[0-9]{7}$/;
 
   return phoneRegex.test(cleanPhone) || 'Formato de teléfono inválido';
 };

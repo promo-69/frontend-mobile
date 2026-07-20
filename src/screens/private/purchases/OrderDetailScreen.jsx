@@ -1,5 +1,5 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Armchair, ChevronLeft, Gift, Ticket } from 'lucide-react-native';
+import { ArrowLeft, Armchair, Gift, Ticket } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import {
     ActivityIndicator,
@@ -231,7 +231,7 @@ export default function OrderDetailScreen() {
     return (
       <ScreenWrapper>
         <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-          <ChevronLeft size={26} color={colors.primary} />
+          <ArrowLeft size={22} color={colors.primary} strokeWidth={1} />
         </TouchableOpacity>
         <View style={styles.centered}>
           <AppText variant="body" style={styles.errorText}>
@@ -270,7 +270,7 @@ export default function OrderDetailScreen() {
       {/* ── Header ── */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-          <ChevronLeft size={26} color={colors.primary} />
+          <ArrowLeft size={22} color={colors.primary} strokeWidth={1} />
         </TouchableOpacity>
         <View style={styles.headerTexts}>
           <AppText variant="h3" style={styles.headerTitle}>
@@ -475,7 +475,9 @@ const styles = StyleSheet.create({
     gap: spacing.s8,
   },
   backBtn: {
-    padding: spacing.s4,
+    padding: 8,
+    borderRadius: 999,
+    backgroundColor: 'rgba(0,0,0,0.5)',
   },
   headerTexts: { flex: 1 },
   headerTitle: {

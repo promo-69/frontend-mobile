@@ -8,6 +8,7 @@ import { Input } from '../../../../components/ui/Input';
 import { ScreenWrapper } from '../../../../components/ui/ScreenWrapper';
 import { theme } from '../../../../constants';
 import { useProfile } from '../../../../hooks/profile/useProfile';
+import { validatePassword } from '../../../../utils/validators';
 
 export default function SecurityVerifyScreen() {
   const router = useRouter();
@@ -46,7 +47,10 @@ export default function SecurityVerifyScreen() {
           <Controller
             control={control}
             name="currentPassword"
-            rules={{ required: 'La contraseña es obligatoria' }}
+            rules={{
+              required: 'La contraseña es obligatoria',
+              validate: validatePassword,
+            }}
             render={({
               field: { onChange, onBlur, value },
               fieldState: { error },

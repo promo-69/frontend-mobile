@@ -11,6 +11,7 @@ import {
     validateEmail,
     validateNames,
     validatePassword,
+    validatePhoneNumberVE,
 } from '../utils/validators';
 import { DateInput } from './ui/DateInput';
 import { Input } from './ui/Input';
@@ -120,16 +121,7 @@ export const PersonalInfoSteps = ({
             name="phoneNumber"
             rules={{
               required: 'El teléfono es obligatorio',
-              validate: (value) => {
-                const digitsOnly = value ? value.replace(/\D/g, '') : '';
-                // Restamos los 2 dígitos correspondientes al prefijo internacional (+58 o +57)
-                const netLength = digitsOnly.length - 2;
-
-                if (netLength < 7 || netLength > 15) {
-                  return 'Teléfono debe tener entre 7 y 15 dígitos';
-                }
-                return true;
-              },
+              validate: validatePhoneNumberVE,
             }}
             render={({
               field: { onChange, onBlur, value = '+58' },
