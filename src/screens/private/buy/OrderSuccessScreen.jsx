@@ -44,7 +44,8 @@ function SuccessCheckmark() {
         }),
       ]),
     ]).start();
-  }, []);
+    // scale y opacity son refs estables (useRef); incluirlos no re-dispara nada.
+  }, [scale, opacity]);
 
   return (
     <Animated.View style={[styles.check, { transform: [{ scale }], opacity }]}>

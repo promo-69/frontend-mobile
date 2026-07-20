@@ -89,6 +89,14 @@ export const usersService = {
   // ─── Suscripción a alertas de preventa (películas "Próximamente") ───────────
 
   /**
+     * Lista todas las películas marcadas por el usuario (con datos de la película).
+     */
+    getMyMovieSubscriptions: async () => {
+      const response = await api.get('/users/me/movie-subscriptions');
+      return response.data.data;
+  },
+
+  /**
    * Consulta si el usuario está suscrito a las alertas de una película.
    * El backend devuelve 404 si no hay suscripción (se maneja en el hook).
    */

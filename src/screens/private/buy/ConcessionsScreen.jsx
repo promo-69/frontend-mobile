@@ -3,7 +3,6 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
     ActivityIndicator,
-    Alert,
     FlatList,
     Image,
     Modal,
@@ -21,6 +20,7 @@ import {
     getAvailableCombos,
     getAvailableProducts,
 } from '../../../services/concessions.service';
+import { appAlert } from '../../../context/AlertContext';
 
 const { colors, spacing, borderRadius } = theme;
 
@@ -372,11 +372,11 @@ export default function ConcessionsScreen() {
           setCinemas(data);
           setCinemaModalVisible(true);
         } else if (isMounted) {
-          Alert.alert('Sin sucursales', 'No hay sucursales disponibles.');
+          appAlert('Sin sucursales', 'No hay sucursales disponibles.');
         }
       } catch {
         if (isMounted) {
-          Alert.alert(
+          appAlert(
             'Error de conexión',
             'No se pudo cargar la lista de sucursales.',
             [{ text: 'Reintentar', onPress: fetchCinemas }]
@@ -412,7 +412,7 @@ export default function ConcessionsScreen() {
           const msg =
             err?.response?.data?.message ||
             'No se pudo cargar el catálogo. Verifica tu conexión.';
-          Alert.alert('Error', msg);
+          appAlert('Error', msg);
         }
       } finally {
         if (!cancelled) setLoading(false);

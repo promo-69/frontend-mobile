@@ -1,8 +1,8 @@
 import { useRouter } from 'expo-router';
 import {
     Award,
+    Bookmark,
     CalendarClock,
-    ChevronLeft,
     ChevronRight,
     ClipboardList,
     FileText,
@@ -22,6 +22,7 @@ import {
 
 import { AppText } from '../../../components/ui/AppText';
 import { LogoutModal } from '../../../components/ui/LogoutModal';
+import { appAlert } from '../../../context/AlertContext';
 import { ScreenWrapper } from '../../../components/ui/ScreenWrapper';
 import { theme } from '../../../constants';
 import { useAuth } from '../../../context/AuthContext';
@@ -30,7 +31,7 @@ import { useProfile } from '../../../hooks/profile/useProfile';
 export default function ProfileScreen() {
   const router = useRouter();
   const { user, logout } = useAuth();
-  const { profile, loading } = useProfile();
+  const { loading } = useProfile();
 
   const [isLogoutModalVisible, setIsLogoutModalVisible] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -140,6 +141,11 @@ export default function ProfileScreen() {
             onPress: () => router.push('/profile/my-genres'),
           })}
           {renderMenuItem({
+            icon: Bookmark,
+            title: 'Mis marcadores',
+            onPress: () => router.push('/profile/bookmarks'),
+          })}
+          {renderMenuItem({
             icon: ShieldCheck,
             title: 'Seguridad',
             onPress: () => router.push( '/profile/security' ),
@@ -159,14 +165,14 @@ export default function ProfileScreen() {
         {/* --- CATEGORÍA 2: CONFIGURACIÓN DE APP ---
         <AppText variant="small" style={styles.categoryTitle}>App Settings</AppText>
         <View style={styles.menuGroup}>
-          {renderMenuItem({ icon: Globe, title: 'Language', onPress: () => alert('Próximamente') })}
-          {renderMenuItem({ icon: Bell, title: 'Notification', onPress: () => alert('Próximamente') })}
+          {renderMenuItem({ icon: Globe, title: 'Language', onPress: () => appAlert('Muy pronto', 'Esta sección estará disponible próximamente.') })}
+          {renderMenuItem({ icon: Bell, title: 'Notification', onPress: () => appAlert('Muy pronto', 'Esta sección estará disponible próximamente.') })}
         </View>
 
         {/* --- CATEGORÍA 3: SOPORTE ---
         <AppText variant="small" style={styles.categoryTitle}>Support</AppText>
         <View style={styles.menuGroup}>
-          {renderMenuItem({ icon: HelpCircle, title: 'Help Center', onPress: () => alert('Próximamente') })}
+          {renderMenuItem({ icon: HelpCircle, title: 'Help Center', onPress: () => appAlert('Muy pronto', 'Esta sección estará disponible próximamente.') })}
         </View>*/}
       </ScrollView>
 
@@ -186,26 +192,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: theme.spacing.s16,
-    paddingTop: theme.spacing.s8,
-    marginBottom: theme.spacing.s8,
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    justifyContent: 'center',
-  },
-  headerTitle: {
-    color: theme.colors.primary,
-    flex: 1,
-    textAlign: 'center',
-    marginRight: 40,
-    fontSize: 20,
-    fontWeight: 'bold',
   },
   scrollContent: {
     paddingHorizontal: theme.spacing.s24,
@@ -257,15 +243,6 @@ const styles = StyleSheet.create({
   },
 
   // Agrupadores de menús
-  categoryTitle: {
-    color: theme.colors.textSecondary,
-    opacity: 0.4,
-    textTransform: 'uppercase',
-    fontWeight: '700',
-    letterSpacing: 1,
-    marginBottom: theme.spacing.s8,
-    marginLeft: 4,
-  },
   menuGroup: {
     backgroundColor: 'rgba(255,255,255,0.03)',
     borderRadius: 16,
