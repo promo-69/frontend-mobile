@@ -64,6 +64,29 @@ La app selecciona automaticamente la URL segun el modo:
 
 Los sockets derivan la URL del mismo `API_URL`, extrayendo solo el host.
 
+## Identidad del dispositivo y cabeceras HTTP
+
+Toda peticion al backend sale con dos cabeceras inyectadas globalmente por el
+interceptor de Axios (`src/services/api.js`):
+
+| Cabecera | Valor | Proposito |
+|----------|-------|-----------|
+| `x-client-channel` | `mobile` | El backend responde con tokens Bearer en el body (nunca cookies). |
+| `x-device-id` | nanoid de 21 caracteres | Sesiones Unicas por Dispositivo: el backend asocia los tokens a este id y, al iniciar sesion de nuevo desde el MISMO aparato, revoca la sesion anterior (las de otros dispositivos siguen vivas). |
+
+Reglas del `device_id` (`src/helper/device.helper.js`):
+
+- Se genera UNA sola vez con `nanoid/non-secure` (21 caracteres) y se persiste
+  en AsyncStorage bajo la clave `@device_id`.
+- Es independiente de la cuenta: NO se borra al cerrar sesion. Por eso su clave
+  vive fuera de `STORAGE_KEYS` y no debe agregarse a
+  `storageHelper.clearSession()`.
+- Solo desaparece si el usuario borra los datos de la app o la desinstala (en
+  ese caso se genera uno nuevo en el proximo arranque).
+- Se usa la variante `nanoid/non-secure` (JS puro) porque la estandar requiere
+  `crypto.getRandomValues`, que en React Native implica un modulo nativo y
+  recompilar el dev build. Para un identificador de dispositivo es suficiente.
+
 ## Ejecutar la app: Expo Go vs Development Build
 
 `yarn start` levanta el bundler de Metro. Puedes escanear el QR con **Expo Go** o con un **development build** - ambos se conectan al mismo servidor.
@@ -139,6 +162,27 @@ Rutas relativas. No se usan alias (`@`).
 ```js
 import CustomButton from '../../components/CustomButton';
 ```
+
+### Alertas
+
+No usar `Alert.alert` de React Native (modal blanco del sistema). Usar el
+sistema global con la estetica de la app:
+
+```js
+import { appAlert } from '../context/AlertContext';
+
+// Aviso simple (boton "Entendido")
+appAlert('Titulo', 'Mensaje');
+
+// Confirmacion (misma firma que Alert.alert; style 'destructive' = alerta roja)
+appAlert('Quitar marcador', 'Deseas continuar?', [
+  { text: 'Cancelar', style: 'cancel' },
+  { text: 'Quitar', style: 'destructive', onPress: () => {} },
+]);
+```
+
+El `AlertProvider` ya esta montado en `src/app/_layout.jsx`; si no estuviera,
+`appAlert` degrada al Alert nativo para no perder el aviso.
 
 ## Flujo de trabajo con Git
 

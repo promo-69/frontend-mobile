@@ -6597,6 +6597,7 @@ __metadata:
     jest-expo: "npm:~54.0.0"
     jwt-decode: "npm:^4.0.0"
     lucide-react-native: "npm:^1.7.0"
+    nanoid: "npm:^6.0.0"
     prettier: "npm:^3.8.1"
     react: "npm:19.1.0"
     react-dom: "npm:19.1.0"
@@ -9420,6 +9421,15 @@ __metadata:
   bin:
     nanoid: bin/nanoid.cjs
   checksum: 10c0/40e7f70b3d15f725ca072dfc4f74e81fcf1fbb02e491cf58ac0c79093adc9b0a73b152bcde57df4b79cd097e13023d7504acb38404a4da7bc1cd8e887b82fe0b
+  languageName: node
+  linkType: hard
+
+"nanoid@npm:^6.0.0":
+  version: 6.0.0
+  resolution: "nanoid@npm:6.0.0"
+  bin:
+    nanoid: bin/nanoid.js
+  checksum: 10c0/45bc79b7fc3f8f7110986fee7ac8acc2dc673b4c9ebe0c28a05fd0b2c2bb7a0b9942e43a558e39ea3c41a7fb74c7de1a0f8b73263b025f82e87cdb4a769188c3
   languageName: node
   linkType: hard
 
