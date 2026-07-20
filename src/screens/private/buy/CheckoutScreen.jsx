@@ -4,7 +4,6 @@ import { Film, Trash2 } from 'lucide-react-native';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
     ActivityIndicator,
-    Alert,
     ScrollView,
     StyleSheet,
     TouchableOpacity,
@@ -21,6 +20,7 @@ import {
     getSessionState,
     processCheckout,
 } from '../../../services/orders.service';
+import { appAlert } from '../../../context/AlertContext';
 
 const { colors, spacing, borderRadius } = theme;
 
@@ -148,7 +148,7 @@ export default function CheckoutScreen() {
   useEffect(() => {
     if (timeLeft === 0 && !alertShownRef.current) {
       alertShownRef.current = true;
-      Alert.alert(
+      appAlert(
         'Sesión expirada',
         'Tu sesión de compra de 10 minutos ha vencido. Vuelve a intentarlo.',
         [
@@ -192,17 +192,17 @@ export default function CheckoutScreen() {
   const handleGoToPayment = useCallback(async () => {
     if (processing) return;
     if (!hasItems) {
-      Alert.alert('Carrito vacío', 'Agrega al menos un producto o boleto.');
+      appAlert('Carrito vacío', 'Agrega al menos un producto o boleto.');
       return;
     }
     if (!effectiveCinemaId) {
-      Alert.alert('Sucursal requerida', 'Selecciona una sucursal.');
+      appAlert('Sucursal requerida', 'Selecciona una sucursal.');
       return;
     }
 
     const token = await storageHelper.getAccessToken();
     if (!token) {
-      Alert.alert('Sesión requerida', 'Inicia sesión para continuar.', [
+      appAlert('Sesión requerida', 'Inicia sesión para continuar.', [
         {
           text: 'Iniciar sesión',
           onPress: () => router.replace('/(auth)/login'),
@@ -230,7 +230,7 @@ export default function CheckoutScreen() {
           // NO la recreamos: hacerlo cancelaría los bloqueos de asientos.
           const session = await getSessionState().catch(() => null);
           if (!session) {
-            Alert.alert(
+            appAlert(
               'Sesión expirada',
               'Tu sesión de compra venció. Vuelve a seleccionar tus asientos.',
               [
@@ -290,7 +290,7 @@ export default function CheckoutScreen() {
         });
         // 409 = asiento ya no disponible o lock expirado: la sesión quedó inconsistente
         if (err?.response?.status === 409) {
-          Alert.alert(
+          appAlert(
             'Asientos no disponibles',
             err.response?.data?.message ||
               'Uno o más asientos ya no están disponibles. Vuelve a seleccionarlos.',
@@ -298,7 +298,7 @@ export default function CheckoutScreen() {
           );
           return;
         }
-        Alert.alert(
+        appAlert(
           'Error al procesar la orden',
           err.response?.data?.message || err.message || 'Ocurrió un problema.'
         );

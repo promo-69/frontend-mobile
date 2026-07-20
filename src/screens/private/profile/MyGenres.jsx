@@ -8,9 +8,9 @@ import {
   Pressable,
   ActivityIndicator
 } from 'react-native';
-import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import { ScreenWrapper } from '../../../components/ui/ScreenWrapper';
 import { Sliders, Calendar } from 'lucide-react-native';
-import { theme } from '../../../constants'; 
+import { theme } from '../../../constants';
 import MovieCard from '../../../components/movies/MovieCard';
 import MyGenresModal from '../../../components/home/MyGenresModal';
 import { getMoviesByGenres, getMoviesGenres } from '../../../services/movies.service';
@@ -27,7 +27,7 @@ export default function MyGenres() {
     try {
       setLoading(true);
       const favoriteGenres = await getMoviesGenres();
-      
+
       if (favoriteGenres && favoriteGenres.length > 0) {
         const ids = favoriteGenres.map(genre => genre.id);
         const dataPayload = await getMoviesByGenres(ids);
@@ -61,7 +61,7 @@ export default function MyGenres() {
     if (!dateString) return 'Por anunciar';
     const [year, month, day] = dateString.split('-');
     if (!year || !month || !day) return 'Por anunciar';
-    
+
     const date = new Date(year, month - 1, day);
     return date.toLocaleDateString('es-VE', {
       day: 'numeric',
@@ -70,22 +70,23 @@ export default function MyGenres() {
     }).replace('.', '');
   };
 
-  
+
   if (loading) {
     return (
+      <ScreenWrapper>
       <View style={styles.centerContainer}>
         <ActivityIndicator size="large" color={theme.colors.textAccent.gold} />
         <Text style={styles.loadingText}>Buscando películas ideales para ti...</Text>
       </View>
+      </ScreenWrapper>
     );
   }
 
   return (
-   <SafeAreaProvider style={{ backgroundColor: '#231640' }}>
-    <SafeAreaView style={styles.safeArea}>
+   <ScreenWrapper>
       <View style={styles.mainContainer}>
-        
-        {/* CABECERA DE LA PANTALLA 
+
+        {/* CABECERA DE LA PANTALLA
         <View style={styles.headerContainer}>
           <View style={styles.titleBorderGroup}>
             <Text style={styles.headerTitle}>
@@ -97,23 +98,23 @@ export default function MyGenres() {
             </Text>
           </View>
 
-          <Pressable 
-            onPress={() => setShowGenresModal(true)} 
+          <Pressable
+            onPress={() => setShowGenresModal(true)}
             style={({ pressed }) => [styles.adjustButton, pressed && styles.buttonPressed]}
           >
             <Sliders size={14} color="#231640" strokeWidth={3} />
             <Text style={styles.adjustButtonText}>Ajustar mis géneros</Text>
           </Pressable>
         </View>*/}
-        
+
         {/* 2. TEXTO INFORMATIVO (SUBHEADER REESTRUCTURADO) */}
         <View style={styles.subHeaderContainer}>
           <Text style={styles.headerSubtitle}>
             Explora el catálogo de películas seleccionadas minuciosamente basándonos en tus preferencias cinematográficas.
           </Text>
 
-          <Pressable 
-            onPress={() => setShowGenresModal(true)} 
+          <Pressable
+            onPress={() => setShowGenresModal(true)}
             style={({ pressed }) => [styles.adjustButton, pressed && styles.buttonPressed]}
           >
             <Sliders size={14} color="#231640" strokeWidth={2.5} />
@@ -137,18 +138,17 @@ export default function MyGenres() {
             </View>
           }
           renderItem={({ item }) => {
-            const isSpecialEvent = item.type === 'special_event' || !!item.event;
             return (
               <View style={styles.cardWrapper}>
                 <View style={styles.movieCardWrapper}>
-                  <MovieCard 
+                  <MovieCard
                     title={item.title}
                     posterUrl={item.poster_url}
-                    style={{ width: '100%' }}
+                    style={styles.fullWidth}
                     onPress={() => router.push(`/content/${item.id}?type=${item.contentType || 'movie'}`)}
                   />
                 </View>
-                
+
                 {/* Etiqueta externa de estreno */}
                 <View style={styles.dateBadge}>
                   <Calendar size={12} color={theme.colors.textAccent.gold} />
@@ -168,16 +168,14 @@ export default function MyGenres() {
           }}
         />
       </View>
-      </SafeAreaView>
-   </SafeAreaProvider>
+   </ScreenWrapper>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: '#231640', 
-  },  
+  fullWidth: {
+    width: '100%',
+  },
   subHeaderContainer: {
     marginBottom: theme.spacing.s8,
     gap: theme.spacing.s16,
@@ -188,7 +186,6 @@ const styles = StyleSheet.create({
   },
   centerContainer: {
     flex: 1,
-    backgroundColor: '#231640',
     justifyContent: 'center',
     alignItems: 'center',
     gap: theme.spacing.s16,
@@ -199,27 +196,6 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
     textTransform: 'uppercase',
     fontFamily: theme.typography.family.primary.bold,
-  },
-  headerContainer: {
-    borderBottomWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.05)',
-    paddingBottom: theme.spacing.s16,
-    marginVertical: theme.spacing.s16,
-    gap: theme.spacing.s12,
-  },
-  titleBorderGroup: {
-    borderLeftWidth: 4,
-    borderColor: theme.colors.textAccent.gold,
-    paddingLeft: theme.spacing.s12,
-  },
-  headerTitle: {
-    ...theme.typography.variants.h2,
-    color: '#FFFFFF',
-    textTransform: 'uppercase',
-    lineHeight: 28,
-  },
-  headerTitleHighlight: {
-    color: theme.colors.textAccent.gold,
   },
   headerSubtitle: {
     ...theme.typography.variants.smallText,
@@ -256,7 +232,7 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.s24,
   },
   cardWrapper: {
-    width: '47%', 
+    width: '47%',
     gap: theme.spacing.s8,
   },
   movieCardWrapper: {

@@ -4,7 +4,6 @@ import { Ticket } from 'lucide-react-native';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
     ActivityIndicator,
-    Alert,
     ScrollView,
     StyleSheet,
     TouchableOpacity,
@@ -15,6 +14,7 @@ import { AppText } from '../../../components/ui/AppText';
 import { theme } from '../../../constants';
 import { useCart } from '../../../context/CartContext';
 import { getShowtimeSeats } from '../../../services/showtimes.service';
+import { appAlert } from '../../../context/AlertContext';
 
 const { colors, spacing, borderRadius } = theme;
 
@@ -22,21 +22,13 @@ const { colors, spacing, borderRadius } = theme;
 const fmtPrice = (n, symbol = '$') => `${symbol}${Number(n || 0).toFixed(2)}`;
 
 // ─── Sub-componentes ──────────────────────────────────────────────────────────
-
-/**
- * Tarjeta de un asiento seleccionado, con selector de categoría de audiencia.
- * El usuario elige aquí si ese asiento es para General, Niño, Tercera Edad, etc.
- */
 function SeatCategoryCard({
   seat,
   pricingMatrix,
   selectedCategory,
   onSelectCategory,
 }) {
-  // Obtiene una lista de precios única por categoría de audiencia para este asiento.
-  // El matrix viene como producto seat_category × audience_category; si el asiento
-  // tiene una seat_category conocida la usamos para filtrar, y de todas formas
-  // deduplicamos por audience_category para no mostrar opciones repetidas.
+
   const seatPrices = useMemo(() => {
     if (!pricingMatrix?.length) return [];
 
@@ -150,7 +142,9 @@ export default function TicketsSelectionCategory() {
 
   // Del carrito obtenemos los asientos ya seleccionados en la pantalla anterior
   const { cart, updateTickets } = useCart();
-  const selectedSeats = cart.tickets ?? [];
+  // Memoizado: si fuera `cart.tickets ?? []`, el array nuevo en cada render
+  // invalidaría las dependencias de los useMemo/useEffect/useCallback de abajo.
+  const selectedSeats = useMemo(() => cart.tickets ?? [], [cart.tickets]);
 
   const [pricingMatrix, setPricingMatrix] = useState(cart.pricingMatrix ?? []);
   const [loadingPricing, setLoadingPricing] = useState(
@@ -161,8 +155,6 @@ export default function TicketsSelectionCategory() {
   const [categoryMap, setCategoryMap] = useState({});
 
   // ─── Obtener el pricing matrix ───────────────────────────────────────────
-  // Preferimos el matrix capturado en la selección de asientos (carrito).
-  // Solo si no existe, lo pedimos al seat-map como respaldo.
   useEffect(() => {
     if (cart.pricingMatrix?.length) {
       setPricingMatrix(cart.pricingMatrix);
@@ -236,7 +228,7 @@ export default function TicketsSelectionCategory() {
 
   const handleContinue = useCallback(() => {
     if (!selectedSeats.length) {
-      Alert.alert(
+      appAlert(
         'Sin asientos',
         'Vuelve atrás y selecciona al menos un asiento.'
       );

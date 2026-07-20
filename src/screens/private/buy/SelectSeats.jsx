@@ -3,7 +3,6 @@ import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   AppState,
   StyleSheet,
   Text,
@@ -22,6 +21,7 @@ import {
   getShowtimeById,
   getShowtimeSeats,
 } from '../../../services/showtimes.service';
+import { appAlert } from '../../../context/AlertContext';
 
 const COLORS = {
   bgDeep: '#231640',
@@ -107,7 +107,7 @@ export default function SelectSeats() {
   );
 
   const handleQuoteExpired = useCallback(() => {
-    Alert.alert(
+    appAlert(
       'Sesión expirada',
       'Tu tiempo de reserva ha expirado. Vuelve a empezar la compra.',
       [{ text: 'Entendido', onPress: () => router.back() }]
@@ -208,7 +208,7 @@ export default function SelectSeats() {
       } catch (err) {
         console.error('Error cargando la selección de asientos:', err);
         setError('No se pudieron cargar los asientos.');
-        Alert.alert(
+        appAlert(
           'Error',
           err?.response?.data?.message || 'No se pudieron cargar los asientos.'
         );
@@ -232,7 +232,7 @@ export default function SelectSeats() {
 
       // Límite: no permitir más asientos que boletos solicitados.
       if (cart.tickets.length >= maxSeats) {
-        Alert.alert(
+        appAlert(
           'Límite de boletos',
           `Elegiste ${maxSeats} boleto${maxSeats === 1 ? '' : 's'}. Deselecciona uno para cambiarlo.`
         );
@@ -240,7 +240,7 @@ export default function SelectSeats() {
       }
 
       if (!realtimeReady) {
-        Alert.alert(
+        appAlert(
           'Un momento',
           'Aún estamos preparando la sala. Intenta de nuevo en un segundo.'
         );
@@ -269,12 +269,12 @@ export default function SelectSeats() {
         // un problema de sesión no significa que el asiento esté tomado.
         if (!/sesión de compra|expirad/i.test(msg)) {
           setLiveSeatStatus((prev) => ({ ...prev, [seatId]: 'occupied' }));
-          Alert.alert(
+          appAlert(
             'Asiento no disponible',
             msg || 'Ese asiento acaba de ser ocupado. Elige otro.'
           );
         } else {
-          Alert.alert(
+          appAlert(
             'Sesión de compra interrumpida',
             'Tu sesión de compra fue cerrada o reemplazada. Esto puede ocurrir ' +
               'si tienes otra compra en curso con esta misma cuenta en otro ' +
@@ -318,7 +318,7 @@ export default function SelectSeats() {
 
   const handleContinue = () => {
     if (cart.tickets.length !== maxSeats) {
-      Alert.alert(
+      appAlert(
         'Selección incompleta',
         `Selecciona ${maxSeats} asiento${maxSeats === 1 ? '' : 's'} para continuar.`
       );

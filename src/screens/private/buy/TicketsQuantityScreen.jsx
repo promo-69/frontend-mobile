@@ -3,7 +3,6 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   ScrollView,
   StyleSheet,
   TouchableOpacity,
@@ -15,6 +14,7 @@ import { theme } from '../../../constants';
 import { useCart } from '../../../context/CartContext';
 import { usePurchaseSession } from '../../../context/PurchaseSessionContext';
 import { getShowtimeSeats } from '../../../services/showtimes.service';
+import { appAlert } from '../../../context/AlertContext';
 
 const { colors, spacing, borderRadius } = theme;
 const fmtPrice = (n, symbol = '$') => `${symbol}${Number(n || 0).toFixed(2)}`;
@@ -131,11 +131,11 @@ export default function TicketsQuantityScreen() {
 
   const handleContinue = useCallback(() => {
     if (totalTickets === 0) {
-      Alert.alert('Sin boletos', 'Selecciona al menos un boleto para continuar.');
+      appAlert('Sin boletos', 'Selecciona al menos un boleto para continuar.');
       return;
     }
     if (!quoteReady) {
-      Alert.alert('Un momento', 'Estamos preparando tu sesión de compra.');
+      appAlert('Un momento', 'Estamos preparando tu sesión de compra.');
       return;
     }
     // plan: un audienceCategoryId por cada boleto solicitado
@@ -189,7 +189,7 @@ export default function TicketsQuantityScreen() {
       />
 
       <ScrollView
-        contentContainerStyle={[styles.scroll, { paddingBottom: 140 }]}
+        contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
       >
         <AppText style={styles.sectionLabel}>¿CUÁNTOS BOLETOS?</AppText>
@@ -283,7 +283,12 @@ export default function TicketsQuantityScreen() {
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing.s16 },
-  scroll: { paddingHorizontal: spacing.s16, paddingTop: spacing.s16, gap: spacing.s12 },
+  scroll: {
+    paddingHorizontal: spacing.s16,
+    paddingTop: spacing.s16,
+    gap: spacing.s12,
+    paddingBottom: 140,
+  },
   sectionLabel: {
     color: colors.textSecondary,
     fontFamily: theme.typography.family.primary.bold,

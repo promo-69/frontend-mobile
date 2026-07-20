@@ -4,7 +4,6 @@ import { Check, ChevronLeft, Gift, Lock, Ticket, X } from 'lucide-react-native';
 import { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   Modal,
   ScrollView,
   StyleSheet,
@@ -18,6 +17,7 @@ import { theme } from '../../../../constants';
 import { useCart } from '../../../../context/CartContext';
 import { getCinemas } from '../../../../services/cinemas.service';
 import { loyaltyRewardsService } from '../../../../services/loyalty-rewards.service';
+import { appAlert } from '../../../../context/AlertContext';
 
 const { colors, spacing, borderRadius, typography } = theme;
 
@@ -132,7 +132,7 @@ export default function LoyaltyCatalogScreen() {
   );
 
   const confirmRedeem = (reward) => {
-    Alert.alert(
+    appAlert(
       'Canjear premio',
       `¿Canjear "${reward.name}" por ${Number(reward.points_cost).toLocaleString('es-VE')} CinePuntos?`,
       [
@@ -150,7 +150,7 @@ export default function LoyaltyCatalogScreen() {
       await loadCatalog(); // refrescar saldo y disponibilidad
     } catch (e) {
       const msg = e?.response?.data?.message || 'No se pudo completar el canje.';
-      Alert.alert('Error', msg);
+      appAlert('Error', msg);
     } finally {
       setRedeeming(false);
     }
