@@ -1,7 +1,7 @@
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ChevronLeft, Film, Play } from 'lucide-react-native';
+import { ArrowLeft, Film, Play } from 'lucide-react-native';
 import { useEffect, useMemo, useState } from 'react';
 import {
   Dimensions,
@@ -173,7 +173,7 @@ export default function ViewDetails() {
             style={styles.backButton}
             onPress={() => router.back()}
           >
-            <ChevronLeft color="white" size={28} />
+            <ArrowLeft color="white" size={22} strokeWidth={2.5} />
           </TouchableOpacity>
         </View>
 
@@ -312,13 +312,10 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 45,
     left: 20,
-    width: 40,
-    height: 40,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    borderRadius: 20,
+    padding: 8,
+    backgroundColor: 'rgba(0,0,0,0.25)',
+    borderRadius: 999,
     zIndex: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   headerRow: { flexDirection: 'row', alignItems: 'flex-end', marginBottom: 20 },
   posterWrapper: {

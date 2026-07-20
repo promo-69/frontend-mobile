@@ -57,8 +57,9 @@ export default function LegalLayout() {
 
 const styles = StyleSheet.create({
   backButton: {
-    justifyContent: 'center',
-    alignItems: 'center',
+    padding: 8,
+    borderRadius: 999,
+    backgroundColor: 'rgba(0,0,0,0.25)',
   },
   buttonPressed: {
     opacity: 0.7,

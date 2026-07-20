@@ -1,6 +1,6 @@
 import { useFocusEffect } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
-import { Check, ChevronLeft, Gift, Lock, Ticket, X } from 'lucide-react-native';
+import { ArrowLeft, Check, Gift, Lock, Ticket, X } from 'lucide-react-native';
 import { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -163,10 +163,11 @@ export default function LoyaltyCatalogScreen() {
     <ScreenWrapper>
       <View style={styles.topBar}>
         <TouchableOpacity
+          style={styles.backButton}
           onPress={() => router.back()}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
-          <ChevronLeft size={26} color={colors.primary} />
+          <ArrowLeft size={22} color={colors.primary} strokeWidth={2.5} />
         </TouchableOpacity>
         <AppText style={styles.topBarTitle}>Premios canjeables</AppText>
         <View style={{ width: 26 }} />
@@ -314,6 +315,11 @@ function VoucherModal({ voucher, onClose }) {
 }
 
 const styles = StyleSheet.create({
+  backButton: {
+    padding: 8,
+    borderRadius: 999,
+    backgroundColor: 'rgba(0,0,0,0.25)',
+  },
   topBar: {
     flexDirection: 'row',
     alignItems: 'center',

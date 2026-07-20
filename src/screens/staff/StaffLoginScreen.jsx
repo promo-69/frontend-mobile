@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { ChevronLeft, ScanLine } from 'lucide-react-native';
+import { ArrowLeft, ScanLine } from 'lucide-react-native';
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import {
@@ -75,7 +75,7 @@ export default function StaffLoginScreen() {
             activeOpacity={0.7}
             style={styles.backButton}
           >
-            <ChevronLeft size={26} color={theme.colors.textPrimary} />
+            <ArrowLeft size={22} color={theme.colors.textPrimary} strokeWidth={2.5} />
           </TouchableOpacity>
 
           <View style={styles.badge}>

@@ -185,12 +185,12 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 25,
   },
-  backButton: {
-    width: 40,
-    height: 40,
-    marginTop: theme.spacing.s8,
-    justifyContent: 'center',
-  },
+backButton: {
+  padding: 8,
+  marginTop: theme.spacing.s8,
+  borderRadius: 999,
+  backgroundColor: 'rgba(0,0,0,0.25)',
+},
   title: {
     color: theme.colors.primary,
     marginTop: 16,

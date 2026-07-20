@@ -1,6 +1,6 @@
 import { useFocusEffect } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
-import { ArrowDownLeft, ArrowUpRight, ChevronLeft } from 'lucide-react-native';
+import { ArrowDownLeft, ArrowLeft, ArrowUpRight } from 'lucide-react-native';
 import { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
@@ -129,10 +129,11 @@ export default function LoyaltyHistoryScreen() {
     <ScreenWrapper>
       <View style={styles.topBar}>
         <TouchableOpacity
+          style={styles.backButton}
           onPress={() => router.back()}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
-          <ChevronLeft size={26} color={colors.primary} />
+          <ArrowLeft size={22} color={colors.primary} strokeWidth={2.5} />
         </TouchableOpacity>
         <AppText style={styles.topBarTitle}>Historial de puntos</AppText>
         <View style={{ width: 26 }} />
@@ -176,6 +177,11 @@ export default function LoyaltyHistoryScreen() {
 }
 
 const styles = StyleSheet.create({
+  backButton: {
+    padding: 8,
+    borderRadius: 999,
+    backgroundColor: 'rgba(0,0,0,0.25)',
+  },
   topBar: {
     flexDirection: 'row',
     alignItems: 'center',

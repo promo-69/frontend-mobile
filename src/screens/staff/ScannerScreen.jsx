@@ -2,8 +2,8 @@ import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useRouter } from 'expo-router';
 import {
   Armchair,
+  ArrowLeft,
   CheckCircle2,
-  ChevronLeft,
   Gift,
   Popcorn,
   ScanLine,
@@ -156,8 +156,8 @@ export default function ScannerScreen() {
     return (
       <ScreenWrapper>
         <View style={styles.topBar}>
-          <TouchableOpacity onPress={resetScanner} hitSlop={12}>
-            <ChevronLeft size={26} color={colors.primary} />
+          <TouchableOpacity style={styles.backButton} onPress={resetScanner} hitSlop={12}>
+            <ArrowLeft size={22} color={colors.primary} strokeWidth={2.5} />
           </TouchableOpacity>
           <AppText style={styles.topBarTitle}>Detalle de la orden</AppText>
           <View style={{ width: 26 }} />
@@ -294,6 +294,11 @@ const styles = StyleSheet.create({
   logoutBtn: { padding: spacing.s12 },
   logoutText: { color: 'rgba(255,255,255,0.85)', fontSize: 13, textDecorationLine: 'underline' },
   // detalle
+  backButton: {
+    padding: 8,
+    borderRadius: 999,
+    backgroundColor: 'rgba(0,0,0,0.25)',
+  },
   topBar: {
     flexDirection: 'row',
     alignItems: 'center',

@@ -288,6 +288,7 @@ export default function RentalRequestScreen() {
     <ScreenWrapper>
       <View style={styles.topBar}>
         <TouchableOpacity
+          style={styles.backButton}
           onPress={() => router.back()}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
@@ -507,6 +508,11 @@ export default function RentalRequestScreen() {
 }
 
 const styles = StyleSheet.create({
+  backButton: {
+    padding: 8,
+    borderRadius: 999,
+    backgroundColor: 'rgba(0,0,0,0.25)',
+  },
   topBar: {
     flexDirection: 'row',
     alignItems: 'center',
