@@ -63,7 +63,7 @@ export default function StaffLoginScreen() {
     <ScreenWrapper>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        style={{ flex: 1 }}
+        style={styles.spacer}
       >
         <ScrollView
           contentContainerStyle={styles.content}
@@ -230,4 +230,7 @@ const styles = StyleSheet.create({
     color: theme.colors.red[400],
     lineHeight: 20,
   },
+  spacer: {
+    flex:1,
+  }
 });
