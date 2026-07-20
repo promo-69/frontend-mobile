@@ -1,5 +1,5 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ArrowLeft } from 'lucide-react-native';
+import { AlertCircle, ArrowLeft, MailCheck } from 'lucide-react-native';
 import { useState } from 'react';
 import {
     KeyboardAvoidingView,
@@ -8,19 +8,84 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
+import { AppAlert } from '../../../components/ui/AppAlert';
 import { AppText } from '../../../components/ui/AppText';
 import { CustomButton } from '../../../components/ui/CustomButton';
 import { OTPInput } from '../../../components/ui/OTPInput';
 import { ScreenWrapper } from '../../../components/ui/ScreenWrapper';
+import { useAuth } from '../../../context/AuthContext';
 import { theme } from '../../../constants';
 
 export const VerifyCodeScreen = () => {
   const router = useRouter();
   const { email } = useLocalSearchParams();
+  const { verifyRecoveryCode, sendRecoveryEmail } = useAuth();
   const [code, setCode] = useState('');
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [isResending, setIsResending] = useState(false);
+  const [notice, setNotice] = useState(null);
 
   const handleBack = () => {
     router.back();
+  };
+
+  const handleVerifyCode = async () => {
+    if (code.length < 4) {
+      setNotice({
+        title: 'Código incompleto',
+        message: 'Ingresa los 4 dígitos del código de verificación.',
+      });
+      return;
+    }
+
+    setIsVerifying(true);
+    try {
+      const result = await verifyRecoveryCode(email, code);
+      if (result.success) {
+        const resetToken = result.data?.data?.resetToken;
+        router.push({
+          pathname: '/reset-password',
+          params: { email, resetToken },
+        });
+      } else {
+        setNotice({
+          title: 'Error',
+          message: result.message || 'Código de verificación inválido.',
+        });
+      }
+    } catch (error) {
+      setNotice({
+        title: 'Error',
+        message: 'No se pudo verificar el código.',
+      });
+    } finally {
+      setIsVerifying(false);
+    }
+  };
+
+  const handleResendCode = async () => {
+    setIsResending(true);
+    try {
+      const result = await sendRecoveryEmail(email);
+      if (result.success) {
+        setNotice({
+          title: 'Código reenviado',
+          message: 'Se envió un nuevo código a tu correo.',
+        });
+      } else {
+        setNotice({
+          title: 'Error',
+          message: result.message || 'No se pudo reenviar el código.',
+        });
+      }
+    } catch (error) {
+      setNotice({
+        title: 'Error',
+        message: 'No se pudo reenviar el código.',
+      });
+    } finally {
+      setIsResending(false);
+    }
   };
 
   return (
@@ -48,22 +113,32 @@ export const VerifyCodeScreen = () => {
 
           <View style={styles.actionSection}>
             <CustomButton
-              title="Confirmar Código"
-              onPress={() =>
-                router.push({
-                  pathname: '/reset-password',
-                  params: { email: email },
-                })
-              }
+              title={isVerifying ? 'Validando...' : 'Confirmar Código'}
+              onPress={handleVerifyCode}
+              disabled={isVerifying || isResending}
             />
-            <TouchableOpacity activeOpacity={0.7}>
-              <AppText style={styles.resendText}>
-                ¿No recibiste nada? Reenviar
+            <TouchableOpacity
+              activeOpacity={0.7}
+              onPress={handleResendCode}
+              disabled={isResending}
+            >
+              <AppText style={[styles.resendText, isResending && { opacity: 0.4 }]}>
+                {isResending ? 'Reenviando...' : '¿No recibiste nada? Reenviar'}
               </AppText>
             </TouchableOpacity>
           </View>
         </View>
       </KeyboardAvoidingView>
+
+      <AppAlert
+        visible={!!notice}
+        icon={notice?.title === 'Código reenviado' ? MailCheck : AlertCircle}
+        variant={notice?.title === 'Error' ? 'danger' : 'primary'}
+        title={notice?.title}
+        message={notice?.message}
+        confirmLabel="Entendido"
+        onConfirm={() => setNotice(null)}
+      />
     </ScreenWrapper>
   );
 };

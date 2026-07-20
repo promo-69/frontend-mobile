@@ -1,5 +1,6 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ArrowLeft } from 'lucide-react-native';
+import { AlertCircle, ArrowLeft, CheckCircle } from 'lucide-react-native';
+import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import {
     KeyboardAvoidingView,
@@ -8,10 +9,12 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
+import { AppAlert } from '../../../components/ui/AppAlert';
 import { AppText } from '../../../components/ui/AppText';
 import { CustomButton } from '../../../components/ui/CustomButton';
 import { Input } from '../../../components/ui/Input';
 import { ScreenWrapper } from '../../../components/ui/ScreenWrapper';
+import { useAuth } from '../../../context/AuthContext';
 import { theme } from '../../../constants';
 import {
     validatePassword,
@@ -20,7 +23,9 @@ import {
 
 export const ResetPasswordScreen = () => {
   const router = useRouter();
-  const { email } = useLocalSearchParams();
+  const { email, resetToken } = useLocalSearchParams();
+  const { resetPassword } = useAuth();
+  const [notice, setNotice] = useState(null);
 
   const { control, handleSubmit, watch } = useForm({
     mode: 'onBlur',
@@ -35,18 +40,24 @@ export const ResetPasswordScreen = () => {
 
   const onSubmit = async (data) => {
     try {
-      // API
-      // await api.post('/auth/reset-password', {
-      // password: data.password,
-      // email: params.email
-      //  });
-      //
-      console.log('Cambiando clave para:', email);
-      console.log('Nueva clave:', data.password);
-      router.replace('/(auth)/success-reset');
+      const result = await resetPassword({
+        email,
+        resetToken,
+        newPassword: data.password,
+      });
+      if (result.success) {
+        router.replace('/(auth)/success-reset');
+      } else {
+        setNotice({
+          title: 'Error',
+          message: result.message || 'No se pudo restablecer la contraseña.',
+        });
+      }
     } catch (error) {
-      // Manejar error de servidor
-      console.error('Error en el servidor:', error);
+      setNotice({
+        title: 'Error',
+        message: 'No se pudo restablecer la contraseña.',
+      });
     }
   };
 
@@ -123,6 +134,16 @@ export const ResetPasswordScreen = () => {
           </View>
         </View>
       </KeyboardAvoidingView>
+
+      <AppAlert
+        visible={!!notice}
+        icon={notice?.title === 'Error' ? AlertCircle : CheckCircle}
+        variant={notice?.title === 'Error' ? 'danger' : 'primary'}
+        title={notice?.title}
+        message={notice?.message}
+        confirmLabel="Entendido"
+        onConfirm={() => setNotice(null)}
+      />
     </ScreenWrapper>
   );
 };

@@ -43,7 +43,7 @@ export const authService = {
   // Recuperar Contraseña: Paso 1 — Enviar correo
   // ---------------------------------------------------------
   forgotPassword: async (email) => {
-    const response = await api.post('/auth/forgot-password', { email });
+    const response = await api.post('/auth/forgot-password/2', { email });
     return response.data;
   },
 
@@ -51,7 +51,7 @@ export const authService = {
   // RECOVERY: Paso 2 — Validar código
   // ---------------------------------------------------------
   verifyResetCode: async ({ email, code }) => {
-    const response = await api.post('/auth/verify-reset-code', { email, code });
+    const response = await api.post('/auth/verify-reset-code/2', { email, code });
     return response.data;
   },
 
@@ -59,7 +59,7 @@ export const authService = {
   // RECOVERY: Paso 3 — Guardar nueva contraseña
   // ---------------------------------------------------------
   resetPassword: async ({ email, resetToken, newPassword }) => {
-    const response = await api.post('/auth/reset-password', {
+    const response = await api.post('/auth/reset-password/2', {
       email,
       resetToken,
       newPassword,

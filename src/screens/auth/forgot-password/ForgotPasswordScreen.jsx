@@ -1,5 +1,6 @@
 import { useRouter } from 'expo-router';
-import { ArrowLeft } from 'lucide-react-native';
+import { AlertCircle, ArrowLeft } from 'lucide-react-native';
+import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import {
     KeyboardAvoidingView,
@@ -8,15 +9,19 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
+import { AppAlert } from '../../../components/ui/AppAlert';
 import { AppText } from '../../../components/ui/AppText';
 import { CustomButton } from '../../../components/ui/CustomButton';
 import { Input } from '../../../components/ui/Input';
 import { ScreenWrapper } from '../../../components/ui/ScreenWrapper';
+import { useAuth } from '../../../context/AuthContext';
 import { theme } from '../../../constants';
 import { sanitizeInput, validateEmail } from '../../../utils/validators';
 
 export default function ForgotPasswordScreen() {
   const router = useRouter();
+  const { sendRecoveryEmail } = useAuth();
+  const [notice, setNotice] = useState(null);
   const {
     control,
     handleSubmit,
@@ -32,33 +37,28 @@ export default function ForgotPasswordScreen() {
   const onSubmit = async (data) => {
     const cleanEmail = sanitizeInput(data.email, 'email');
     try {
-      // API
-      // await api.post('/auth/forgot-password', { email: cleanEmail });
-      console.log('Login intent (sanitized):', cleanEmail);
-      router.push({
-        pathname: '/(auth)/verify-code',
-        params: { email: cleanEmail },
-      });
+      const result = await sendRecoveryEmail(cleanEmail);
+      if (result.success) {
+        router.push({
+          pathname: '/(auth)/verify-code',
+          params: { email: cleanEmail },
+        });
+      } else {
+        setNotice({
+          title: 'Error',
+          message: result.message || 'No se pudo enviar el correo de recuperación.',
+        });
+      }
     } catch (error) {
-      // Manejar error de servidor
+      setNotice({
+        title: 'Error',
+        message: 'No se pudo enviar el correo de recuperación.',
+      });
     }
   };
 
   const handleBack = () => {
     router.back();
-  };
-
-  const handleNext = () => {
-    router.push({
-      pathname: '/verify-code',
-      params: { email },
-    });
-  };
-
-  const handleCancel = () => {
-    router.push({
-      pathname: '/login',
-    });
   };
 
   return (
@@ -76,7 +76,7 @@ export default function ForgotPasswordScreen() {
             Recuperar Contraseña
           </AppText>
           <AppText variant="body" style={styles.description}>
-            Ingresa tu correo electrónico para enviarte un código de de
+            Ingresa tu correo electrónico para enviarte un código de
             recuperación
           </AppText>
 
@@ -102,10 +102,14 @@ export default function ForgotPasswordScreen() {
             )}
           />
           <View style={styles.actionSection}>
-            <CustomButton title="Enviar" onPress={handleSubmit(onSubmit)} />
+            <CustomButton
+              title={isSubmitting ? 'Enviando...' : 'Enviar'}
+              onPress={handleSubmit(onSubmit)}
+              disabled={isSubmitting}
+            />
             <CustomButton
               title="Cancelar"
-              onPress={handleCancel}
+              onPress={handleBack}
               style={{
                 backgroundColor: 'transparent',
                 borderWidth: 2,
@@ -115,6 +119,15 @@ export default function ForgotPasswordScreen() {
           </View>
         </View>
       </KeyboardAvoidingView>
+
+      <AppAlert
+        visible={!!notice}
+        icon={AlertCircle}
+        title={notice?.title}
+        message={notice?.message}
+        confirmLabel="Entendido"
+        onConfirm={() => setNotice(null)}
+      />
     </ScreenWrapper>
   );
 }
