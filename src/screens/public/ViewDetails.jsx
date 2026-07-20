@@ -173,7 +173,7 @@ export default function ViewDetails() {
             style={styles.backButton}
             onPress={() => router.back()}
           >
-            <ArrowLeft color="white" size={22} strokeWidth={2.5} />
+            <ArrowLeft color="white" size={22} strokeWidth={1} />
           </TouchableOpacity>
         </View>
 
@@ -313,7 +313,7 @@ const styles = StyleSheet.create({
     top: 45,
     left: 20,
     padding: 8,
-    backgroundColor: 'rgba(0,0,0,0.25)',
+    backgroundColor: 'rgba(0,0,0,0.5)',
     borderRadius: 999,
     zIndex: 10,
   },

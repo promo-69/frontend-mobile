@@ -23,7 +23,7 @@ export const CustomHeader = ({ title, rightComponent, onPressAction }) => {
         onPress={onPressAction || handleDefaultBack}
         activeOpacity={0.7}
       >
-        <ArrowLeft size={22} color={theme.colors.accent} strokeWidth={2.5} />
+        <ArrowLeft size={22} color={theme.colors.accent} strokeWidth={1} />
       </TouchableOpacity>
 
       {/* Título de la pantalla */}
@@ -53,7 +53,7 @@ const styles = StyleSheet.create({
   backButton: {
     padding: 8,
     borderRadius: 999,
-    backgroundColor: 'rgba(0,0,0,0.25)',
+    backgroundColor: 'rgba(0,0,0,0.5)',
   },
   titleContainer: {
     flex: 1,

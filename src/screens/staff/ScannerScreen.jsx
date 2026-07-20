@@ -157,7 +157,7 @@ export default function ScannerScreen() {
       <ScreenWrapper>
         <View style={styles.topBar}>
           <TouchableOpacity style={styles.backButton} onPress={resetScanner} hitSlop={12}>
-            <ArrowLeft size={22} color={colors.primary} strokeWidth={2.5} />
+            <ArrowLeft size={22} color={colors.primary} strokeWidth={1} />
           </TouchableOpacity>
           <AppText style={styles.topBarTitle}>Detalle de la orden</AppText>
           <View style={{ width: 26 }} />
@@ -297,7 +297,7 @@ const styles = StyleSheet.create({
   backButton: {
     padding: 8,
     borderRadius: 999,
-    backgroundColor: 'rgba(0,0,0,0.25)',
+    backgroundColor: 'rgba(0,0,0,0.5)',
   },
   topBar: {
     flexDirection: 'row',

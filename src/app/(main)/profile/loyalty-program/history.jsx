@@ -133,7 +133,7 @@ export default function LoyaltyHistoryScreen() {
           onPress={() => router.back()}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
-          <ArrowLeft size={22} color={colors.primary} strokeWidth={2.5} />
+          <ArrowLeft size={22} color={colors.primary} strokeWidth={1} />
         </TouchableOpacity>
         <AppText style={styles.topBarTitle}>Historial de puntos</AppText>
         <View style={{ width: 26 }} />
@@ -180,7 +180,7 @@ const styles = StyleSheet.create({
   backButton: {
     padding: 8,
     borderRadius: 999,
-    backgroundColor: 'rgba(0,0,0,0.25)',
+    backgroundColor: 'rgba(0,0,0,0.5)',
   },
   topBar: {
     flexDirection: 'row',

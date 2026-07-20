@@ -75,7 +75,7 @@ export default function StaffLoginScreen() {
             activeOpacity={0.7}
             style={styles.backButton}
           >
-            <ArrowLeft size={22} color={theme.colors.textPrimary} strokeWidth={2.5} />
+            <ArrowLeft size={22} color={theme.colors.textPrimary} strokeWidth={1} />
           </TouchableOpacity>
 
           <View style={styles.badge}>
@@ -179,7 +179,7 @@ const styles = StyleSheet.create({
     zIndex: 20,
     padding: 8,
     borderRadius: 999,
-    backgroundColor: 'rgba(0,0,0,0.25)',
+    backgroundColor: 'rgba(0,0,0,0.5)',
   },
   badge: {
     alignSelf: 'center',

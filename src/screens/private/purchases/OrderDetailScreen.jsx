@@ -231,7 +231,7 @@ export default function OrderDetailScreen() {
     return (
       <ScreenWrapper>
         <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-          <ArrowLeft size={22} color={colors.primary} strokeWidth={2.5} />
+          <ArrowLeft size={22} color={colors.primary} strokeWidth={1} />
         </TouchableOpacity>
         <View style={styles.centered}>
           <AppText variant="body" style={styles.errorText}>
@@ -270,7 +270,7 @@ export default function OrderDetailScreen() {
       {/* ── Header ── */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-          <ArrowLeft size={22} color={colors.primary} strokeWidth={2.5} />
+          <ArrowLeft size={22} color={colors.primary} strokeWidth={1} />
         </TouchableOpacity>
         <View style={styles.headerTexts}>
           <AppText variant="h3" style={styles.headerTitle}>
@@ -477,7 +477,7 @@ const styles = StyleSheet.create({
   backBtn: {
     padding: 8,
     borderRadius: 999,
-    backgroundColor: 'rgba(0,0,0,0.25)',
+    backgroundColor: 'rgba(0,0,0,0.5)',
   },
   headerTexts: { flex: 1 },
   headerTitle: {

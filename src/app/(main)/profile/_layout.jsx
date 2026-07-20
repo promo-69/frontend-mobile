@@ -39,7 +39,7 @@ export default function ProfileLayout() {
             ]}
             hitSlop={15}
           >
-            <ArrowLeft size={22} color={theme.colors.accent} strokeWidth={2.5} />
+            <ArrowLeft size={22} color={theme.colors.accent} strokeWidth={1} />
           </Pressable>
         ),
       }}
@@ -92,7 +92,7 @@ const styles = StyleSheet.create({
   backButton: {
     padding: 8,
     borderRadius: 999,
-    backgroundColor: 'rgba(0,0,0,0.25)',
+    backgroundColor: 'rgba(0,0,0,0.5)',
   },
   buttonPressed: {
     opacity: 0.7,
