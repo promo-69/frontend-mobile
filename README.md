@@ -148,42 +148,6 @@ src/
 └── assets/               # Imagenes, fuentes, iconos
 ```
 
-## Convenciones
-
-### Nombres de archivos
-
-- **Paginas/rutas**: `camelCase` - `homeScreen.jsx`, `loginScreen.jsx`
-- **Componentes**: `PascalCase` - `MainCarousel.jsx`, `ChatAssistant.jsx`
-
-### Imports
-
-Rutas relativas. No se usan alias (`@`).
-
-```js
-import CustomButton from '../../components/CustomButton';
-```
-
-### Alertas
-
-No usar `Alert.alert` de React Native (modal blanco del sistema). Usar el
-sistema global con la estetica de la app:
-
-```js
-import { appAlert } from '../context/AlertContext';
-
-// Aviso simple (boton "Entendido")
-appAlert('Titulo', 'Mensaje');
-
-// Confirmacion (misma firma que Alert.alert; style 'destructive' = alerta roja)
-appAlert('Quitar marcador', 'Deseas continuar?', [
-  { text: 'Cancelar', style: 'cancel' },
-  { text: 'Quitar', style: 'destructive', onPress: () => {} },
-]);
-```
-
-El `AlertProvider` ya esta montado en `src/app/_layout.jsx`; si no estuviera,
-`appAlert` degrada al Alert nativo para no perder el aviso.
-
 ## Flujo de trabajo con Git
 
 1. Clonar en la rama `development`
