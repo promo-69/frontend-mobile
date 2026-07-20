@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { ENV } from '../constants/config';
+import { getDeviceId } from '../helper/device.helper';
 import { storageHelper } from '../helper/storage.helper';
 
 const api = axios.create({
@@ -15,6 +16,7 @@ const api = axios.create({
 api.interceptors.request.use(
   async (config) => {
     config.headers['x-client-channel'] = 'mobile';
+    config.headers['x-device-id'] = await getDeviceId();
     const token = await storageHelper.getAccessToken();
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
