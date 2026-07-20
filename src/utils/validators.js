@@ -50,6 +50,7 @@ export const validatePassword = (password) => {
 
   if (password.length < 8) return 'Debe tener al menos 8 caracteres';
   if (password.length > 90) return 'La contraseña es muy larga';
+  if (/\s/.test(password)) return 'La contraseña no debe contener espacios';
   if (!hasLetter || !hasNumber)
     return 'Debe incluir al menos una letra y un número';
 

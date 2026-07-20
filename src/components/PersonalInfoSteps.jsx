@@ -1,7 +1,8 @@
-import { ChevronDown } from 'lucide-react-native';
+import { useRouter } from 'expo-router';
+import { Check, ChevronDown } from 'lucide-react-native';
 import { useState } from 'react';
 import { Controller } from 'react-hook-form';
-import { StyleSheet, TouchableOpacity, View } from 'react-native';
+import { Pressable, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { theme } from '../constants';
 import { AppText } from './ui/AppText';
 import {
@@ -11,7 +12,6 @@ import {
     validateNames,
     validatePassword,
 } from '../utils/validators';
-import { Checkbox } from './ui/CheckBox';
 import { DateInput } from './ui/DateInput';
 import { Input } from './ui/Input';
 import { SelectorInput } from './ui/SelectorInput';
@@ -19,6 +19,7 @@ import { SelectorInput } from './ui/SelectorInput';
 const GENDER_OPTIONS = [
   { label: 'Masculino', value: 1 },
   { label: 'Femenino', value: 2 },
+  { label: 'No prefiero decirlo', value: 3 },
 ];
 
 const COUNTRY_OPTIONS = [
@@ -34,6 +35,7 @@ export const PersonalInfoSteps = ({
   setValue,
 }) => {
   const [isGenderOpen, setIsGenderOpen] = useState(false);
+  const router = useRouter();
 
   // Paso 1: Información Personal
   if (step === 1) {
@@ -365,27 +367,47 @@ export const PersonalInfoSteps = ({
                 v === true || 'Debes aceptar los términos y condiciones',
             }}
             render={({ field: { onChange, value }, fieldState: { error } }) => (
-              <Checkbox
-                value={value}
-                onChange={onChange}
-                error={error?.message}
-              >
-                <AppText
-                  variant="label"
-                  style={{ color: theme.colors.textPrimary }}
+              <View style={styles.acceptTermsWrapper}>
+                <TouchableOpacity
+                  onPress={() => onChange(!value)}
+                  activeOpacity={0.8}
+                  style={styles.acceptTermsRow}
                 >
-                  Acepto los{' '}
-                  <AppText
-                    variant="label"
-                    style={{
-                      color: theme.colors.primary,
-                      textDecorationLine: 'underline',
-                    }}
+                  <View
+                    style={[
+                      styles.checkboxBox,
+                      value && styles.checkboxBoxSelected,
+                      error && { borderColor: theme.colors.error },
+                    ]}
                   >
-                    Términos y Condiciones
+                    {value && <Check size={14} color="white" />}
+                  </View>
+                  <AppText variant="label" style={styles.acceptTermsText}>
+                    Acepto los{' '}
                   </AppText>
-                </AppText>
-              </Checkbox>
+                  <TouchableOpacity
+                    activeOpacity={0.7}
+                    onPress={() =>
+                      router.push({
+                        pathname: '/(legal)/terms',
+                        params: { acceptOnly: 'true' },
+                      })
+                    }
+                  >
+                    <AppText
+                      variant="label"
+                      style={styles.acceptTermsLink}
+                    >
+                      Términos y Condiciones
+                    </AppText>
+                  </TouchableOpacity>
+                </TouchableOpacity>
+                {error && (
+                  <AppText style={styles.acceptTermsError}>
+                    {error.message}
+                  </AppText>
+                )}
+              </View>
             )}
           />
         </View>
@@ -509,6 +531,40 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.size.s16,
   },
   errorTextSmall: {
+    color: theme.colors.error,
+    fontSize: theme.typography.size.s12,
+    marginTop: theme.spacing.s4,
+  },
+  acceptTermsWrapper: {
+    alignItems: 'center',
+    marginTop: theme.spacing.s8,
+  },
+  acceptTermsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  checkboxBox: {
+    width: 20,
+    height: 20,
+    borderRadius: 4,
+    borderWidth: 2,
+    borderColor: theme.colors.primary,
+    marginRight: theme.spacing.s12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  checkboxBoxSelected: {
+    backgroundColor: theme.colors.primary,
+  },
+  acceptTermsText: {
+    color: theme.colors.textPrimary,
+  },
+  acceptTermsLink: {
+    color: theme.colors.primary,
+    textDecorationLine: 'underline',
+    fontWeight: 'bold',
+  },
+  acceptTermsError: {
     color: theme.colors.error,
     fontSize: theme.typography.size.s12,
     marginTop: theme.spacing.s4,

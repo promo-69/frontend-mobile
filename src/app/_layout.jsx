@@ -50,6 +50,7 @@ function NavigationGuard() {
       <Stack.Screen name="content" />
       <Stack.Screen name="(buy)" />
       <Stack.Screen name="(staff)" options={{ animation: 'slide_from_bottom' }} />
+      <Stack.Screen name="(legal)" options={{ animation: 'slide_from_right' }} />
       <Stack.Screen name="index" options={{ href: null }} />
     </Stack>
   );

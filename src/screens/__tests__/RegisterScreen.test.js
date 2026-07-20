@@ -305,7 +305,7 @@ describe('Registro - Integración Paso 1 (Validación Explícita)', () => {
           email: 'alexis@ucla.edu.ve',
           // Verificación crítica: el formato de la fecha coincide con el enviado por el input
           birthDate: '2000-05-20',
-          documentNumber: '12345678',
+          documentNumber: 'V-12345678',
         })
       );
 

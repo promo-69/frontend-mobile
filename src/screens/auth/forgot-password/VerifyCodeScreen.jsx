@@ -1,5 +1,5 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ChevronLeft } from 'lucide-react-native';
+import { ArrowLeft } from 'lucide-react-native';
 import { useState } from 'react';
 import {
     KeyboardAvoidingView,
@@ -31,7 +31,7 @@ export const VerifyCodeScreen = () => {
         keyboardVerticalOffset={Platform.OS === 'android' ? 0 : 64}
       >
         <TouchableOpacity onPress={handleBack} style={styles.backButton}>
-          <ChevronLeft size={28} color={theme.colors.border} />
+          <ArrowLeft size={22} color={theme.colors.accent} strokeWidth={2.5} />
         </TouchableOpacity>
 
         <View style={styles.content}>
