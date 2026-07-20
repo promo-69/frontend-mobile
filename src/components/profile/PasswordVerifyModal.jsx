@@ -11,14 +11,24 @@ import {
 import { Eye, EyeOff } from 'lucide-react-native';
 import { AppText } from '../ui/AppText';
 import { theme } from '../../constants';
+import { validatePassword } from '../../utils/validators';
 
 export function PasswordVerifyModal({ visible, onConfirm, onCancel, loading }) {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState(false);
+  const [formatError, setFormatError] = useState(null);
 
   const handleConfirm = async () => {
     if (!password.trim() || loading) return;
+
+    const validation = validatePassword(password);
+    if (validation !== true) {
+      setFormatError(validation);
+      return;
+    }
+
+    setFormatError(null);
     try {
       await onConfirm(password);
     } catch {
@@ -30,6 +40,7 @@ export function PasswordVerifyModal({ visible, onConfirm, onCancel, loading }) {
     setPassword('');
     setShowPassword(false);
     setError(false);
+    setFormatError(null);
     onCancel();
   };
 
@@ -55,6 +66,7 @@ export function PasswordVerifyModal({ visible, onConfirm, onCancel, loading }) {
                 onChangeText={(text) => {
                   setPassword(text);
                   if (error) setError(false);
+                  if (formatError) setFormatError(null);
                 }}
                 secureTextEntry={!showPassword}
                 autoCapitalize="none"
@@ -80,9 +92,9 @@ export function PasswordVerifyModal({ visible, onConfirm, onCancel, loading }) {
           </View>
 
           <View style={styles.errorContainer}>
-            {error && (
+            {(error || formatError) && (
               <AppText variant="small" style={styles.errorText}>
-                La contraseña es inválida
+                {formatError || 'La contraseña es inválida'}
               </AppText>
             )}
           </View>

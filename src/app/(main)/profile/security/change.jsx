@@ -9,6 +9,7 @@ import { ScreenWrapper } from '../../../../components/ui/ScreenWrapper';
 import { SuccessModal } from '../../../../components/ui/SuccessModal';
 import { theme } from '../../../../constants';
 import { useProfile } from '../../../../hooks/profile/useProfile';
+import { validateEmail, validatePassword } from '../../../../utils/validators';
 
 export default function SecurityChangeScreen() {
   const router = useRouter();
@@ -63,6 +64,12 @@ export default function SecurityChangeScreen() {
           <Controller
             control={control}
             name="newEmail"
+            rules={{
+              validate: (value) => {
+                if (!value || value.trim() === '') return true;
+                return validateEmail(value);
+              },
+            }}
             render={({
               field: { onChange, onBlur, value },
               fieldState: { error },
@@ -82,6 +89,12 @@ export default function SecurityChangeScreen() {
           <Controller
             control={control}
             name="newPassword"
+            rules={{
+              validate: (value) => {
+                if (!value || value.trim() === '') return true;
+                return validatePassword(value);
+              },
+            }}
             render={({
               field: { onChange, onBlur, value },
               fieldState: { error },

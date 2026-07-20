@@ -18,7 +18,7 @@ import { ScreenWrapper } from '../../components/ui/ScreenWrapper';
 import { theme } from '../../constants';
 import { useAuth } from '../../context/AuthContext';
 import { canAccessScanner } from '../../helper/roles.helper';
-import { sanitizeInput, validateEmail } from '../../utils/validators';
+import { sanitizeInput, validateEmail, validatePassword } from '../../utils/validators';
 
 export default function StaffLoginScreen() {
   const router = useRouter();
@@ -118,7 +118,10 @@ export default function StaffLoginScreen() {
             <Controller
               control={control}
               name="password"
-              rules={{ required: 'La contraseña es obligatoria' }}
+              rules={{
+                required: 'La contraseña es obligatoria',
+                validate: validatePassword,
+              }}
               render={({
                 field: { onChange, onBlur, value },
                 fieldState: { error: e },
