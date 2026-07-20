@@ -11,9 +11,11 @@ import {
 import { Tabs } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme } from '../../constants';
+import { useAuth } from '../../context/AuthContext';
 
 export default function MainLayout() {
   const insets = useSafeAreaInsets();
+  const { isAuthenticated } = useAuth();
 
   return (
     <Tabs
@@ -59,6 +61,9 @@ export default function MainLayout() {
         options={{
           title: 'Mis Compras',
           tabBarIcon: ({ color }) => <ShoppingCart color={color} size={24} />,
+          // Solo para usuarios autenticados: href null quita la tab del tab bar
+          // y desactiva la navegación a la ruta
+          href: isAuthenticated ? undefined : null,
         }}
       />
       <Tabs.Screen
@@ -66,6 +71,7 @@ export default function MainLayout() {
         options={{
           title: 'Perfil',
           tabBarIcon: ({ color }) => <User color={color} size={24} />,
+          href: isAuthenticated ? undefined : null,
         }}
       />
       <Tabs.Screen
