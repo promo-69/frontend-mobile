@@ -132,6 +132,8 @@ export default function MoviesUpcoming() {
                   return (
                     <View key={`upcoming-${movie.id || index}`} style={styles.cardWrapper}>
                       <MovieGridCard 
+                       movie={movie}
+                       upcoming
                        onPress={() => {
                         router.push({
                           pathname: `/content/${movie.id}`, 
