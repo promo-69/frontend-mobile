@@ -1,5 +1,6 @@
 import { useFonts } from 'expo-font';
 import { Stack, useRouter, useSegments } from 'expo-router';
+import { isEmployee } from '../helper/roles.helper';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import { Platform, StatusBar } from 'react-native';
@@ -15,16 +16,24 @@ import { theme } from '../constants';
 SplashScreen.preventAutoHideAsync();
 
 function NavigationGuard() {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, user } = useAuth();
   const segments = useSegments();
   const router = useRouter();
+  const employeeUser = isEmployee(user);
 
   useEffect(() => {
     if (isLoading) return;
 
-    const inAuthGroup = segments[0] === '(auth)';
-    const inMainGroup = segments[0] === '(main)';
-    const inBuyGroup = segments[0] === '(buy)';
+    const inAuthGroup  = segments[0] === '(auth)';
+    const inMainGroup  = segments[0] === '(main)';
+    const inBuyGroup   = segments[0] === '(buy)';
+    const inStaffGroup = segments[0] === '(staff)';
+
+    // Empleado autenticado fuera del stack de staff → redirigir al scanner
+    if (isAuthenticated && employeeUser && !inStaffGroup) {
+      router.replace('/(staff)/scanner');
+      return;
+    }
 
     // Tabs de (main) que requieren sesión
     const protectedTabs = ['profile', 'purchases'];
@@ -38,7 +47,7 @@ function NavigationGuard() {
     if (!isAuthenticated && (isAccessingProtectedTab || inBuyGroup)) {
       router.replace('/(auth)/login');
     }
-  }, [isAuthenticated, isLoading, segments]);
+  }, [isAuthenticated, isLoading, segments, employeeUser]);
 
   return (
     <Stack screenOptions={{ headerShown: false }}>

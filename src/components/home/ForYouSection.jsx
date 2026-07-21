@@ -18,6 +18,7 @@ import {
     getMoviesByGenres,
     getMoviesGenres,
 } from '../../services/movies.service';
+import { isEmployee } from '../../helper/roles.helper';
 import MovieCard from '../movies/MovieCard';
 import MovieCarousel from './MovieCarousel';
 
@@ -29,7 +30,7 @@ const ROOM_RENT_IMG = require('../../assets/images/room-rent.webp');
 
 export default function ForYouSection() {
   const router = useRouter();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const { showBottomSheet } = useBottomSheet();
 
   const [genres, setGenres] = useState([]);
@@ -45,7 +46,8 @@ export default function ForYouSection() {
   // 1. Fetch de datos según autenticación
   useEffect(() => {
     const fetchPersonalizedData = async () => {
-      if (!isAuthenticated) {
+      // Guard: empleados no tienen perfil de cliente, no llamar endpoint
+      if (!isAuthenticated || isEmployee(user)) {
         setLoading(false);
         return;
       }
