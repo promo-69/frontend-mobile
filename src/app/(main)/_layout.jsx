@@ -25,10 +25,16 @@ export default function MainLayout() {
         tabBarInactiveTintColor: theme.colors.itemInactive,
         tabBarStyle: {
           backgroundColor: theme.colors.background.accent,
-          borderTopWidth: 0,
+          borderTopWidth: 1,
+          borderTopColor: theme.colors.primary,
           height: 65 + insets.bottom,
           paddingBottom: Math.max(insets.bottom, 8),
           paddingTop: 10,
+          shadowColor: theme.colors.primary,
+          shadowOffset: { width: 0, height: -2 },
+          shadowOpacity: 0.4,
+          shadowRadius: 8,
+          elevation: 8,
         },
         tabBarLabelStyle: {
           fontFamily: theme.typography.variants.label,
