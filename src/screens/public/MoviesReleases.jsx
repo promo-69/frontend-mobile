@@ -1,10 +1,11 @@
-import { useState, useEffect, useMemo } from 'react';
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity, ActivityIndicator, Dimensions } from 'react-native';
+import { useState, useEffect, useMemo, useCallback } from 'react';
+import { StyleSheet, Text, View, FlatList, ScrollView, TouchableOpacity, ActivityIndicator, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import MovieGridCard from '../../components/movies/MovieGridCard';
 import { getMoviesBillboard } from '../../services/movies.service';
 import { getProjectionTypes } from '../../services/info.service';
 import { useRouter } from 'expo-router';
+import { ArrowLeft } from 'lucide-react-native';
 import { theme } from '../../constants';
 
 const { width } = Dimensions.get('window');
@@ -41,17 +42,17 @@ export default function MoviesReleases() {
             ...content,
             title: content.title || content.name,
             type: item.type,
-            id: content.id || item.id, 
-            availableFormats,   
+            id: content.id || item.id,
+            availableFormats,
             isEvent: isSpecialEvent
           };
         });
-        
+
         const uniqueItems = Array.from(
           new Map(processedItems.map(item => [`${item.type}-${item.id}`, item])).values()
         );
 
-        setBillboardMovies(uniqueItems); 
+        setBillboardMovies(uniqueItems);
       } catch (error) {
         console.error("Error inicializando los datos de cartelera:", error);
       } finally {
@@ -71,6 +72,96 @@ export default function MoviesReleases() {
     });
   }, [billboardMovies, activeProjection]);
 
+  const flatData = useMemo(() => {
+    const result = [];
+    for (let i = 0; i < filteredMovies.length; i += 2) {
+      result.push({
+        items: filteredMovies.slice(i, i + 2),
+        _key: `row-${i}`,
+      });
+    }
+    return result;
+  }, [filteredMovies]);
+
+  const renderFlatItem = useCallback(({ item }) => (
+    <View style={styles.cardRow}>
+      {item.items.map((movie, index) => (
+        <View key={`${movie.type}-${movie.id || index}`} style={styles.cardWrapper}>
+          <MovieGridCard
+            movie={movie}
+            isEventsPage={movie.isEvent}
+            onPress={() => {
+              router.push({
+                pathname: `/content/${movie.id}`,
+                params: {
+                  movieId: movie.id,
+                  type: movie.isEvent ? 'special_event' : 'movie',
+                },
+              });
+            }}
+          />
+        </View>
+      ))}
+    </View>
+  ), [router]);
+
+  const renderHeader = () => (
+    <>
+      <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <ArrowLeft color="white" size={22} strokeWidth={1} />
+      </TouchableOpacity>
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>
+          Películas en <Text style={styles.headerTitleAccent}>Cartelera</Text>
+        </Text>
+        <Text style={styles.headerSubtitle}>
+          Filtra por formato de pantalla de tu preferencia para personalizar la experiencia perfecta en nuestras salas.
+        </Text>
+      </View>
+
+      <View style={styles.filterWrapper}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterScroll}>
+          <TouchableOpacity
+            onPress={() => setActiveProjection('Todos')}
+            style={[styles.filterButton, activeProjection === 'Todos' && styles.filterButtonActive]}
+          >
+            <Text style={[styles.filterButtonText, activeProjection === 'Todos' && styles.filterButtonTextActive]}>
+              Todos
+            </Text>
+          </TouchableOpacity>
+          {projectionTypes.map((type) => (
+            <TouchableOpacity
+              key={type.id}
+              onPress={() => setActiveProjection(type.description)}
+              style={[
+                styles.filterButton,
+                activeProjection.toLowerCase() === type.description?.toLowerCase() && styles.filterButtonActive
+              ]}
+            >
+              <Text style={[
+                styles.filterButtonText,
+                activeProjection.toLowerCase() === type.description?.toLowerCase() && styles.filterButtonTextActive
+              ]}>
+                {type.description}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      </View>
+    </>
+  );
+
+  const renderEmpty = () => {
+    if (loading) return null;
+    return (
+      <View style={styles.emptyContainer}>
+        <Text style={styles.emptyText}>
+          No hay funciones disponibles que coincidan con el formato seleccionado.
+        </Text>
+      </View>
+    );
+  };
+
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
@@ -82,79 +173,14 @@ export default function MoviesReleases() {
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        
-        {/* Cabecera */}
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>
-            Películas en <Text style={styles.headerTitleAccent}>Cartelera</Text>
-          </Text>
-          <Text style={styles.headerSubtitle}>
-            Filtra por formato de pantalla de tu preferencia para personalizar la experiencia perfecta en nuestras salas.
-          </Text>
-        </View>
-
-        {/* Filtros Horizontales de Formatos */}
-        <View style={styles.filterWrapper}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterScroll}>
-            <TouchableOpacity
-              onPress={() => setActiveProjection('Todos')}
-              style={[styles.filterButton, activeProjection === 'Todos' && styles.filterButtonActive]}
-            >
-              <Text style={[styles.filterButtonText, activeProjection === 'Todos' && styles.filterButtonTextActive]}>
-                Todos
-              </Text>
-            </TouchableOpacity>
-            {projectionTypes.map((type) => (
-              <TouchableOpacity
-                key={type.id}
-                onPress={() => setActiveProjection(type.description)}
-                style={[
-                  styles.filterButton,
-                  activeProjection.toLowerCase() === type.description?.toLowerCase() && styles.filterButtonActive
-                ]}
-              >
-                <Text style={[
-                  styles.filterButtonText,
-                  activeProjection.toLowerCase() === type.description?.toLowerCase() && styles.filterButtonTextActive
-                ]}>
-                  {type.description}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
-
-        {/* Grid de Películas */}
-        {filteredMovies.length === 0 ? (
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>
-              No hay funciones disponibles que coincidan con el formato seleccionado.
-            </Text>
-          </View>
-        ) : (
-          <View style={styles.grid}>
-            {filteredMovies.map((movie, index) => (
-              <View key={`${movie.type}-${movie.id || index}`} style={styles.cardWrapper}>
-                <MovieGridCard 
-                movie={movie} 
-                isEventsPage={movie.isEvent}
-                onPress={() => {
-                  router.push({
-                    pathname: `/content/${movie.id}`, // Ajusta la ruta base según tu árbol de archivos (ej: /movies/[movieId])
-                    params: { 
-                      movieId: movie.id, 
-                      type: movie.isEvent ? 'special_event' : 'movie' 
-                    }
-                  });
-                }} 
-                />
-              </View>
-            ))}
-          </View>
-        )}
-
-      </ScrollView>
+      <FlatList
+        data={flatData}
+        renderItem={renderFlatItem}
+        keyExtractor={(item) => item._key}
+        ListHeaderComponent={renderHeader}
+        ListEmptyComponent={renderEmpty}
+        contentContainerStyle={styles.listContent}
+      />
     </SafeAreaView>
   );
 }
@@ -175,10 +201,17 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginTop: 12,
   },
-  scrollContent: {
+  listContent: {
     paddingHorizontal: 16,
     paddingTop: 24,
     paddingBottom: 40,
+  },
+  backButton: {
+    alignSelf: 'flex-start',
+    padding: 8,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    borderRadius: 999,
+    marginBottom: 16,
   },
   header: {
     borderLeftWidth: 4,
@@ -242,14 +275,13 @@ const styles = StyleSheet.create({
     fontSize: 14,
     textAlign: 'center',
   },
-  grid: {
+  cardRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginHorizontal: -8,
+    justifyContent: 'flex-start',
+    marginBottom: 16,
   },
   cardWrapper: {
     width: CARD_WIDTH,
     marginHorizontal: 8,
-    marginBottom: 16,
   },
 });

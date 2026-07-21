@@ -46,8 +46,8 @@ export default function HomeScreen() {
 
         // Los servicios ya devuelven los arrays normalizados
         setReleases(releasesData);
-        setUpcoming(upcomingData);
-        setEvents(eventsData);
+        setUpcoming(upcomingData?.items || []);
+        setEvents(eventsData?.items || []);
       } catch (error) {
         console.error('Error crítico cargando la data del Home:', error);
         setError(true);
