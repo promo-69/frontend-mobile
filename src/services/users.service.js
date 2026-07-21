@@ -126,4 +126,15 @@ export const usersService = {
     );
     return response.data.data;
   },
+
+  /**
+   * Cancela suscripciones en lote.
+   * @param {number[]} movieIds - Array de IDs de películas
+   */
+  unsubscribeFromMoviesBatch: async (movieIds) => {
+    const response = await api.delete('/users/me/movie-subscriptions', {
+      data: movieIds,
+    });
+    return response.data;
+  },
 };
