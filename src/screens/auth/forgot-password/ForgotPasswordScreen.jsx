@@ -107,15 +107,6 @@ export default function ForgotPasswordScreen() {
               onPress={handleSubmit(onSubmit)}
               disabled={isSubmitting}
             />
-            <CustomButton
-              title="Cancelar"
-              onPress={handleBack}
-              style={{
-                backgroundColor: 'transparent',
-                borderWidth: 2,
-                borderColor: theme.colors.primary,
-              }}
-            />
           </View>
         </View>
       </KeyboardAvoidingView>

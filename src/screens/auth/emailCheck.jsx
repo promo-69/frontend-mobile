@@ -123,11 +123,13 @@ export default function EmailCheck() {
   // Si completó el flujo con éxito, renderizamos tu SuccessScreen tal como deseas
   if (showSuccess) {
     return (
-      <SuccessScreen
-        title="¡Cuenta Verificada!"
-        message="Tu correo electrónico ha sido validado correctamente. Ya puedes iniciar sesión con tus credenciales."
-        onPress={() => router.replace('/login')}
-      />
+      <ScreenWrapper>
+        <SuccessScreen
+          title="¡Cuenta Verificada!"
+          message="Tu correo electrónico ha sido validado correctamente. Ya puedes iniciar sesión con tus credenciales."
+          onPress={() => router.replace('/login')}
+        />
+      </ScreenWrapper>
     );
   }
 
