@@ -1,6 +1,5 @@
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import {
-    ArrowLeft,
     Calendar,
     ChevronDown,
     Info,
@@ -130,6 +129,14 @@ function SelectField({
 // ─── Pantalla principal ──────────────────────────────────────────────────────
 export default function RentalRequestScreen() {
   const router = useRouter();
+  const { from } = useLocalSearchParams();
+  const goBack = () => {
+    if (from === 'home') {
+      router.replace('/(main)/home');
+    } else {
+      router.back();
+    }
+  };
 
   const [cinemas, setCinemas] = useState([]);
   const [rooms, setRooms] = useState([]);
@@ -286,18 +293,6 @@ export default function RentalRequestScreen() {
 
   return (
     <ScreenWrapper>
-      <View style={styles.topBar}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => router.back()}
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-        >
-          <ArrowLeft size={22} color={colors.primary} strokeWidth={1} />
-        </TouchableOpacity>
-        <AppText style={styles.topBarTitle}>Alquiler de Sala</AppText>
-        <View style={{ width: 26 }} />
-      </View>
-
       {loadingCatalogs ? (
         <View style={styles.center}>
           <ActivityIndicator size="large" color={colors.primary} />
@@ -474,7 +469,7 @@ export default function RentalRequestScreen() {
           onPress={() => {
             const wasSuccess = alert?.type === 'success';
             setAlert(null);
-            if (wasSuccess) router.back();
+            if (wasSuccess) goBack();
           }}
         >
           <Pressable style={styles.alertCard}>
@@ -495,7 +490,7 @@ export default function RentalRequestScreen() {
               onPress={() => {
                 const wasSuccess = alert?.type === 'success';
                 setAlert(null);
-                if (wasSuccess) router.back();
+                if (wasSuccess) goBack();
               }}
             >
               <AppText style={styles.alertBtnText}>Entendido</AppText>
@@ -508,23 +503,6 @@ export default function RentalRequestScreen() {
 }
 
 const styles = StyleSheet.create({
-  backButton: {
-    padding: 8,
-    borderRadius: 999,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-  },
-  topBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.s16,
-    paddingVertical: spacing.s12,
-  },
-  topBarTitle: {
-    color: colors.primary,
-    fontSize: 18,
-    fontFamily: theme.typography.family.primary.bold,
-  },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   scroll: {
     paddingHorizontal: spacing.s16,

@@ -128,7 +128,7 @@ export default function ProfileScreen() {
           {renderMenuItem({
             icon: CalendarClock,
             title: 'Alquilar una sala',
-            onPress: () => router.push('/cinemas/rental'),
+            onPress: () => router.push('/profile/rental'),
           })}
           {renderMenuItem({
             icon: ClipboardList,
