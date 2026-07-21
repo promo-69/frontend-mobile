@@ -89,7 +89,7 @@ export const usersService = {
   // ─── Suscripción a alertas de preventa (películas "Próximamente") ───────────
 
   /**
-     * Lista todas las películas marcadas por el usuario (con datos de la película).
+     * Lista todas las películas suscritas por el usuario (con datos de la película).
      */
     getMyMovieSubscriptions: async () => {
       const response = await api.get('/users/me/movie-subscriptions');

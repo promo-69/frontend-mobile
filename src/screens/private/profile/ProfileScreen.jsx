@@ -142,7 +142,7 @@ export default function ProfileScreen() {
           })}
           {renderMenuItem({
             icon: Bookmark,
-            title: 'Mis marcadores',
+            title: 'Mis subscripciones',
             onPress: () => router.push('/profile/bookmarks'),
           })}
           {renderMenuItem({

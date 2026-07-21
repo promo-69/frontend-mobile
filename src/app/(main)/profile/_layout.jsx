@@ -64,7 +64,7 @@ export default function ProfileLayout() {
       />
 
       <Stack.Screen name="bookmarks" options={{
-        title: 'Mis marcadores',
+        title: 'Mis subscripciones',
         gestureEnabled: true }} />
 
       {/* Mis solicitudes de alquiler de salas */}
