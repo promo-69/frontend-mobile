@@ -132,7 +132,7 @@ export default function RegisterScreen() {
         >
           <View style={styles.mainContainer}>
             <TouchableOpacity onPress={handleBack} style={styles.backButton}>
-              <ArrowLeft size={22} color={theme.colors.accent} strokeWidth={1} />
+              <ArrowLeft size={22} color="white" strokeWidth={1} />
             </TouchableOpacity>
 
             <AppText variant="h2" style={styles.title}>
@@ -186,10 +186,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 25,
   },
 backButton: {
+  alignSelf: 'flex-start',
   padding: 8,
-  marginTop: theme.spacing.s8,
-  borderRadius: 999,
   backgroundColor: 'rgba(0,0,0,0.5)',
+  borderRadius: 999,
+  marginBottom: 16,
 },
   title: {
     color: theme.colors.primary,
