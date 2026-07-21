@@ -1,5 +1,14 @@
 import { useRouter } from 'expo-router';
-import { Bookmark, BookmarkMinus, CalendarDays, Ticket } from 'lucide-react-native';
+import {
+  Bookmark,
+  BookmarkMinus,
+  CalendarDays,
+  CheckSquare,
+  ListChecks,
+  Square,
+  Ticket,
+  Trash2,
+} from 'lucide-react-native';
 import { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -33,9 +42,9 @@ const formatReleaseDate = (dateStr) => {
 };
 
 /**
- * Mis marcadores: lista de películas "Próximamente" a las que el usuario se
+ * Mis subscripciones: lista de películas "Próximamente" a las que el usuario se
  * suscribió para recibir alertas de estreno/preventa. Permite desmarcarlas
- * directamente desde aquí sin buscar en el feed.
+ * individualmente o en lote.
  */
 export default function MyBookmarksScreen() {
   const router = useRouter();
@@ -43,22 +52,29 @@ export default function MyBookmarksScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [removing, setRemoving] = useState(false);
-  // Suscripción pendiente de confirmar su eliminación (abre el AppAlert de confirmación)
+
+  // Modo lote
+  const [isBatchMode, setIsBatchMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [isDeletingBatch, setIsDeletingBatch] = useState(false);
+
+  // Suscripción pendiente de confirmar su eliminación (individual)
   const [confirmTarget, setConfirmTarget] = useState(null);
+  // Confirmación de eliminación en lote
+  const [showBatchConfirm, setShowBatchConfirm] = useState(false);
   // Aviso simple: { title, message } (éxito o error)
   const [notice, setNotice] = useState(null);
 
   const load = useCallback(async () => {
     try {
       const data = await usersService.getMyMovieSubscriptions();
-      // El repo puede devolver un array plano o { rows, count } según filtros.
       const list = Array.isArray(data) ? data : (data?.rows ?? []);
       setItems(list.filter((s) => s?._Movies));
     } catch (err) {
-      console.error('Error al cargar marcadores:', err);
+      console.error('Error al cargar subscripciones:', err);
       setNotice({
         title: 'Error',
-        message: 'No pudimos cargar tus marcadores. Intenta de nuevo.',
+        message: 'No pudimos cargar tus subscripciones. Intenta de nuevo.',
       });
     } finally {
       setLoading(false);
@@ -75,10 +91,63 @@ export default function MyBookmarksScreen() {
     load();
   };
 
-  // Abre el diálogo de confirmación (AppAlert) para una suscripción.
+  // ─── Modo lote ───────────────────────────────────────────────────────────
+
+  const handleToggleBatchMode = () => {
+    setIsBatchMode((prev) => !prev);
+    setSelectedIds([]);
+  };
+
+  const handleToggleSelect = (movieId) => {
+    setSelectedIds((prev) =>
+      prev.includes(movieId)
+        ? prev.filter((id) => id !== movieId)
+        : [...prev, movieId]
+    );
+  };
+
+  const handleToggleSelectAll = () => {
+    const allMovieIds = items.map((s) => s._Movies?.id).filter(Boolean);
+    if (selectedIds.length === allMovieIds.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(allMovieIds);
+    }
+  };
+
+  const confirmDeleteBatch = async () => {
+    setShowBatchConfirm(false);
+    setIsDeletingBatch(true);
+    const previous = items;
+    const count = selectedIds.length;
+
+    // UI optimista
+    setItems((prev) => prev.filter((s) => !selectedIds.includes(s._Movies?.id)));
+    setSelectedIds([]);
+    setIsBatchMode(false);
+
+    try {
+      await usersService.unsubscribeFromMoviesBatch(selectedIds);
+      setNotice({
+        title: 'Subscripciones eliminadas',
+        message: `Se eliminaron ${count} subscripciones.`,
+      });
+    } catch (err) {
+      console.error('Error al eliminar subscripciones en lote:', err);
+      setItems(previous);
+      setNotice({
+        title: 'Error',
+        message: 'No pudimos eliminar las subscripciones. Intenta de nuevo.',
+      });
+    } finally {
+      setIsDeletingBatch(false);
+    }
+  };
+
+  // ─── Eliminación individual ──────────────────────────────────────────────
+
   const handleUnsubscribe = (subscription) => setConfirmTarget(subscription);
 
-  // Confirmación aceptada: elimina con UI optimista y revierte si falla.
   const confirmRemoval = async () => {
     if (!confirmTarget || removing) return;
     const subscription = confirmTarget;
@@ -90,44 +159,69 @@ export default function MyBookmarksScreen() {
     try {
       await usersService.unsubscribeFromMovie(movie.id);
       setConfirmTarget(null);
-      // Confirmación visual tras cancelar (criterio 3 de HU-33).
       setNotice({
-        title: 'Marcador eliminado',
+        title: 'Subscripción eliminada',
         message: `Ya no recibirás alertas de "${movie.title}".`,
       });
     } catch (err) {
-      console.error('Error al quitar marcador:', err);
+      console.error('Error al quitar subscripción:', err);
       setItems(previous);
       setConfirmTarget(null);
       setNotice({
         title: 'Error',
-        message: 'No pudimos quitar el marcador. Intenta de nuevo.',
+        message: 'No pudimos quitar la subscripción. Intenta de nuevo.',
       });
     } finally {
       setRemoving(false);
     }
   };
 
+  // ─── Render ──────────────────────────────────────────────────────────────
+
   const renderItem = ({ item }) => {
     const movie = item._Movies;
     const inPresale = movie.lifecycle_state === PRESALE_STATE;
     const release = formatReleaseDate(movie.release_date);
+    const isSelected = selectedIds.includes(movie.id);
 
     return (
       <TouchableOpacity
-        style={styles.card}
+        style={[
+          styles.card,
+          isBatchMode && styles.cardBatch,
+          isBatchMode && isSelected && styles.cardSelected,
+        ]}
         activeOpacity={0.8}
-        onPress={() => router.push(`/content/${movie.id}`)}
+        onPress={() => {
+          if (isBatchMode) {
+            handleToggleSelect(movie.id);
+          } else {
+            router.push(`/content/${movie.id}`);
+          }
+        }}
       >
+        {isBatchMode && (
+          <View style={styles.checkboxOverlay}>
+            {isSelected ? (
+              <CheckSquare size={22} color={colors.primary} strokeWidth={2.5} />
+            ) : (
+              <Square size={22} color={colors.textSecondary} strokeWidth={1.5} />
+            )}
+          </View>
+        )}
+
         {movie.poster_url ? (
-          <Image source={{ uri: movie.poster_url }} style={styles.poster} />
+          <Image
+            source={{ uri: movie.poster_url }}
+            style={[styles.poster, isBatchMode && !isSelected && styles.posterDimmed]}
+          />
         ) : (
-          <View style={[styles.poster, styles.posterFallback]}>
+          <View style={[styles.poster, styles.posterFallback, isBatchMode && !isSelected && styles.posterDimmed]}>
             <Bookmark size={22} color={colors.textDisabled} />
           </View>
         )}
 
-        <View style={styles.info}>
+        <View style={[styles.info, isBatchMode && !isSelected && styles.infoDimmed]}>
           <AppText style={styles.title} numberOfLines={2}>
             {movie.title}
           </AppText>
@@ -149,14 +243,16 @@ export default function MyBookmarksScreen() {
           )}
         </View>
 
-        <TouchableOpacity
-          style={styles.removeBtn}
-          onPress={() => handleUnsubscribe(item)}
-          disabled={removing}
-          hitSlop={8}
-        >
-          <BookmarkMinus size={20} color={colors.textSecondary} />
-        </TouchableOpacity>
+        {!isBatchMode && (
+          <TouchableOpacity
+            style={styles.removeBtn}
+            onPress={() => handleUnsubscribe(item)}
+            disabled={removing}
+            hitSlop={8}
+          >
+            <BookmarkMinus size={20} color={colors.textSecondary} />
+          </TouchableOpacity>
+        )}
       </TouchableOpacity>
     );
   };
@@ -173,6 +269,67 @@ export default function MyBookmarksScreen() {
 
   return (
     <ScreenWrapper>
+      {/* Barra de controles del modo lote */}
+      {items.length > 0 && (
+        <View style={styles.batchBar}>
+          {!isBatchMode ? (
+            <TouchableOpacity
+              style={styles.batchToggleBtn}
+              onPress={handleToggleBatchMode}
+              activeOpacity={0.7}
+            >
+              <ListChecks size={16} color={colors.primary} />
+              <AppText style={styles.batchToggleText}>Seleccionar en lote</AppText>
+            </TouchableOpacity>
+          ) : (
+            <View style={styles.batchControls}>
+              <TouchableOpacity
+                style={styles.batchSelectAllBtn}
+                onPress={handleToggleSelectAll}
+                activeOpacity={0.7}
+              >
+                {selectedIds.length === items.length ? (
+                  <CheckSquare size={16} color={colors.primary} />
+                ) : (
+                  <Square size={16} color={colors.primary} />
+                )}
+                <AppText style={styles.batchSelectAllText}>
+                  {selectedIds.length === items.length ? 'Deseleccionar' : 'Seleccionar todo'}
+                </AppText>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  styles.batchDeleteBtn,
+                  selectedIds.length === 0 && styles.batchDeleteBtnDisabled,
+                ]}
+                onPress={() => setShowBatchConfirm(true)}
+                disabled={selectedIds.length === 0 || isDeletingBatch}
+                activeOpacity={0.7}
+              >
+                <Trash2 size={16} color={selectedIds.length === 0 ? colors.textDisabled : '#FFFFFF'} />
+                <AppText
+                  style={[
+                    styles.batchDeleteText,
+                    selectedIds.length === 0 && styles.batchDeleteTextDisabled,
+                  ]}
+                >
+                  Eliminar ({selectedIds.length})
+                </AppText>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.batchCancelBtn}
+                onPress={handleToggleBatchMode}
+                activeOpacity={0.7}
+              >
+                <AppText style={styles.batchCancelText}>Cancelar</AppText>
+              </TouchableOpacity>
+            </View>
+          )}
+        </View>
+      )}
+
       <FlatList
         data={items}
         keyExtractor={(item) => String(item.id)}
@@ -191,10 +348,10 @@ export default function MyBookmarksScreen() {
           <View style={styles.emptyState}>
             <Bookmark size={44} color={colors.textDisabled} />
             <AppText style={styles.emptyTitle}>
-              No tienes películas marcadas
+              No tienes subscripciones activas
             </AppText>
             <AppText style={styles.emptyText}>
-              Marca una película de “Próximamente” y te avisaremos cuando su
+              Suscríbete a una película de "Próximamente" y te avisaremos cuando su
               preventa esté disponible o el estreno esté cerca.
             </AppText>
             <TouchableOpacity
@@ -210,12 +367,12 @@ export default function MyBookmarksScreen() {
         }
       />
 
-      {/* Confirmación de eliminación, con la estética de la app */}
+      {/* Confirmación de eliminación individual */}
       <AppAlert
         visible={!!confirmTarget}
         variant="danger"
         icon={BookmarkMinus}
-        title="Quitar marcador"
+        title="Quitar subscripción"
         message={
           confirmTarget
             ? `¿Dejar de recibir alertas de "${confirmTarget._Movies?.title}"?`
@@ -226,6 +383,20 @@ export default function MyBookmarksScreen() {
         loading={removing}
         onConfirm={confirmRemoval}
         onCancel={() => !removing && setConfirmTarget(null)}
+      />
+
+      {/* Confirmación de eliminación en lote */}
+      <AppAlert
+        visible={showBatchConfirm}
+        variant="danger"
+        icon={Trash2}
+        title="Eliminar subscripciones"
+        message={`¿Estás seguro de que deseas eliminar las ${selectedIds.length} subscripciones seleccionadas? Dejarás de recibir alertas sobre sus estrenos.`}
+        confirmLabel="Eliminar"
+        cancelLabel="Cancelar"
+        loading={isDeletingBatch}
+        onConfirm={confirmDeleteBatch}
+        onCancel={() => !isDeletingBatch && setShowBatchConfirm(false)}
       />
 
       {/* Aviso simple (éxito o error) */}
@@ -246,6 +417,86 @@ const styles = StyleSheet.create({
   listContainer: { padding: spacing.s16, gap: spacing.s12 },
   emptyContainer: { flexGrow: 1, justifyContent: 'center' },
 
+  // ─── Batch bar ──────────────────────────────────────────────────────────
+  batchBar: {
+    paddingHorizontal: spacing.s16,
+    paddingTop: spacing.s12,
+    paddingBottom: spacing.s4,
+  },
+  batchToggleBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    gap: spacing.s8,
+    paddingHorizontal: spacing.s12,
+    paddingVertical: spacing.s8,
+    borderRadius: 10,
+    backgroundColor: `${colors.primary}14`,
+    borderWidth: 1,
+    borderColor: `${colors.primary}30`,
+  },
+  batchToggleText: {
+    color: colors.primary,
+    fontSize: 14,
+    fontFamily: theme.typography.family.primary.bold,
+  },
+  batchControls: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.s8,
+    flexWrap: 'wrap',
+  },
+  batchSelectAllBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.s8,
+    paddingHorizontal: spacing.s12,
+    paddingVertical: spacing.s8,
+    borderRadius: 10,
+    backgroundColor: `${colors.primary}14`,
+    borderWidth: 1,
+    borderColor: `${colors.primary}30`,
+  },
+  batchSelectAllText: {
+    color: colors.primary,
+    fontSize: 14,
+    fontFamily: theme.typography.family.primary.bold,
+  },
+  batchDeleteBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.s8,
+    paddingHorizontal: spacing.s12,
+    paddingVertical: spacing.s8,
+    borderRadius: 10,
+    backgroundColor: colors.error,
+  },
+  batchDeleteBtnDisabled: {
+    backgroundColor: `${colors.error}30`,
+  },
+  batchDeleteText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontFamily: theme.typography.family.primary.bold,
+  },
+  batchDeleteTextDisabled: {
+    color: colors.textDisabled,
+  },
+  batchCancelBtn: {
+    paddingHorizontal: spacing.s12,
+    paddingVertical: spacing.s8,
+    borderRadius: 10,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+  },
+  batchCancelText: {
+    color: colors.textSecondary,
+    fontSize: 14,
+    fontFamily: theme.typography.family.primary.bold,
+  },
+
+  // ─── Card ───────────────────────────────────────────────────────────────
   card: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -256,14 +507,31 @@ const styles = StyleSheet.create({
     padding: spacing.s12,
     gap: spacing.s12,
   },
+  cardBatch: {
+    paddingRight: spacing.s16,
+  },
+  cardSelected: {
+    borderColor: colors.primary,
+    backgroundColor: `${colors.primary}08`,
+  },
+  checkboxOverlay: {
+    position: 'absolute',
+    top: spacing.s12,
+    right: spacing.s12,
+    zIndex: 10,
+  },
   poster: {
     width: 52,
     height: 76,
     borderRadius: borderRadius.s8,
     backgroundColor: colors.midnight[700],
   },
+  posterDimmed: {
+    opacity: 0.4,
+  },
   posterFallback: { alignItems: 'center', justifyContent: 'center' },
   info: { flex: 1, gap: spacing.s8 },
+  infoDimmed: { opacity: 0.4 },
   title: {
     color: colors.textPrimary,
     fontSize: 15,
@@ -288,6 +556,7 @@ const styles = StyleSheet.create({
   },
   removeBtn: { padding: spacing.s8 },
 
+  // ─── Empty state ────────────────────────────────────────────────────────
   emptyState: {
     alignItems: 'center',
     paddingHorizontal: spacing.s32,

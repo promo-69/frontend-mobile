@@ -96,7 +96,7 @@ export const VerifyCodeScreen = () => {
         keyboardVerticalOffset={Platform.OS === 'android' ? 0 : 64}
       >
         <TouchableOpacity onPress={handleBack} style={styles.backButton}>
-          <ArrowLeft size={22} color={theme.colors.accent} strokeWidth={1} />
+          <ArrowLeft size={22} color="white" strokeWidth={1} />
         </TouchableOpacity>
 
         <View style={styles.content}>
@@ -152,11 +152,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.s16,
   },
 backButton: {
+  alignSelf: 'flex-start',
   padding: 8,
-  marginTop: theme.spacing.s8,
   marginLeft: theme.spacing.s16,
-  borderRadius: 999,
   backgroundColor: 'rgba(0,0,0,0.5)',
+  borderRadius: 999,
+  marginBottom: 16,
 },
   title: {
     color: theme.colors.primary,

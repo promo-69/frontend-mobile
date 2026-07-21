@@ -1,10 +1,12 @@
-import { Stack, useRouter } from 'expo-router';
+import { Stack, useRouter, useLocalSearchParams } from 'expo-router';
 import { Pressable, StyleSheet } from 'react-native';
 import { ArrowLeft } from 'lucide-react-native';
 import { theme } from '../../../constants';
 
 export default function ProfileLayout() {
   const router = useRouter();
+  const { from } = useLocalSearchParams();
+  const fromHome = from === 'home';
 
   return (
     <Stack
@@ -27,7 +29,9 @@ export default function ProfileLayout() {
         headerLeft: () => (
           <Pressable
             onPress={() => {
-              if (router.canGoBack()) {
+              if (fromHome) {
+                router.replace('/(main)/home');
+              } else if (router.canGoBack()) {
                 router.back();
               } else {
                 router.replace('/(main)/home');
@@ -64,12 +68,17 @@ export default function ProfileLayout() {
       />
 
       <Stack.Screen name="bookmarks" options={{
-        title: 'Mis marcadores',
+        title: 'Mis subscripciones',
+        gestureEnabled: true }} />
+
+      {/* Solicitud de alquiler de salas */}
+      <Stack.Screen name="rental" options={{
+        title: 'Alquiler de Sala',
         gestureEnabled: true }} />
 
       {/* Mis solicitudes de alquiler de salas */}
       <Stack.Screen name="rental-requests" options={{
-        title: 'Mis solicitudes de alquier',
+        title: 'Mis solicitudes de alquiler',
         gestureEnabled: true }} />
 
       {/* Módulo de fidelidad: sus pantallas traen encabezado propio */}

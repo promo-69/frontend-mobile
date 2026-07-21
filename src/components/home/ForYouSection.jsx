@@ -104,7 +104,7 @@ export default function ForYouSection() {
         },
       });
     } else {
-      router.push(type === 'genres' ? '/(main)/profile/my-genres' : '/(main)/profile/room-rent');
+      router.push(type === 'genres' ? '/(main)/profile/my-genres' : { pathname: '/(main)/profile/rental', params: { from: 'home' } });
     }
   };
 

@@ -89,7 +89,7 @@ export const usersService = {
   // ─── Suscripción a alertas de preventa (películas "Próximamente") ───────────
 
   /**
-     * Lista todas las películas marcadas por el usuario (con datos de la película).
+     * Lista todas las películas suscritas por el usuario (con datos de la película).
      */
     getMyMovieSubscriptions: async () => {
       const response = await api.get('/users/me/movie-subscriptions');
@@ -125,5 +125,16 @@ export const usersService = {
       `/users/me/movie-subscriptions/${movieId}`
     );
     return response.data.data;
+  },
+
+  /**
+   * Cancela suscripciones en lote.
+   * @param {number[]} movieIds - Array de IDs de películas
+   */
+  unsubscribeFromMoviesBatch: async (movieIds) => {
+    const response = await api.delete('/users/me/movie-subscriptions', {
+      data: movieIds,
+    });
+    return response.data;
   },
 };

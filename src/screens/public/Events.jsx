@@ -1,101 +1,187 @@
-import { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, ScrollView, ActivityIndicator, Dimensions } from 'react-native';
+import { useState, useEffect, useMemo, useCallback } from 'react';
+import { StyleSheet, Text, View, FlatList, TouchableOpacity, ActivityIndicator, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import MovieGridCard from '../../components/movies/MovieGridCard'; 
-import { getEvents } from '../../services/events.service'; 
+import MovieGridCard from '../../components/movies/MovieGridCard';
+import { getEvents } from '../../services/events.service';
+import { usePaginatedList } from '../../hooks/usePaginatedList';
 import { useRouter } from 'expo-router';
+import { ArrowLeft } from 'lucide-react-native';
 import { theme } from '../../constants';
 
 const { width } = Dimensions.get('window');
-const CARD_WIDTH = (width - 48) / 2; // Grid de 2 columnas con espaciado
+const CARD_WIDTH = (width - 48) / 2;
+
+const MONTHS = [
+  "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+  "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+];
+
+const MONTHS_DIRECTORY = {
+  "Enero": 0, "Febrero": 1, "Marzo": 2, "Abril": 3, "Mayo": 4, "Junio": 5,
+  "Julio": 6, "Agosto": 7, "Septiembre": 8, "Octubre": 9, "Noviembre": 10, "Diciembre": 11
+};
 
 export default function Events() {
   const router = useRouter();
-  const [upcomingEvents, setUpcomingEvents] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const {
+    items: events,
+    loading,
+    refreshing,
+    loadingMore,
+    hasMore,
+    load,
+    loadMore,
+    refresh,
+  } = usePaginatedList(getEvents);
 
   useEffect(() => {
-    const fetchUpcomingEvents = async () => {
-      try {
-        const response = await getEvents();
-        const eventsData = Array.isArray(response) ? response : [];
-
-        const processedEvents = eventsData.map(event => ({
-          ...event,
-          title: event.title || event.name, 
-          type: event.type || 'special_event',
-          isEvent: true
-        }));
-
-        setUpcomingEvents(processedEvents);
-      } catch (error) {
-        console.error("Error cargando los próximos eventos:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchUpcomingEvents();
+    load(1);
   }, []);
 
-  const getEventsGroupedByMonth = () => {
-    if (!Array.isArray(upcomingEvents) || upcomingEvents.length === 0) return {};
+  const processedEvents = useMemo(() => {
+    if (!Array.isArray(events)) return [];
+    return events.map(event => ({
+      ...event,
+      title: event.title || event.name,
+      type: event.type || 'special_event',
+      isEvent: true,
+    }));
+  }, [events]);
 
-    const months = [
-      "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
-      "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
-    ];
+  const groupedEvents = useMemo(() => {
+    if (processedEvents.length === 0) return {};
 
-    return upcomingEvents.reduce((groups, event) => {
+    return processedEvents.reduce((groups, event) => {
       const eventDate = event.release_date || event.date;
 
       if (!eventDate) {
-        const unknownKey = 'Por Confirmar';
-        if (!groups[unknownKey]) groups[unknownKey] = [];
-        groups[unknownKey].push(event);
+        const key = 'Por Confirmar';
+        if (!groups[key]) groups[key] = [];
+        groups[key].push(event);
         return groups;
       }
 
       const parts = eventDate.split('-');
       const year = parts[0];
-      const monthIndex = parseInt(parts[1], 10) - 1; 
+      const monthIndex = parseInt(parts[1], 10) - 1;
 
       if (monthIndex >= 0 && monthIndex < 12) {
-        const formattedMonth = `${months[monthIndex]} ${year}`;
-        if (!groups[formattedMonth]) groups[formattedMonth] = [];
-        groups[formattedMonth].push(event);
+        const key = `${MONTHS[monthIndex]} ${year}`;
+        if (!groups[key]) groups[key] = [];
+        groups[key].push(event);
       } else {
-        const unknownKey = 'Por Confirmar';
-        if (!groups[unknownKey]) groups[unknownKey] = [];
-        groups[unknownKey].push(event);
+        const key = 'Por Confirmar';
+        if (!groups[key]) groups[key] = [];
+        groups[key].push(event);
       }
       return groups;
     }, {});
+  }, [processedEvents]);
+
+  const monthsOrder = useMemo(() => {
+    return Object.keys(groupedEvents).sort((a, b) => {
+      if (a === 'Por Confirmar') return 1;
+      if (b === 'Por Confirmar') return -1;
+
+      const partsA = a.split(' ');
+      const partsB = b.split(' ');
+
+      const monthA = MONTHS_DIRECTORY[partsA[0]];
+      const yearA = parseInt(partsA[1], 10);
+      const monthB = MONTHS_DIRECTORY[partsB[0]];
+      const yearB = parseInt(partsB[1], 10);
+
+      return new Date(yearA, monthA, 1) - new Date(yearB, monthB, 1);
+    });
+  }, [groupedEvents]);
+
+  const flatData = useMemo(() => {
+    const result = [];
+    monthsOrder.forEach(month => {
+      result.push({ _type: 'header', month, _key: `header-${month}` });
+      const items = groupedEvents[month];
+      for (let i = 0; i < items.length; i += 2) {
+        const pair = items.slice(i, i + 2);
+        result.push({
+          _type: 'row',
+          items: pair,
+          _key: `row-${month}-${i}`,
+        });
+      }
+    });
+    return result;
+  }, [monthsOrder, groupedEvents]);
+
+  const renderFlatItem = useCallback(({ item }) => {
+    if (item._type === 'header') {
+      return (
+        <View style={styles.monthRow}>
+          <Text style={styles.monthTitle}>{item.month}</Text>
+          <View style={styles.monthLine} />
+        </View>
+      );
+    }
+
+    return (
+      <View style={styles.cardRow}>
+        {item.items.map((event, index) => (
+          <View key={`event-${event.id || index}`} style={styles.cardWrapper}>
+            <MovieGridCard
+              movie={event}
+              isEventsPage={true}
+              onPress={() => {
+                router.push({
+                  pathname: `/content/${event.id}`,
+                  params: {
+                    movieId: event.id,
+                    type: 'special_event',
+                  },
+                });
+              }}
+            />
+          </View>
+        ))}
+      </View>
+    );
+  }, [router]);
+
+  const renderHeader = () => (
+    <>
+      <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <ArrowLeft color="white" size={22} strokeWidth={1} />
+      </TouchableOpacity>
+      <View style={styles.header}>
+      <Text style={styles.headerTitle}>
+        Próximos <Text style={styles.headerTitleAccent}>Eventos</Text>
+      </Text>
+      <Text style={styles.headerSubtitle}>
+        Explora las funciones especiales, festivales y eventos exclusivos que están por llegar. ¡Disfruta de experiencias únicas en Cineflix!
+      </Text>
+      </View>
+    </>
+  );
+
+  const renderEmpty = () => {
+    if (loading) return null;
+    return (
+      <View style={styles.emptyContainer}>
+        <Text style={styles.emptyText}>
+          No hay eventos especiales programados en este momento.
+        </Text>
+      </View>
+    );
   };
 
-  const groupedEvents = getEventsGroupedByMonth();
-
-  const monthsDirectory = {
-    "Enero": 0, "Febrero": 1, "Marzo": 2, "Abril": 3, "Mayo": 4, "Junio": 5,
-    "Julio": 6, "Agosto": 7, "Septiembre": 8, "Octubre": 9, "Noviembre": 10, "Diciembre": 11
+  const renderFooter = () => {
+    if (!loadingMore) return null;
+    return (
+      <View style={styles.footerLoader}>
+        <ActivityIndicator size="small" color={theme.colors.accent} />
+      </View>
+    );
   };
 
-  const monthsOrder = Object.keys(groupedEvents).sort((a, b) => {
-    if (a === 'Por Confirmar') return 1;
-    if (b === 'Por Confirmar') return -1;
-
-    const partsA = a.split(' ');
-    const partsB = b.split(' ');
-
-    const monthA = monthsDirectory[partsA[0]];
-    const yearA = parseInt(partsA[1], 10);
-    const monthB = monthsDirectory[partsB[0]];
-    const yearB = parseInt(partsB[1], 10);
-
-    return new Date(yearA, monthA, 1) - new Date(yearB, monthB, 1);
-  });
-
-  if (loading) {
+  if (loading && events.length === 0) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="small" color={theme.colors.accent} />
@@ -106,59 +192,19 @@ export default function Events() {
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        
-        {/* Encabezado */}
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>
-            Próximos <Text style={styles.headerTitleAccent}>Eventos</Text>
-          </Text>
-          <Text style={styles.headerSubtitle}>
-            Explora las funciones especiales, festivales y eventos exclusivos que están por llegar. ¡Disfruta de experiencias únicas en Cineflix!
-          </Text>
-        </View>
-
-        {monthsOrder.length === 0 ? (
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>
-              No hay eventos especiales programados en este momento.
-            </Text>
-          </View>
-        ) : (
-          monthsOrder.map((month) => (
-            <View key={month} style={styles.sectionContainer}>
-              
-              {/* Título del month */}
-              <View style={styles.monthRow}>
-                <Text style={styles.monthTitle}>{month}</Text>
-                <View style={styles.monthLine} />
-              </View>
-
-              {/* Grid de Eventos */}
-              <View style={styles.grid}>
-                {groupedEvents[month].map((event, index) => (
-                  <View key={`event-${event.id || index}`} style={styles.cardWrapper}>
-                    <MovieGridCard 
-                    movie={event} 
-                    isEventsPage={true}
-                    onPress={() => {
-                        router.push({
-                        pathname: `/content/${event.id}`, 
-                        params: { 
-                            movieId: event.id, 
-                            type: 'special_event'
-                        }
-                    });
-                    }} 
-                    />
-                  </View>
-                ))}
-              </View>
-
-            </View>
-          ))
-        )}
-      </ScrollView>
+      <FlatList
+        data={flatData}
+        renderItem={renderFlatItem}
+        keyExtractor={(item) => item._key}
+        ListHeaderComponent={renderHeader}
+        ListEmptyComponent={renderEmpty}
+        ListFooterComponent={renderFooter}
+        contentContainerStyle={styles.listContent}
+        onEndReached={hasMore ? loadMore : null}
+        onEndReachedThreshold={0.3}
+        refreshing={refreshing}
+        onRefresh={refresh}
+      />
     </SafeAreaView>
   );
 }
@@ -180,10 +226,17 @@ const styles = StyleSheet.create({
     marginTop: 12,
     letterSpacing: 1,
   },
-  scrollContent: {
+  listContent: {
     paddingHorizontal: 16,
     paddingTop: 24,
     paddingBottom: 40,
+  },
+  backButton: {
+    alignSelf: 'flex-start',
+    padding: 8,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    borderRadius: 999,
+    marginBottom: 16,
   },
   header: {
     borderLeftWidth: 4,
@@ -218,13 +271,11 @@ const styles = StyleSheet.create({
     fontSize: 14,
     textAlign: 'center',
   },
-  sectionContainer: {
-    marginBottom: 32,
-  },
   monthRow: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 16,
+    marginTop: 8,
   },
   monthTitle: {
     color: '#F6AD38',
@@ -238,14 +289,17 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: 'rgba(255, 255, 255, 0.05)',
   },
-  grid: {
+  cardRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginHorizontal: -8,
+    justifyContent: 'flex-start',
+    marginBottom: 16,
   },
   cardWrapper: {
     width: CARD_WIDTH,
     marginHorizontal: 8,
-    marginBottom: 16,
+  },
+  footerLoader: {
+    paddingVertical: 20,
+    alignItems: 'center',
   },
 });
