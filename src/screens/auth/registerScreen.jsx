@@ -183,7 +183,7 @@ const styles = StyleSheet.create({
   },
   mainContainer: {
     flex: 1,
-    paddingHorizontal: 25,
+    paddingHorizontal: theme.spacing.s16,
   },
 backButton: {
   alignSelf: 'flex-start',
