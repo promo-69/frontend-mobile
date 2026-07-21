@@ -1,23 +1,23 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation, useRouter } from 'expo-router';
-import { ArrowLeft } from 'lucide-react-native';
+import { ArrowLeft, XCircle } from 'lucide-react-native';
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import {
-    Dimensions,
-    Image,
-    ImageBackground,
-    KeyboardAvoidingView,
-    Platform,
-    ScrollView,
-    StyleSheet,
-    TouchableOpacity,
-    View,
+  Dimensions,
+  Image,
+  ImageBackground,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+  View,
 } from 'react-native';
-import Animated, { FadeInUp, FadeOutDown } from 'react-native-reanimated';
+import Logo from '../../assets/images/logo-cineflix-2.png';
+import { AppAlert } from '../../components/ui/AppAlert';
 import { AppText } from '../../components/ui/AppText';
 import { CustomButton } from '../../components/ui/CustomButton';
-import Logo from '../../assets/images/logo-cineflix-2.png';
 import { Input } from '../../components/ui/Input';
 import { ScreenWrapper } from '../../components/ui/ScreenWrapper';
 import { theme } from '../../constants';
@@ -25,9 +25,9 @@ import { AUTH_ERRORS, getErrorMessage } from '../../constants/errorMessages';
 import { useAuth } from '../../context/AuthContext';
 import { storageHelper } from '../../helper/storage.helper';
 import {
-    sanitizeInput,
-    validateEmail,
-    validatePassword,
+  sanitizeInput,
+  validateEmail,
+  validatePassword,
 } from '../../utils/validators';
 
 const { width } = Dimensions.get('window');
@@ -37,8 +37,9 @@ export default function LoginScreen() {
   const navigation = useNavigation();
   const { login } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
-
-  const [Error, setError] = useState(null);
+  const [authError, setAuthError] = useState(null);
+  const [authErrorCode, setAuthErrorCode] = useState(null);
+  const [showAuthErrorModal, setShowAuthErrorModal] = useState(false);
 
   const { control, handleSubmit } = useForm({
     defaultValues: {
@@ -59,13 +60,17 @@ export default function LoginScreen() {
   };
 
   const clearError = () => {
-    if (Error) {
-      setError(null);
+    if (authError) {
+      setAuthError(null);
+      setAuthErrorCode(null);
+      setShowAuthErrorModal(false);
     }
   };
 
   const onSubmit = async (data) => {
-    setError(null);
+    setAuthError(null);
+    setAuthErrorCode(null);
+    setShowAuthErrorModal(false);
     setIsLoading(true);
 
     // 1. Limpieza rigurosa de datos (Evita el espacio invisible del teclado)
@@ -97,11 +102,16 @@ export default function LoginScreen() {
         }
 
         // Usamos el mapeador de errores basado en el código devuelto
-        setError(getErrorMessage(result?.code));
+        const message = getErrorMessage(result?.code);
+        setAuthError(message);
+        setAuthErrorCode(result?.code);
+        setShowAuthErrorModal(true);
       }
     } catch (error) {
       console.error('Login error en el componente:', error);
-      setError(AUTH_ERRORS.NETWORK_ERROR);
+      setAuthError(AUTH_ERRORS.NETWORK_ERROR);
+      setAuthErrorCode(null);
+      setShowAuthErrorModal(true);
     } finally {
       setIsLoading(false);
     }
@@ -137,7 +147,11 @@ export default function LoginScreen() {
               activeOpacity={0.7}
               style={styles.backButton}
             >
-              <ArrowLeft size={22} color={theme.colors.accent} strokeWidth={1} />
+              <ArrowLeft
+                size={22}
+                color={theme.colors.accent}
+                strokeWidth={1}
+              />
             </TouchableOpacity>
 
             {/* Gradiente: imagen sólida arriba, difumina hacia el fondo */}
@@ -227,23 +241,24 @@ export default function LoginScreen() {
               </View>
             </View>
 
-            {Error && (
-              <Animated.View
-                entering={FadeInUp}
-                exiting={FadeOutDown}
-                style={styles.authErrorContainer}
-              >
-                <View style={styles.authErrorAccent} />
-                <AppText variant="body" style={styles.authErrorText}>
-                  {Error}
-                </AppText>
-              </Animated.View>
-            )}
-
             <CustomButton
               title="Ingresar"
               onPress={handleSubmit(onSubmit)}
               loading={isLoading}
+            />
+
+            <AppAlert
+              visible={showAuthErrorModal && !!authError}
+              icon={XCircle}
+              variant="danger"
+              title={
+                authErrorCode === 'INVALID_LOGIN' 
+                  ? 'Error'
+                  : 'Credenciales inválidas'
+              }
+              message={authError}
+              confirmLabel="Entendido"
+              onConfirm={() => setShowAuthErrorModal(false)}
             />
           </View>
 
