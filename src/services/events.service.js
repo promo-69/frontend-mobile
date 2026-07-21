@@ -1,9 +1,22 @@
 import api from './api';
 
-// Obtener eventos próximos - Mary
-export const getEvents = async () => {
-  const response = await api.get('/special-events');
-  return response.data.data;
+// Obtener eventos próximos (paginados)
+export const getEvents = async (page = 1, limit = 10) => {
+  try {
+    const response = await api.get(`/special-events?page=${page}&limit=${limit}`);
+    if (response?.data?.success) {
+      const rawData = response.data.data;
+      const array = Array.isArray(rawData) ? rawData : rawData?.data || [];
+      return {
+        items: array,
+        metadata: response.data.metadata || null,
+      };
+    }
+    return { items: [], metadata: null };
+  } catch (error) {
+    console.error('Error en getEvents:', error.message);
+    return { items: [], metadata: null };
+  }
 };
 
 // Obtener la informacion del Evento con el id - Mary

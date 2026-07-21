@@ -41,7 +41,7 @@ export const getMoviesBillboard = async (page = 1, limit = 10) => {
   }
 };
 
-// Obtener películas con estado proximamente 
+// Obtener películas con estado proximamente (paginadas)
 export const getUpcomingMovies = async (page = 1, limit = 10) => {
   try {
     const response = await api.get(
@@ -51,16 +51,20 @@ export const getUpcomingMovies = async (page = 1, limit = 10) => {
       const rawData = response.data.data;
       const array = Array.isArray(rawData) ? rawData : rawData?.data || [];
 
-      // Aplanamos por si la estructura de próximos estrenos también viene anidada
-      return array.map((movie) => ({
+      const movies = array.map((movie) => ({
         ...(movie.movie || movie),
         contentType: 'movie',
       }));
+
+      return {
+        items: movies,
+        metadata: response.data.metadata || null,
+      };
     }
-    return [];
+    return { items: [], metadata: null };
   } catch (error) {
     console.error('Error en getUpcomingMovies:', error.message);
-    return [];
+    return { items: [], metadata: null };
   }
 };
 
