@@ -142,6 +142,7 @@ const styles = StyleSheet.create({
 backButton: {
   alignSelf: 'flex-start',
   padding: 8,
+  marginLeft: theme.spacing.s16,
   backgroundColor: 'rgba(0,0,0,0.5)',
   borderRadius: 999,
   marginBottom: 16,
