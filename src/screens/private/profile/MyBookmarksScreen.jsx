@@ -428,16 +428,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     alignSelf: 'flex-start',
     gap: spacing.s8,
-    paddingHorizontal: spacing.s16,
-    paddingVertical: spacing.s10,
-    borderRadius: borderRadius.s12,
+    paddingHorizontal: spacing.s12,
+    paddingVertical: spacing.s8,
+    borderRadius: 10,
     backgroundColor: `${colors.primary}14`,
     borderWidth: 1,
     borderColor: `${colors.primary}30`,
   },
   batchToggleText: {
     color: colors.primary,
-    fontSize: 13,
+    fontSize: 14,
     fontFamily: theme.typography.family.primary.bold,
   },
   batchControls: {
@@ -449,26 +449,26 @@ const styles = StyleSheet.create({
   batchSelectAllBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.s6,
+    gap: spacing.s8,
     paddingHorizontal: spacing.s12,
     paddingVertical: spacing.s8,
-    borderRadius: borderRadius.s12,
+    borderRadius: 10,
     backgroundColor: `${colors.primary}14`,
     borderWidth: 1,
     borderColor: `${colors.primary}30`,
   },
   batchSelectAllText: {
     color: colors.primary,
-    fontSize: 12,
+    fontSize: 14,
     fontFamily: theme.typography.family.primary.bold,
   },
   batchDeleteBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.s6,
+    gap: spacing.s8,
     paddingHorizontal: spacing.s12,
     paddingVertical: spacing.s8,
-    borderRadius: borderRadius.s12,
+    borderRadius: 10,
     backgroundColor: colors.error,
   },
   batchDeleteBtnDisabled: {
@@ -476,7 +476,7 @@ const styles = StyleSheet.create({
   },
   batchDeleteText: {
     color: '#FFFFFF',
-    fontSize: 12,
+    fontSize: 14,
     fontFamily: theme.typography.family.primary.bold,
   },
   batchDeleteTextDisabled: {
@@ -485,14 +485,14 @@ const styles = StyleSheet.create({
   batchCancelBtn: {
     paddingHorizontal: spacing.s12,
     paddingVertical: spacing.s8,
-    borderRadius: borderRadius.s12,
+    borderRadius: 10,
     backgroundColor: 'rgba(255,255,255,0.05)',
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.1)',
   },
   batchCancelText: {
     color: colors.textSecondary,
-    fontSize: 12,
+    fontSize: 14,
     fontFamily: theme.typography.family.primary.bold,
   },
 
