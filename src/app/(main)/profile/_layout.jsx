@@ -62,8 +62,18 @@ export default function ProfileLayout() {
 
       {/* Pantalla de cambio de credenciales / seguridad */}
       <Stack.Screen name="security/index"
-      options={{
-          title: 'Cambio de Contraseña'
+        options={{
+          title: 'Seguridad'
+        }}
+      />
+      <Stack.Screen name="security/change-email"
+        options={{
+          title: 'Cambiar Correo'
+        }}
+      />
+      <Stack.Screen name="security/change-password"
+        options={{
+          title: 'Cambiar Contraseña'
         }}
       />
 
