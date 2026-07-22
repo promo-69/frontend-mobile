@@ -1,0 +1,155 @@
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
+import { Controller, useForm } from 'react-hook-form';
+import { ScrollView, StyleSheet, View } from 'react-native';
+import { AppText } from '../../../../components/ui/AppText';
+import { CustomButton } from '../../../../components/ui/CustomButton';
+import { Input } from '../../../../components/ui/Input';
+import { ScreenWrapper } from '../../../../components/ui/ScreenWrapper';
+import { SuccessModal } from '../../../../components/ui/SuccessModal';
+import { theme } from '../../../../constants';
+import { useProfile } from '../../../../hooks/profile/useProfile';
+import { validateEmail, validatePassword } from '../../../../utils/validators';
+
+export default function SecurityChangeScreen() {
+  const router = useRouter();
+  const { token } = useLocalSearchParams();
+  const { changeSecurity, isUpdating } = useProfile();
+  const [isSuccessVisible, setIsSuccessVisible] = useState(false);
+
+  const { control, handleSubmit } = useForm({
+    defaultValues: { newEmail: '', newPassword: '' },
+  });
+  const [errorMessage, setErrorMessage] = useState(null);
+
+  useEffect(() => {
+    if (!token) {
+      // If there's no token, go back to verification
+      router.replace('/profile/security');
+    }
+  }, [token]);
+
+  const onSave = async (values) => {
+    const payload = { securityChangeToken: token };
+    if (values.newPassword && values.newPassword.trim() !== '')
+      payload.newPassword = values.newPassword;
+    if (values.newEmail && values.newEmail.trim() !== '')
+      payload.newEmail = values.newEmail;
+
+    setErrorMessage(null);
+    const res = await changeSecurity(payload);
+    if (res.success) {
+      setIsSuccessVisible(true);
+      setTimeout(() => {
+        setIsSuccessVisible(false);
+        router.push('/profile');
+      }, 900);
+    } else {
+      setErrorMessage(res.message || 'Error al aplicar cambios de seguridad');
+    }
+  };
+
+  return (
+    <ScreenWrapper>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        <AppText variant="body" style={styles.description}>
+          Ingresa tu nueva dirección de correo o una nueva contraseña. Dejar en
+          blanco mantiene el valor actual.
+        </AppText>
+
+        <View style={styles.inputsGroup}>
+          <Controller
+            control={control}
+            name="newEmail"
+            rules={{
+              validate: (value) => {
+                if (!value || value.trim() === '') return true;
+                return validateEmail(value);
+              },
+            }}
+            render={({
+              field: { onChange, onBlur, value },
+              fieldState: { error },
+            }) => (
+              <Input
+                label="Nuevo Correo (Opcional)"
+                value={value}
+                onBlur={onBlur}
+                onChangeText={onChange}
+                error={error?.message}
+                keyboardType="email-address"
+                autoCapitalize="none"
+              />
+            )}
+          />
+
+          <Controller
+            control={control}
+            name="newPassword"
+            rules={{
+              validate: (value) => {
+                if (!value || value.trim() === '') return true;
+                return validatePassword(value);
+              },
+            }}
+            render={({
+              field: { onChange, onBlur, value },
+              fieldState: { error },
+            }) => (
+              <Input
+                label="Nueva Contraseña (Opcional)"
+                value={value}
+                onBlur={onBlur}
+                onChangeText={onChange}
+                error={error?.message}
+                secureTextEntry
+                autoCapitalize="none"
+                placeholder="Dejar en blanco para mantener actual"
+              />
+            )}
+          />
+          {errorMessage ? (
+            <AppText variant="small" style={{ color: 'tomato', marginTop: 8 }}>
+              {errorMessage}
+            </AppText>
+          ) : null}
+        </View>
+      </ScrollView>
+
+      <View style={styles.footer}>
+        <CustomButton
+          title="Guardar Cambios"
+          onPress={handleSubmit(onSave)}
+          disabled={isUpdating}
+          loading={isUpdating}
+        />
+      </View>
+      <SuccessModal
+        visible={isSuccessVisible}
+        onClose={() => {
+          setIsSuccessVisible(false);
+          router.push('/profile');
+        }}
+      />
+    </ScreenWrapper>
+  );
+}
+
+const styles = StyleSheet.create({
+  scrollContent: {
+    paddingHorizontal: theme.spacing.s24,
+    paddingBottom: theme.spacing.s32,
+  },
+  description: {
+    color: theme.colors.textSecondary,
+    opacity: 0.6,
+    fontSize: 14,
+    lineHeight: 20,
+    marginBottom: theme.spacing.s24,
+  },
+  inputsGroup: { gap: theme.spacing.s24 },
+  footer: { padding: theme.spacing.s24, backgroundColor: 'transparent' },
+});

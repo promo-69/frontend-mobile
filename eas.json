@@ -1,0 +1,35 @@
+{
+  "cli": {
+    "version": ">= 19.1.0",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "channel": "development",
+      "corepack": true,
+      "autoIncrement": true,
+      "environment": "development",
+      "env": {
+        "APP_VARIANT": ".dev"
+      }
+    },
+    "preview": {
+      "distribution": "internal",
+      "channel": "preview",
+      "corepack": true,
+      "autoIncrement": true,
+      "environment": "preview"
+    },
+    "production": {
+      "autoIncrement": true,
+      "channel": "production",
+      "corepack": true,
+      "environment": "production"
+    }
+  },
+  "submit": {
+    "production": {}
+  }
+}
