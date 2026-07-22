@@ -3,7 +3,7 @@
   "main": "expo-router/entry",
   "version": "1.0.0",
   "scripts": {
-    "start": "npx expo start --host lan",
+    "start": "npx expo start --go --host lan",
     "reset-project": "node ./scripts/reset-project.js",
     "android": "npx expo run:android",
     "ios": "npx expo run:ios",
@@ -27,6 +27,7 @@
     "expo-asset": "~12.0.13",
     "expo-audio": "~1.1.1",
     "expo-camera": "~17.0.10",
+    "expo-clipboard": "^57.0.1",
     "expo-constants": "~18.0.13",
     "expo-dev-client": "~6.0.21",
     "expo-file-system": "~19.0.23",

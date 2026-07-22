@@ -29,6 +29,9 @@ import { usePurchaseSession } from '../../../context/PurchaseSessionContext';
 import { usePaymentEvents } from '../../../hooks/buy/usePaymentEvents';
 import { usersService } from '../../../services/users.service';
 import { appAlert } from '../../../context/AlertContext';
+import * as Clipboard from 'expo-clipboard';
+import { Copy } from 'lucide-react-native';
+import { ToastHelper } from '../../../utils/feedback';
 
 const { colors, spacing, borderRadius } = theme;
 
@@ -61,12 +64,8 @@ function BankMethodForm({
   onSelectAccount,
   reference,
   onChangeReference,
+  onCopy,
 }) {
-  const selected = accounts.find((a) => a.id === selectedAccountId) || null;
-  const details = Array.isArray(selected?.payment_details)
-    ? selected.payment_details
-    : [];
-
   return (
     <View style={styles.formSection}>
       <AppText variant="caption" style={styles.formLabel}>
@@ -90,6 +89,9 @@ function BankMethodForm({
             const active = acc.id === selectedAccountId;
             const bankName = acc._Banks?.name || `Banco #${acc.bank}`;
             const currencyCode = acc._Currencies?.code || '';
+            const accDetails = Array.isArray(acc?.payment_details)
+              ? acc.payment_details
+              : [];
             return (
               <TouchableOpacity
                 key={acc.id}
@@ -108,19 +110,26 @@ function BankMethodForm({
                     </AppText>
                   )}
                 </View>
-                {active &&
-                  details.map((d, i) => (
+                {accDetails.map((d, i) => (
+                  <View key={`${acc.id}-${i}`} style={styles.detailRow}>
                     <AppText
-                      key={`${acc.id}-${i}`}
                       variant="smallText"
-                      style={styles.bankCardField}
+                      style={[styles.bankCardField, { flex: 1 }]}
                     >
                       <AppText style={styles.bankFieldKey}>
                         {d.label}:{' '}
                       </AppText>
                       {d.value}
                     </AppText>
-                  ))}
+                    <TouchableOpacity
+                      style={styles.copyButton}
+                      onPress={() => onCopy(d.value, d.label)}
+                      activeOpacity={0.7}
+                    >
+                      <Copy size={14} color={colors.primary} />
+                    </TouchableOpacity>
+                  </View>
+                ))}
               </TouchableOpacity>
             );
           })}
@@ -512,6 +521,39 @@ export default function PaymentScreen() {
     // pointsInvolved cubre también el pago dividido con puntos (antes solo
     // se refrescaba al cambiar el método principal).
   }, [pointsInvolved]);
+
+  // Auto-seleccionar la primera cuenta del primer método
+  useEffect(() => {
+    if (accounts.length > 0) {
+      const exists = accounts.some(acc => acc.id === selectedAccountId);
+      if (!exists) {
+        setSelectedAccountId(accounts[0].id);
+      }
+    } else {
+      setSelectedAccountId(null);
+    }
+  }, [accounts, selectedAccountId]);
+
+  // Auto-seleccionar la primera cuenta del segundo método
+  useEffect(() => {
+    if (accounts2.length > 0) {
+      const exists = accounts2.some(acc => acc.id === selectedAccountId2);
+      if (!exists) {
+        setSelectedAccountId2(accounts2[0].id);
+      }
+    } else {
+      setSelectedAccountId2(null);
+    }
+  }, [accounts2, selectedAccountId2]);
+
+  const handleCopy = async (text, label) => {
+    try {
+      await Clipboard.setStringAsync(text);
+      ToastHelper.showSuccess('Copiado', `${label} copiado al portapapeles.`);
+    } catch (err) {
+      console.error('Error al copiar:', err);
+    }
+  };
 
   const selectMethod = (key) => {
     setSelectedMethod(key);
@@ -1061,6 +1103,7 @@ export default function PaymentScreen() {
             onSelectAccount={setSelectedAccountId}
             reference={reference}
             onChangeReference={setReference}
+            onCopy={handleCopy}
           />
         )}
         {selectedMethod === 'points' && (
@@ -1158,6 +1201,7 @@ export default function PaymentScreen() {
                 onSelectAccount={setSelectedAccountId2}
                 reference={reference2}
                 onChangeReference={setReference2}
+                onCopy={handleCopy}
               />
             )}
             {secondMethod === 'points' && (
@@ -1532,5 +1576,19 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     fontSize: 13,
     textAlign: 'center',
+  },
+  detailRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 2,
+  },
+  copyButton: {
+    padding: 6,
+    borderRadius: 4,
+    backgroundColor: 'rgba(240, 177, 42, 0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 8,
   },
 });
